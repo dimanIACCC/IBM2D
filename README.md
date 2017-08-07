@@ -1,0 +1,1 @@
+The project is devoted to simulation of numerical simulation of disperse flows in the channels of various shapes.
