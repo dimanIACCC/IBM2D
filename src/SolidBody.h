@@ -5,6 +5,15 @@
 #include "Grid.h"
 
 using namespace std;
+
+class Node
+{
+public:
+	double x[3];        // coordinates
+	double u[3];        // velocity
+	double integral[3]; // value of integral when calculating force
+};
+
 class SolidBody
 {
 public:
@@ -18,6 +27,7 @@ public:
 	vector<double> Integral_x; // value of integral when calculating force
 	vector<double> Integral_y;
 
+	vector<Node> Nodes;
 	
 	SolidBody(double x, double y, int n);
 	~SolidBody();
@@ -32,3 +42,4 @@ public:
 	//void AddSolid(list<Circle> &iList);
 	~Circle();
 };
+
