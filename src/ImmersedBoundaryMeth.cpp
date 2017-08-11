@@ -134,14 +134,6 @@ int main() {
 	}
 
 
-	/*
-	// BicGstab doesn`t work correctly with that initial data
-		Circle c4(1, 5, r, n, grid);
-		c4.AddSolid(solidList);
-		Circle c44(1, 4, r, n, grid);
-		c44.AddSolid(solidList);
-	*/
-
 
 	CalculateForce_X(Force_x, solidList, U_new, r, Cd, grid, alpha_f, beta_f, m);
 	CalculateForce_Y(Force_y, solidList, V_new, r, Cl, grid, alpha_f, beta_f, m);
@@ -193,12 +185,14 @@ int main() {
 			eps_u = 0.0;
 			eps_v = 0.0;
 
+			//<---------- prediction of velocity --------------------------
 			B_u = CalculateB_u(U_n, V_n, U_prev, V_prev, P, Force_x, grid, Re);
 			B_v = CalculateB_v(U_n, V_n, U_prev, V_prev, P, Force_y, grid, Re);
 
-
 			BiCGStab(U_new, grid.N1, grid.N2 + 1, OperatorA_u, B_u, grid);
 			BiCGStab(V_new, grid.N1 + 1, grid.N2, OperatorA_v, B_v, grid);
+			//<----------end of prediction of velocity --------------------------
+
 
 			P_Right = Calculate_Press_Right(U_n, V_n, grid);
 
@@ -208,7 +202,7 @@ int main() {
 				}
 
 
-			eps_p = Calculate_Press_correction(Delta_P, P_Right, N_Zeidel, Zeidel_eps, grid); //Должна ли поправка зависеть от скорости? пока не зависит
+			eps_p = Calculate_Press_correction(Delta_P, P_Right, N_Zeidel, Zeidel_eps, grid);
 			press_output << n << ' ' << eps_p << endl; //<---writing in closed stream
 
 
