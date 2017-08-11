@@ -20,7 +20,9 @@ public:
 	int start_n; // number of iteration, when solid added
 	bool moveSolid;
 	bool eraseSolid;
-	double U, V, x,y;
+	double xc[3];     // coordinates of the mass center
+	double Uc[3];     // velocity of the mass center
+	double omega;     // angular velocity
 
 
 	vector<double> Bound[2];

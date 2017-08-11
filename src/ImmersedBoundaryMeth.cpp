@@ -270,8 +270,8 @@ int main() {
 		///--------------collisions between particles---------------------------------
 		for (auto one = solidList.begin(); one != solidList.end(); one++) {
 			for (auto two = next(one); two != solidList.end(); two++) {
-				double distance = sqrt(pow(one->x - two->x, 2) + pow(one->y - two->y, 2));//<----distance between two particles 
-				if (one->x < two->x) {
+				double distance = sqrt(pow(one->xc[1] - two->xc[1], 2) + pow(one->xc[2] - two->xc[2], 2)); //<----distance between two particles 
+				if (one->xc[1] < two->xc[1]) {
 					first = one;
 					second = two;
 				}
@@ -284,28 +284,28 @@ int main() {
 					if (Debug) cout << "COLLISION DETECTED";
 					if (InelasticCollision) {
 						//Perfectly inelastic collision
-						first->U = (first->U + second->U) / 2;
-						first->V = (first->V + second->V) / 2;
-						second->U = first->U;
-						second->V = first->V;
+						first->Uc[1] = (first->Uc[1] + second->Uc[1]) / 2;
+						first->Uc[2] = (first->Uc[2] + second->Uc[2]) / 2;
+						second->Uc[1] = first->Uc[1];
+						second->Uc[2] = first->Uc[2];
 
 					}
 					else {
 						//this is perfectly elastic impact
 						double v1, v2;
-						v1 = sgn(first->U)*sqrt(pow(first->V, 2) + pow(first->U, 2));
-						v2 = sgn(second->U)*sqrt(pow(second->V, 2) + pow(second->U, 2));
+						v1 = sgn(first ->Uc[1])*sqrt(pow(first->Uc[2] , 2) + pow(first ->Uc[1], 2));
+						v2 = sgn(second->Uc[1])*sqrt(pow(second->Uc[2], 2) + pow(second->Uc[1], 2));
 
 						double tetta_1, tetta_2, phi;
-						if (v1 != 0) { tetta_1 = atan(first->V / first->U); }
+						if (v1 != 0) { tetta_1 = atan(first->Uc[2] / first->Uc[1]); }
 						else { tetta_1 = 0; } //??if (v1 == 0) { tetta_1 = M_PI_2 - tetta_2 / 2; }
-						if (v2 != 0) { tetta_2 = atan(second->V / second->U); }
+						if (v2 != 0) { tetta_2 = atan(second->Uc[2] / second->Uc[1]); }
 						else { tetta_2 = 0; } //??if (v2 == 0) { tetta_2 = M_PI_2 - tetta_1 / 2; }
-						phi = atan((second->y - first->y) / (second->x - first->x));
-						first->U = v2*cos(tetta_2 - phi)*cos(phi) + v1*sin(tetta_1 - phi)*cos(phi + M_PI_2);
-						first->V = v2*cos(tetta_2 - phi)*sin(phi) + v1*sin(tetta_1 - phi)*sin(phi + M_PI_2);
-						second->U = v1*cos(tetta_1 - phi)*cos(phi) + v2*sin(tetta_2 - phi)*cos(phi + M_PI_2);
-						second->V = v1*cos(tetta_1 - phi)*sin(phi) + v2*sin(tetta_2 - phi)*sin(phi + M_PI_2);
+						phi = atan((second->xc[2] - first->xc[2]) / (second->xc[1] - first->xc[1]));
+						first->Uc[1] = v2*cos(tetta_2 - phi)*cos(phi) + v1*sin(tetta_1 - phi)*cos(phi + M_PI_2);
+						first->Uc[2] = v2*cos(tetta_2 - phi)*sin(phi) + v1*sin(tetta_1 - phi)*sin(phi + M_PI_2);
+						second->Uc[1] = v1*cos(tetta_1 - phi)*cos(phi) + v2*sin(tetta_2 - phi)*cos(phi + M_PI_2);
+						second->Uc[2] = v1*cos(tetta_1 - phi)*sin(phi) + v2*sin(tetta_2 - phi)*sin(phi + M_PI_2);
 					}
 				}
 			}
@@ -314,11 +314,11 @@ int main() {
 
 		///-------------collision with walls--------------------------
 		for (auto one = solidList.begin(); one != solidList.end(); one++) {
-			double DistUpper = grid.H - one->y;//<----distance to upper wall
-			double DistLower = one->y;//<-------distance to lower wall
+			double DistUpper = grid.H - one->xc[2];//<----distance to upper wall
+			double DistLower = one->xc[2];//<-------distance to lower wall
 			if (DistUpper < one->r || DistLower < one->r) {
 				if (Debug) cout << "COLLISION DETECTED";
-				one->V = -one->V;
+				one->Uc[2] = -one->Uc[2];
 			}
 		}
 		///-------------end of collision with walls--------------------------
@@ -334,15 +334,15 @@ int main() {
 			if (it->moveSolid) {
 				//update position
 				for (int k = 0; k < grid.NF; ++k) {
-					it->Bound[0][k] += it->U * grid.d_t;
-					it->Bound[1][k] += it->V * grid.d_t;
+					it->Bound[0][k] += it->Uc[1] * grid.d_t;
+					it->Bound[1][k] += it->Uc[2] * grid.d_t;
 				}
-				it->x += it->U * grid.d_t;
-				it->y += it->V * grid.d_t;
+				it->xc[1] += it->Uc[1] * grid.d_t;
+				it->xc[2] += it->Uc[2] * grid.d_t;
 			}
 
 			//delete bodies which move 95% of length
-			if (it->x > grid.L*0.95) {
+			if (it->xc[1] > grid.L*0.95) {
 				solidList.erase(it++);
 			}
 			else {

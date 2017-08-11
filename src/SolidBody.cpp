@@ -8,10 +8,10 @@ SolidBody::SolidBody(double x, double y, int n)
 	 this->start_n = n; // number of iteration, when solid added
 	 moveSolid = false;
 	 moveSolid = false;
-	 U = 0.0;
-	 V = 0.0;
-	 this->x = x;
-	 this->y = y;
+	 Uc[1] = 0.0;
+	 Uc[2] = 0.0;
+	 this->xc[1] = x;
+	 this->xc[2] = y;
 }
 
 

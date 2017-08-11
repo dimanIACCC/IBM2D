@@ -86,8 +86,8 @@ double CalculateForce_X(Matrix& force_x, list<Circle> &iList, Matrix& u, double 
 			}
 
 
-			solid.Integral_x[k] += (new_x - solid.U) * grid.d_t;
-			bound_Force_x[k] = alpha_f * solid.Integral_x[k] + beta_f * (new_x - solid.U);
+			solid.Integral_x[k] += (new_x - solid.Uc[1]) * grid.d_t;
+			bound_Force_x[k] = alpha_f * solid.Integral_x[k] + beta_f * (new_x - solid.Uc[1]);
 		}
 
 		//calculating force f for Euler points
@@ -173,7 +173,7 @@ double CalculateForce_X(Matrix& force_x, list<Circle> &iList, Matrix& u, double 
 
 		if (solid.moveSolid){
 
-			solid.U = solid.U + (-Coeff * grid.d_t) / (M - M_PI * solid. r * solid.r);
+			solid.Uc[1] = solid.Uc[1] + (-Coeff * grid.d_t) / (M - M_PI * solid. r * solid.r);
 		}
 	}
 
@@ -251,9 +251,9 @@ double CalculateForce_Y(Matrix& force_y, list<Circle> &iList, Matrix& v, double 
 			}
 
 
-			solid.Integral_y[k] += (new_y - solid.V) * grid.d_t;
+			solid.Integral_y[k] += (new_y - solid.Uc[2]) * grid.d_t;
 
-			bound_Force_y[k] = alpha_f * solid.Integral_y[k] + beta_f * (new_y - solid.V);
+			bound_Force_y[k] = alpha_f * solid.Integral_y[k] + beta_f * (new_y - solid.Uc[2]);
 
 		}
 
@@ -339,7 +339,7 @@ double CalculateForce_Y(Matrix& force_y, list<Circle> &iList, Matrix& v, double 
 
 		if (solid.moveSolid){
 
-			solid.V = solid.V + (-Coeff * grid.d_t) / (M - M_PI * solid.r * solid.r);
+			solid.Uc[2] = solid.Uc[2] + (-Coeff * grid.d_t) / (M - M_PI * solid.r * solid.r);
 		}
 	}
 
