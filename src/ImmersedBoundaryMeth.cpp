@@ -7,6 +7,8 @@
 #include "Output.h"
 #include "BiCGStab.h"
 #include "Calculate_press.h"
+#include "PredictVel.h"
+
 
 
 #pragma warning(disable : 4996)//for using <chrono>
@@ -186,12 +188,13 @@ int main() {
 			eps_v = 0.0;
 
 			//<---------- prediction of velocity --------------------------
-			B_u = CalculateB_u(U_n, V_n, U_prev, V_prev, P, Force_x, grid, Re);
-			B_v = CalculateB_v(U_n, V_n, U_prev, V_prev, P, Force_y, grid, Re);
+			//B_u = CalculateB_u(U_n, V_n, U_prev, V_prev, P, Force_x, grid, Re);
+			//B_v = CalculateB_v(U_n, V_n, U_prev, V_prev, P, Force_y, grid, Re);
 
-			BiCGStab(U_new, grid.N1, grid.N2 + 1, OperatorA_u, B_u, grid);
-			BiCGStab(V_new, grid.N1 + 1, grid.N2, OperatorA_v, B_v, grid);
-			//<----------end of prediction of velocity --------------------------
+			//BiCGStab(U_new, grid.N1, grid.N2 + 1, OperatorA_u, B_u, grid);
+			//BiCGStab(V_new, grid.N1 + 1, grid.N2, OperatorA_v, B_v, grid);
+			ExplicPredVel(U_new,V_new,U_n,V_n,P,Force_x,Force_y,grid);
+			//<----------end of prediction of velocity --------------------
 
 
 			P_Right = Calculate_Press_Right(U_n, V_n, grid);
@@ -209,7 +212,7 @@ int main() {
 
 			for (int i = 0; i < grid.N1 + 1; ++i) {
 				for (int j = 0; j < grid.N2 + 1; ++j) {
-					P[i][j] = P[i][j] + 1.0 * Delta_P[i][j]; // 0.8 changed to 1.0
+					P[i][j] = P[i][j] + 0.8 * Delta_P[i][j]; 
 				}
 			}
 

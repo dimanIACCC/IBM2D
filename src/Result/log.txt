@@ -1,0 +1,15 @@
+The IBM program starts.		Mon Aug 14 16:11:28 2017
+
+The parameters are the following:
+Mass of a particle            : M   = 10
+Reynolds number               : Re  = 20
+Channel length                : L   = 30
+Channel width                 : W   = 7
+Number of nodes on            : Nõ  = 101
+Number of nodes on            : Ny  = 21
+Number of nodes for a particle: Np  = 50
+Time step                     : tau = 0.00125
+Force parameter alpha         : alpha = 0
+Force parameter beta          : beta  = -3
+Tolerance for Zeidel method   : tol = 1e-05
+
