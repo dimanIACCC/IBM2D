@@ -334,8 +334,8 @@ int main() {
 			if (it->moveSolid) {
 				//update position
 				for (int k = 0; k < grid.NF; ++k) {
-					it->Bound[0][k] += it->Uc[1] * grid.d_t;
-					it->Bound[1][k] += it->Uc[2] * grid.d_t;
+					it->Nodes[k].x[1] += it->Uc[1] * grid.d_t;
+					it->Nodes[k].x[2] += it->Uc[2] * grid.d_t;
 				}
 				it->xc[1] += it->Uc[1] * grid.d_t;
 				it->xc[2] += it->Uc[2] * grid.d_t;

@@ -50,12 +50,13 @@ void OutputPressure(Matrix data, int n, double output_step, list<Circle> iList, 
 
 	for (auto& solid : iList){
 
-		output << "GEOMETRY ZN = " << n / output_step + 1 << ", X=" << solid.Bound[0][0] << ", Y=" << solid.Bound[1][0] << ", T=LINE, LT = 0.3, CS=GRID" << endl;
+		output << "GEOMETRY ZN = " << n / output_step + 1 << ", X=" << solid.Nodes[0].x[1] << ", Y=" << solid.Nodes[0].x[2] << ", T=LINE, LT = 0.3, CS=GRID" << endl;
 		output << "1" << endl << grid.NF + 1 << endl;
 		output << 0 << " " << 0 << endl;
 		for (int i = 1; i < grid.NF; ++i){
 
-			output << solid.Bound[0][i] - solid.Bound[0][0] << " " << solid.Bound[1][i] - solid.Bound[1][0] << endl;
+			output << solid.Nodes[i].x[1] - solid.Nodes[0].x[1] << " " 
+			       << solid.Nodes[i].x[2] - solid.Nodes[0].x[2] << endl;
 
 		}
 		output << 0 << " " << 0 << endl;
@@ -102,12 +103,13 @@ void OutputVelocity_U(Matrix data, int n, int output_step, list<Circle> iList, G
 
 	for (auto& solid : iList){
 
-		output << "GEOMETRY ZN = " << n / output_step + 1 << ", X=" << solid.Bound[0][0] << ", Y=" << solid.Bound[1][0] << ", T=LINE, LT = 0.3, CS=GRID" << endl;
+		output << "GEOMETRY ZN = " << n / output_step + 1 << ", X=" << solid.Nodes[0].x[1] << ", Y=" << solid.Nodes[0].x[2] << ", T=LINE, LT = 0.3, CS=GRID" << endl;
 		output << "1" << endl << grid.NF + 1 << endl;
 		output << 0 << " " << 0 << endl;
 		for (int i = 1; i < grid.NF; ++i){
 
-			output << solid.Bound[0][i] - solid.Bound[0][0] << " " << solid.Bound[1][i] - solid.Bound[1][0] << endl;
+			output << solid.Nodes[i].x[1] - solid.Nodes[0].x[1] << " "
+			       << solid.Nodes[i].x[2] - solid.Nodes[0].x[2] << endl;
 
 		}
 		output << 0 << " " << 0 << endl;
@@ -153,12 +155,13 @@ void OutputVelocity_V(Matrix& data, int n, int output_step, list<Circle> iList, 
 
 	for (auto& solid : iList){
 
-		output << "GEOMETRY ZN = " << n / output_step + 1 << ", X=" << solid.Bound[0][0] << ", Y=" << solid.Bound[1][0] << ", T=LINE, LT = 0.3, CS=GRID" << endl;
+		output << "GEOMETRY ZN = " << n / output_step + 1 << ", X=" << solid.Nodes[0].x[1] << ", Y=" << solid.Nodes[0].x[2] << ", T=LINE, LT = 0.3, CS=GRID" << endl;
 		output << "1" << endl << grid.NF + 1 << endl;
 		output << 0 << " " << 0 << endl;
 		for (int i = 1; i < grid.NF; ++i){
 
-			output << solid.Bound[0][i] - solid.Bound[0][0] << " " << solid.Bound[1][i] - solid.Bound[1][0] << endl;
+			output << solid.Nodes[i].x[1] - solid.Nodes[0].x[1] << " " 
+			       << solid.Nodes[i].x[2] - solid.Nodes[0].x[2] << endl;
 
 		}
 		output << 0 << " " << 0 << endl;

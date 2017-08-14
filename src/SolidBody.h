@@ -25,7 +25,7 @@ public:
 	double omega;     // angular velocity
 
 
-	vector<double> Bound[2];
+	//vector<double> Bound[2];
 	vector<double> Integral_x; // value of integral when calculating force
 	vector<double> Integral_y;
 

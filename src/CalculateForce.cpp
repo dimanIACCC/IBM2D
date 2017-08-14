@@ -68,7 +68,7 @@ double CalculateForce_X(Matrix& force_x, list<Circle> &iList, Matrix& u, double 
 			int j_max = 0;
 			int j_min = 0;
 
-			GetInfluenceArea(i_min, i_max, j_min, j_max, solid.Bound[0][k], solid.Bound[1][k], 3, grid);
+			GetInfluenceArea(i_min, i_max, j_min, j_max, solid.Nodes[k].x[1], solid.Nodes[k].x[2], 3, grid);
 
 			if (i_max >= n1){
 				i_max = n1 - 1;
@@ -80,7 +80,7 @@ double CalculateForce_X(Matrix& force_x, list<Circle> &iList, Matrix& u, double 
 			for (int i = i_min; i <= i_max; ++i){
 				for (int j = j_min; j <= j_max; ++j){
 
-					new_x += u[i][j] * DeltaFunction(i*grid.d_x - solid.Bound[0][k], (j - 0.5)*grid.d_y - solid.Bound[1][k],grid) * grid.d_x * grid.d_y;
+					new_x += u[i][j] * DeltaFunction(i*grid.d_x - solid.Nodes[k].x[1], (j - 0.5)*grid.d_y - solid.Nodes[k].x[2],grid) * grid.d_x * grid.d_y;
 
 				}
 			}
@@ -100,7 +100,7 @@ double CalculateForce_X(Matrix& force_x, list<Circle> &iList, Matrix& u, double 
 			int j_max = 0;
 			int j_min = 0;
 
-			GetInfluenceArea(i_min, i_max, j_min, j_max, solid.Bound[0][k], solid.Bound[1][k], 3,grid);
+			GetInfluenceArea(i_min, i_max, j_min, j_max, solid.Nodes[k].x[1], solid.Nodes[k].x[2], 3,grid);
 
 			if (i_max >= n1){
 				i_max = n1 - 1;
@@ -112,7 +112,7 @@ double CalculateForce_X(Matrix& force_x, list<Circle> &iList, Matrix& u, double 
 			for (int i = i_min; i <= i_max; ++i){
 				for (int j = j_min; j <= j_max; ++j){
 
-					force_x_temp[i][j] += bound_Force_x[k] * DeltaFunction(i*grid.d_x - solid.Bound[0][k], (j - 0.5)*grid.d_y - solid.Bound[1][k], grid) * solid.d_s * solid.d_s;
+					force_x_temp[i][j] += bound_Force_x[k] * DeltaFunction(i*grid.d_x - solid.Nodes[k].x[1], (j - 0.5)*grid.d_y - solid.Nodes[k].x[2], grid) * solid.d_s * solid.d_s;
 
 				}
 			}
@@ -133,7 +133,7 @@ double CalculateForce_X(Matrix& force_x, list<Circle> &iList, Matrix& u, double 
 			int j_max_temp = 0;
 			int j_min_temp = 0;
 
-			GetInfluenceArea(i_min_temp, i_max_temp, j_min_temp, j_max_temp, solid.Bound[0][k], solid.Bound[1][k], 3, grid);
+			GetInfluenceArea(i_min_temp, i_max_temp, j_min_temp, j_max_temp, solid.Nodes[k].x[1], solid.Nodes[k].x[2], 3, grid);
 
 			if (i_max_temp > i_max){
 				i_max = i_max_temp;
@@ -232,7 +232,7 @@ double CalculateForce_Y(Matrix& force_y, list<Circle> &iList, Matrix& v, double 
 			int j_max = 0;
 			int j_min = 0;
 
-			GetInfluenceArea(i_min, i_max, j_min, j_max, solid.Bound[0][k], solid.Bound[1][k], 3,grid);
+			GetInfluenceArea(i_min, i_max, j_min, j_max, solid.Nodes[k].x[1], solid.Nodes[k].x[2], 3,grid);
 
 			if (i_max >= n1){
 				i_max = n1 - 1;
@@ -245,7 +245,7 @@ double CalculateForce_Y(Matrix& force_y, list<Circle> &iList, Matrix& v, double 
 				for (int j = j_min; j <= j_max; ++j){
 
 
-					new_y += v[i][j] * DeltaFunction((i - 0.5)*grid.d_x - solid.Bound[0][k], j*grid.d_y - solid.Bound[1][k],grid) * grid.d_x * grid.d_y;
+					new_y += v[i][j] * DeltaFunction((i - 0.5)*grid.d_x - solid.Nodes[k].x[1], j*grid.d_y - solid.Nodes[k].x[2],grid) * grid.d_x * grid.d_y;
 
 				}
 			}
@@ -269,7 +269,7 @@ double CalculateForce_Y(Matrix& force_y, list<Circle> &iList, Matrix& v, double 
 			int j_max = 0;
 			int j_min = 0;
 
-			GetInfluenceArea(i_min, i_max, j_min, j_max, solid.Bound[0][k], solid.Bound[1][k], 3,grid);
+			GetInfluenceArea(i_min, i_max, j_min, j_max, solid.Nodes[k].x[1], solid.Nodes[k].x[2], 3,grid);
 
 			if (i_max >= n1){
 				i_max = n1 - 1;
@@ -281,7 +281,7 @@ double CalculateForce_Y(Matrix& force_y, list<Circle> &iList, Matrix& v, double 
 			for (int i = i_min; i <= i_max; ++i){
 				for (int j = j_min; j <= j_max; ++j){
 
-					force_y_temp[i][j] += bound_Force_y[k] * DeltaFunction((i - 0.5)*grid.d_x - solid.Bound[0][k], j*grid.d_y - solid.Bound[1][k], grid) * solid.d_s * solid.d_s;
+					force_y_temp[i][j] += bound_Force_y[k] * DeltaFunction((i - 0.5)*grid.d_x - solid.Nodes[k].x[1], j*grid.d_y - solid.Nodes[k].x[2], grid) * solid.d_s * solid.d_s;
 				}
 			}
 
@@ -301,7 +301,7 @@ double CalculateForce_Y(Matrix& force_y, list<Circle> &iList, Matrix& v, double 
 			int j_max_temp = 0;
 			int j_min_temp = 0;
 
-			GetInfluenceArea(i_min_temp, i_max_temp, j_min_temp, j_max_temp, solid.Bound[0][k], solid.Bound[1][k], 3,grid);
+			GetInfluenceArea(i_min_temp, i_max_temp, j_min_temp, j_max_temp, solid.Nodes[k].x[1], solid.Nodes[k].x[2], 3,grid);
 
 			if (i_max_temp > i_max){
 				i_max = i_max_temp;
