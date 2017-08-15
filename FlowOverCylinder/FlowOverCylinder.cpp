@@ -1,3 +1,6 @@
+// FlowOverCylinder.cpp: определяет точку входа для консольного приложения.
+//
+
 #include "stdafx.h"
 #include "SolidBody.h"
 #include "Grid.h"
@@ -24,7 +27,7 @@ using namespace std;
 
 // fuctions
 
-void InputData(Grid& grid, double &M, int &Re, double &alpha_f, double &beta_f, double& Zeidel_eps, int& output_step, int& N_max, int& N_Zeidel);
+Circle InputData(Grid& grid, double &M, int &Re, double &alpha_f, double &beta_f, double& Zeidel_eps, int& output_step, int& N_max, int& N_Zeidel);
 void SetLog(ostream &log, Grid grid, double M, double Re, double alpha_f, double beta_f, double Zeidel_eps);
 void PushLog(ostream &log, int n, double eps_u, double eps_v);
 void ApplyInitialData(Matrix& u, Grid grid);
@@ -48,16 +51,18 @@ int main() {
 	const double epsilon = 1e-3;
 	int output_step = 0; //frequency of output
 
-	// declaring variables
+						 // declaring variables
 	Grid grid;
 	double eps_u = 0.0;
 	double eps_v = 0.0;
 	double eps_p = 0.0;
 
-
-
+	list<Circle> solidList;
+	Circle cylinder(0, 0, 0, 0, grid);
 	int n = 0; // iteration counter
-	InputData(grid, m, Re, alpha_f, beta_f, Zeidel_eps, output_step, N_max, N_Zeidel); // Get value of some variables
+	cylinder = InputData(grid, m, Re, alpha_f, beta_f, Zeidel_eps, output_step, N_max, N_Zeidel); // Get value of some variables
+	solidList.push_back(cylinder);
+
 	CreateMatrix(U_n, grid.N1, grid.N2 + 1);
 	CreateMatrix(U_new, grid.N1, grid.N2 + 1);
 	CreateMatrix(U_prev, grid.N1, grid.N2 + 1);
@@ -92,9 +97,6 @@ int main() {
 	Calculate_A_u(OperatorA_u, grid, Re);
 	Calculate_A_v(OperatorA_v, grid, Re);
 
-
-	// list of immersed solids
-	list<Circle> solidList;
 	ofstream output; // for Drag and Lift coefficents
 	ofstream press_output; // press
 	ofstream log;
@@ -110,30 +112,6 @@ int main() {
 	U_n = U_new;
 	U_prev = U_new;
 
-
-	//Firstly adding some circles
-	if (!Debug) {
-		Circle c1(3.5, 2.1, r, n, grid);
-		Circle c2(3.5, 4.9, r, n, grid);
-		Circle c3(1.5, 1.9, r, n, grid);
-		Circle c4(1.5, 5.1, r, n, grid);
-		solidList.push_back(c1);
-		solidList.push_back(c2);
-		solidList.push_back(c3);
-		solidList.push_back(c4);
-	}
-	else {
-		/*Circle c1(1, 5, r, n, grid);
-		solidList.push_back(c1);
-		solidList.begin()->U = 1;
-		solidList.begin()->V = -1;
-		Circle c2(1, 1, r, n, grid);
-		solidList.push_back(c2);
-		next(solidList.begin())->U = 1;
-		next(solidList.begin())->V = 1;
-		eps_u = 1.0;
-		eps_v = 1.0;*/
-	}
 
 
 
@@ -270,94 +248,6 @@ int main() {
 
 
 
-		//--------------COLLISION CHECK---------------------------
-		list<Circle>::iterator first;
-		list<Circle>::iterator second;
-		///--------------collisions between particles---------------------------------
-		for (auto one = solidList.begin(); one != solidList.end(); one++) {
-			for (auto two = next(one); two != solidList.end(); two++) {
-				double distance = sqrt(pow(one->x - two->x, 2) + pow(one->y - two->y, 2));//<----distance between two particles 
-				if (one->x < two->x) {
-					first = one;
-					second = two;
-				}
-				else
-				{
-					first = two;
-					second = one;
-				}
-				if (distance <= (2 * first->r)) {
-					if (Debug) cout << "COLLISION DETECTED";
-					if (InelasticCollision) {
-						//Perfectly inelastic collision
-						first->U = (first->U + second->U) / 2;
-						first->V = (first->V + second->V) / 2;
-						second->U = first->U;
-						second->V = first->V;
-
-					}
-					else {
-						//this is perfectly elastic impact
-						double v1, v2;
-						v1 = sgn(first->U)*sqrt(pow(first->V, 2) + pow(first->U, 2));
-						v2 = sgn(second->U)*sqrt(pow(second->V, 2) + pow(second->U, 2));
-
-						double tetta_1, tetta_2, phi;
-						if (v1 != 0) { tetta_1 = atan(first->V / first->U); }
-						else { tetta_1 = 0; } //??if (v1 == 0) { tetta_1 = M_PI_2 - tetta_2 / 2; }
-						if (v2 != 0) { tetta_2 = atan(second->V / second->U); }
-						else { tetta_2 = 0; } //??if (v2 == 0) { tetta_2 = M_PI_2 - tetta_1 / 2; }
-						phi = atan((second->y - first->y) / (second->x - first->x));
-						first->U = v2*cos(tetta_2 - phi)*cos(phi) + v1*sin(tetta_1 - phi)*cos(phi + M_PI_2);
-						first->V = v2*cos(tetta_2 - phi)*sin(phi) + v1*sin(tetta_1 - phi)*sin(phi + M_PI_2);
-						second->U = v1*cos(tetta_1 - phi)*cos(phi) + v2*sin(tetta_2 - phi)*cos(phi + M_PI_2);
-						second->V = v1*cos(tetta_1 - phi)*sin(phi) + v2*sin(tetta_2 - phi)*sin(phi + M_PI_2);
-					}
-				}
-			}
-		}
-		///--------------end of collisions between particles---------------------------------
-
-		///-------------collision with walls--------------------------
-		for (auto one = solidList.begin(); one != solidList.end(); one++) {
-			double DistUpper = grid.H - one->y;//<----distance to upper wall
-			double DistLower = one->y;//<-------distance to lower wall
-			if (DistUpper < one->r || DistLower < one->r) {
-				if (Debug) cout << "COLLISION DETECTED";
-				one->V = -one->V;
-			}
-		}
-		///-------------end of collision with walls--------------------------
-
-//--------------END OF COLLISION CHECK---------------------------------------------------
-
-
-		for (auto it = solidList.begin(); it != solidList.end();) {
-			if ((it->moveSolid == false)) {// && (n - it->start_n > 10)) { 
-				it->moveSolid = true;
-			}
-
-			if (it->moveSolid) {
-				//update position
-				for (int k = 0; k < grid.NF; ++k) {
-					it->Bound[0][k] += it->U * grid.d_t;
-					it->Bound[1][k] += it->V * grid.d_t;
-				}
-				it->x += it->U * grid.d_t;
-				it->y += it->V * grid.d_t;
-			}
-
-			//delete bodies which move 95% of length
-			if (it->x > grid.L*0.95) {
-				solidList.erase(it++);
-			}
-			else {
-				++it;
-			}
-		}
-
-
-
 		if (n < 1000 || (n > 1000 && 0 == n % 100)) {
 			std::cout << "n  = " << n << " | eps_u = " << eps_u << " | eps_v = " << eps_v << "		";
 			time_t t = chrono::system_clock::to_time_t(chrono::system_clock::now());   // get time now
@@ -435,10 +325,10 @@ void PushLog(ostream& log, int n, double eps_u, double eps_v) {
 // Apply initial data for velocity
 void ApplyInitialData(Matrix &u, Grid grid) {
 
-	// Poiseuille flow 
+	
 	for (int i = 0; i < grid.N1; ++i) {
 		for (int j = 1; j < grid.N2; ++j) {
-			u[i][j] = (pow((grid.H) / 2.0, 2) - pow((j - 0.5)*grid.d_y - grid.H / 2.0, 2));
+			u[i][j] = 1.0;
 		}
 	}
 }
@@ -449,11 +339,17 @@ int sgn(double x)
 	return x;
 }
 
-void InputData(Grid& grid, double &M, int &Re, double &alpha_f, double &beta_f, double& Zeidel_eps, int& output_step, int& N_max, int& N_Zeidel) {
+Circle InputData(Grid& grid, double &M, int &Re, double &alpha_f, double &beta_f, double& Zeidel_eps, int& output_step, int& N_max, int& N_Zeidel) {
 
 	ifstream input;
 	string filename = "input.txt";
 	input.open(filename.c_str());
+	double x, y, r;
+	input >> x;
+	input >> y;
+	input >> r;
+	Circle cylinder(x, y, r, 0, grid);
+
 
 	input >> M;
 	input >> Re;
@@ -471,7 +367,9 @@ void InputData(Grid& grid, double &M, int &Re, double &alpha_f, double &beta_f, 
 	input >> Zeidel_eps;
 	input.close();
 
+	
 	grid.d_x = grid.L / (grid.N1 - 1);
 	grid.d_y = grid.H / (grid.N2 - 1);
 
+	return cylinder;
 }

@@ -347,3 +347,92 @@ double CalculateForce_Y(Matrix& force_y, list<Circle> &iList, Matrix& v, double 
 	return 0;
 
 }
+
+//matrix Calculate_F_real_x(matrix u_n, matrix v_n, matrix u_prev, matrix p) {
+//
+//	double d_xx = 1.0 / (d_x*d_x);
+//	double d_yy = 1.0 / (d_y*d_y);
+//	int n1 = N1;
+//	int n2 = N2 + 1;
+//
+//	double advective_term_n = 0.0;
+//	double diffusion_term = 0.0;
+//	double pressure = 0.0;
+//	double v_help = 0.0;
+//
+//	matrix result;
+//
+//	AllocTable(result, n1, n2);
+//
+//	for (int j = 1; j < (n2 - 1); ++j) {
+//		for (int i = 1; i < (n1 - 1); ++i) {
+//
+//			// if ( i <= M1 && j < M2 ){
+//			// 	continue;
+//			// }
+//
+//			// if ( i < M1 && j == M2 ){
+//
+//			// 	result[i][j] = - u_n[i][j+1];
+//			// 	continue;
+//			// }
+//
+//			v_help = 0.25 * (v_n[i][j] + v_n[i + 1][j] + v_n[i][j - 1] + v_n[i + 1][j - 1]);
+//
+//			advective_term_n = u_n[i][j] * (u_n[i + 1][j] - u_n[i - 1][j]) / (2.0*d_x) + v_help * (u_n[i][j + 1] - u_n[i][j - 1]) / (2.0*d_y);
+//
+//			diffusion_term = d_xx * (u_n[i + 1][j] - 2.0 * u_n[i][j] + u_n[i - 1][j]) + d_yy * (u_n[i][j + 1] - 2.0 * u_n[i][j] + u_n[i][j - 1]);
+//
+//			pressure = (p[i + 1][j] - p[i][j]) / (d_x);
+//
+//			// result[i][j] = (u_n[i][j] - u_prev[i][j]) / d_t + advective_term_n + pressure - 1.0/(Re) * ( diffusion_term );
+//
+//			//result[i][j] = advective_term_n + pressure - 1.0/(Re) * ( diffusion_term );
+//
+//			if (j == 1 || j == n2 - 2) {
+//
+//
+//				v_help = 0.25 * (v_n[i][j] + v_n[i + 1][j] + v_n[i][j - 1] + v_n[i + 1][j - 1]);
+//
+//				advective_term_n = u_n[i][j] * (u_n[i + 1][j] - u_n[i - 1][j]) / (2.0*d_x) + v_help * (u_n[i][j + 1] - u_n[i][j - 1]) / (1.5*d_y);
+//
+//				if (j == 1) {
+//
+//					diffusion_term = d_xx * (u_n[i + 1][j] - 2.0 * u_n[i][j] + u_n[i - 1][j]) + d_yy * (4.0*u_n[i][j + 1] - 12.0 * u_n[i][j] + 8.0*u_n[i][j - 1]) / 3.0;
+//
+//				}
+//				if (j == n2 - 2) {
+//
+//					diffusion_term = d_xx * (u_n[i + 1][j] - 2.0 * u_n[i][j] + u_n[i - 1][j]) + d_yy * (8.0*u_n[i][j + 1] - 12.0 * u_n[i][j] + 4.0*u_n[i][j - 1]) / 3.0;
+//
+//				}
+//
+//				// result[i][j] = (u_n[i][j] - u_prev[i][j]) / d_t + advective_term_n + pressure - 1.0/(Re) * ( diffusion_term );
+//
+//				result[i][j] = advective_term_n + pressure - 1.0 / (Re) * (diffusion_term);
+//
+//				// result[i][j] = u_n[0][j];
+//
+//			}
+//
+//		}
+//
+//	}
+//
+//	// outflow du/dx = 0
+//	for (int j = 0; j < n2; ++j) {
+//
+//		// if ( j <= M2 ){
+//		// 	continue;
+//		// }
+//
+//		//result[n1 - 1][j] = 0.0;
+//		// result[n1-1][j] = u_n[0][j];
+//		//result[0][j] = u_n[0][j];
+//		// result[0][j] = 1.0/Re * d_yy * ( u_n[0][j + 1] - 2.0 * u_n[0][j] + u_n[0][j - 1]);
+//	}
+//
+//	return result;
+//
+//
+//}
