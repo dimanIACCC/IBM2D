@@ -5,16 +5,17 @@
 
 #pragma once
 #define _USE_MATH_DEFINES
+#define DIM 2  // dimesion of the problem
 
 #include <cmath>
 #include <fstream>
 #include <iostream>
 #include <string>
-#include <vector>
 //#include <map>
 #include <list>
 #include <string>
 #include <chrono>
 
+#include "GeomVec.h"
 
 // TODO: Установите здесь ссылки на дополнительные заголовки, требующиеся для программы

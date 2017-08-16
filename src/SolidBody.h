@@ -6,30 +6,26 @@
 
 using namespace std;
 
+
 class Node
 {
 public:
-	double x[3];        // coordinates
-	double u[3];        // velocity
-	double integral[3]; // value of integral when calculating force
+	GeomVec x;        // coordinates
+	GeomVec u;        // velocity
+	GeomVec Integral; // value of integral when calculating force
 };
 
 class SolidBody
 {
+
 public:
 	int start_n; // number of iteration, when solid added
 	bool moveSolid;
 	bool eraseSolid;
-	double xc[3];     // coordinates of the mass center
-	double Uc[3];     // velocity of the mass center
-	double omega;     // angular velocity
-
-
-	//vector<double> Bound[2];
-	vector<double> Integral_x; // value of integral when calculating force
-	vector<double> Integral_y;
-
-	vector<Node> Nodes;
+	GeomVec xc;     // coordinates of the mass center
+	GeomVec Uc;     // velocity of the mass center
+	double omega;   // angular velocity
+	vector<Node> Nodes;   // Nodes of the SolidBody mesh
 	
 	SolidBody(double x, double y, int n);
 	~SolidBody();

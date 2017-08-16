@@ -5,13 +5,12 @@
 
 SolidBody::SolidBody(double x, double y, int n)
 {
-	 this->start_n = n; // number of iteration, when solid added
+	 start_n = n; // number of iteration, when solid added
 	 moveSolid = false;
 	 moveSolid = false;
-	 Uc[1] = 0.0;
-	 Uc[2] = 0.0;
-	 this->xc[1] = x;
-	 this->xc[2] = y;
+	 std::fill (Uc.begin(),Uc.end(), 0.0); // fill vector with zeros
+	 xc[1] = x;
+	 xc[2] = y;
 }
 
 
@@ -23,8 +22,7 @@ Circle::Circle(double x, double y, double r, int n, Grid grid) : SolidBody(x, y,
 	this->r = r;
 	this->d_s = (2.0*M_PI*r) / grid.NF;
 	Nodes.resize(grid.NF);
-	Integral_x.resize(grid.NF);
-	Integral_y.resize(grid.NF);
+
 	for (int i = 0; i < grid.NF; ++i){
 		Nodes[i].x[1] = x + cos(i * 2.0 * M_PI / grid.NF) * r;
 		Nodes[i].x[2] = y + sin(i * 2.0 * M_PI / grid.NF) * r;

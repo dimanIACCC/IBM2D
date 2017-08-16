@@ -270,7 +270,7 @@ int main() {
 		///--------------collisions between particles---------------------------------
 		for (auto one = solidList.begin(); one != solidList.end(); one++) {
 			for (auto two = next(one); two != solidList.end(); two++) {
-				double distance = sqrt(pow(one->xc[1] - two->xc[1], 2) + pow(one->xc[2] - two->xc[2], 2)); //<----distance between two particles 
+				double distance = length(one->xc - two->xc); //<----distance between two particles 
 				if (one->xc[1] < two->xc[1]) {
 					first = one;
 					second = two;
@@ -284,17 +284,14 @@ int main() {
 					if (Debug) cout << "COLLISION DETECTED";
 					if (InelasticCollision) {
 						//Perfectly inelastic collision
-						first->Uc[1] = (first->Uc[1] + second->Uc[1]) / 2;
-						first->Uc[2] = (first->Uc[2] + second->Uc[2]) / 2;
-						second->Uc[1] = first->Uc[1];
-						second->Uc[2] = first->Uc[2];
-
+						first ->Uc = (first->Uc + second->Uc) / 2;
+						second->Uc =  first->Uc;
 					}
 					else {
 						//this is perfectly elastic impact
 						double v1, v2;
-						v1 = sgn(first ->Uc[1])*sqrt(pow(first->Uc[2] , 2) + pow(first ->Uc[1], 2));
-						v2 = sgn(second->Uc[1])*sqrt(pow(second->Uc[2], 2) + pow(second->Uc[1], 2));
+						v1 = sgn(first ->Uc[1])*length(first ->Uc);
+						v2 = sgn(second->Uc[1])*length(second->Uc);
 
 						double tetta_1, tetta_2, phi;
 						if (v1 != 0) { tetta_1 = atan(first->Uc[2] / first->Uc[1]); }
@@ -334,11 +331,9 @@ int main() {
 			if (it->moveSolid) {
 				//update position
 				for (int k = 0; k < grid.NF; ++k) {
-					it->Nodes[k].x[1] += it->Uc[1] * grid.d_t;
-					it->Nodes[k].x[2] += it->Uc[2] * grid.d_t;
+					it->Nodes[k].x += it->Uc * grid.d_t;
 				}
-				it->xc[1] += it->Uc[1] * grid.d_t;
-				it->xc[2] += it->Uc[2] * grid.d_t;
+				it->xc += it->Uc * grid.d_t;
 			}
 
 			//delete bodies which move 95% of length
