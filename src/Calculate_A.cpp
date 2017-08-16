@@ -1,3 +1,4 @@
+#include "stdafx.h"
 #include "Calculate_A.h"
 
 void Calculate_A_u(Matrix A[5], Grid grid, double Re){

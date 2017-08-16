@@ -6,6 +6,9 @@ MinimumVisualStudioVersion = 10.0.40219.1
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "ImmersedBoundaryMeth", "ImmersedBoundaryMeth.vcxproj", "{A677C252-A117-4B4A-BF5B-630ADF31D9DB}"
 EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "FlowOverCylinder", "..\FlowOverCylinder\FlowOverCylinder.vcxproj", "{25EEBCCB-E96D-4375-9259-D13F3DA7C696}"
+	ProjectSection(ProjectDependencies) = postProject
+		{A677C252-A117-4B4A-BF5B-630ADF31D9DB} = {A677C252-A117-4B4A-BF5B-630ADF31D9DB}
+	EndProjectSection
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution

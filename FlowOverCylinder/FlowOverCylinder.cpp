@@ -19,7 +19,6 @@
 
 #define CreateMatrix(name, n, m) Matrix name(n,std::vector<double>(m, 0))
 
-bool Debug = false;
 bool InelasticCollision = false; //Perfectly inelastic collision --- абсолютно неупругие столкновения
 
 using namespace std;
@@ -44,14 +43,10 @@ int main() {
 	double Zeidel_eps;
 	double Cd; //drag coefficent
 	double Cl; // lift coefficent
-	double x = 0.0;
-	double y = 0.0;
 	double r = 0.5;
 	double m;
 	const double epsilon = 1e-3;
 	int output_step = 0; //frequency of output
-
-						 // declaring variables
 	Grid grid;
 	double eps_u = 0.0;
 	double eps_v = 0.0;
@@ -122,44 +117,6 @@ int main() {
 	OutputVelocity_V(V_new, -1, output_step, solidList, grid);
 
 	while (n <= N_max) {
-
-		//creation new solids
-		if (!Debug) {
-			if (n > 0 && fmod(n*grid.d_t, 1.5) == 0.0) {
-				int chance = 80;
-				int rnd;
-				rnd = rand() % 100 + 1;
-				if (rnd <= chance) {
-					x = 1 + ((rand() % 100 + 1) / 100.0);
-					y = 1 + ((rand() % 200 + 1) / 100.0);
-					Circle c(x, y, r, n, grid);
-					solidList.push_back(c);
-				}
-				rnd = rand() % 100 + 1;
-				if (rnd <= chance) {
-					x = 1 + ((rand() % 100 + 1) / 100.0);
-					y = 4 + ((rand() % 200 + 1) / 100.0);
-					Circle c(x, y, r, n, grid);
-					solidList.push_back(c);
-				}
-
-				rnd = rand() % 100 + 1;
-				if (rnd <= chance) {
-					x = 3 + ((rand() % 100 + 1) / 100.0);
-					y = 1 + ((rand() % 200 + 1) / 100.0);
-					Circle c(x, y, r, n, grid);
-					solidList.push_back(c);
-				}
-
-				rnd = rand() % 100 + 1;
-				if (rnd <= chance) {
-					x = 3 + ((rand() % 100 + 1) / 100.0);
-					y = 4 + ((rand() % 200 + 1) / 100.0);
-					Circle c(x, y, r, n, grid);
-					solidList.push_back(c);
-				}
-			}
-		}
 		eps_u = 0.0;
 		eps_v = 0.0;
 
@@ -344,12 +301,6 @@ Circle InputData(Grid& grid, double &M, int &Re, double &alpha_f, double &beta_f
 	ifstream input;
 	string filename = "input.txt";
 	input.open(filename.c_str());
-	double x, y, r;
-	input >> x;
-	input >> y;
-	input >> r;
-	Circle cylinder(x, y, r, 0, grid);
-
 
 	input >> M;
 	input >> Re;
@@ -365,6 +316,11 @@ Circle InputData(Grid& grid, double &M, int &Re, double &alpha_f, double &beta_f
 	input >> N_max;
 	input >> N_Zeidel;
 	input >> Zeidel_eps;
+	double x, y, r;
+	input >> x;
+	input >> y;
+	input >> r;
+	Circle cylinder(x, y, r, 0, grid);
 	input.close();
 
 	

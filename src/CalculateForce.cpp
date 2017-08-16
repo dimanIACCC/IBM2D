@@ -1,5 +1,6 @@
 #define _USE_MATH_DEFINES
-#include <math.h>
+#include "stdafx.h"
+//#include <math.h>
 #include "CalculateForce.h"
 
 double DeltaFunction(double x, double y, Grid grid){
