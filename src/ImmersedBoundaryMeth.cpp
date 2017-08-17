@@ -142,9 +142,7 @@ int main() {
 		c44.AddSolid(solidList);
 	*/
 
-
-	CalculateForce_X(Force_x, solidList, U_new, r, Cd, grid, alpha_f, beta_f, m);
-	CalculateForce_Y(Force_y, solidList, V_new, r, Cl, grid, alpha_f, beta_f, m);
+	CalculateForce(Force_x, Force_y, solidList, U_new, V_new, r, Cd, Cl, grid, alpha_f, beta_f, m);
 
 	OutputVelocity_U(U_new, -1, output_step, solidList, grid);
 	OutputVelocity_V(V_new, -1, output_step, solidList, grid);
@@ -258,9 +256,7 @@ int main() {
 				}
 			}
 
-
-			CalculateForce_X(Force_x, solidList, U_new, r, Cd, grid, alpha_f, beta_f, m);
-			CalculateForce_Y(Force_y, solidList, V_new, r, Cl, grid, alpha_f, beta_f, m);
+			CalculateForce(Force_x, Force_y, solidList, U_new, V_new, r, Cd, Cl, grid, alpha_f, beta_f, m);
 		
 
 
@@ -284,25 +280,25 @@ int main() {
 					if (Debug) cout << "COLLISION DETECTED";
 					if (InelasticCollision) {
 						//Perfectly inelastic collision
-						first ->Uc = (first->Uc + second->Uc) / 2;
-						second->Uc =  first->Uc;
+						first ->uc = (first->uc + second->uc) / 2;
+						second->uc =  first->uc;
 					}
 					else {
 						//this is perfectly elastic impact
 						double v1, v2;
-						v1 = sgn(first ->Uc[1])*length(first ->Uc);
-						v2 = sgn(second->Uc[1])*length(second->Uc);
+						v1 = sgn(first ->uc[1])*length(first ->uc);
+						v2 = sgn(second->uc[1])*length(second->uc);
 
 						double tetta_1, tetta_2, phi;
-						if (v1 != 0) { tetta_1 = atan(first->Uc[2] / first->Uc[1]); }
+						if (v1 != 0) { tetta_1 = atan(first->uc[2] / first->uc[1]); }
 						else { tetta_1 = 0; } //??if (v1 == 0) { tetta_1 = M_PI_2 - tetta_2 / 2; }
-						if (v2 != 0) { tetta_2 = atan(second->Uc[2] / second->Uc[1]); }
+						if (v2 != 0) { tetta_2 = atan(second->uc[2] / second->uc[1]); }
 						else { tetta_2 = 0; } //??if (v2 == 0) { tetta_2 = M_PI_2 - tetta_1 / 2; }
 						phi = atan((second->xc[2] - first->xc[2]) / (second->xc[1] - first->xc[1]));
-						first->Uc[1] = v2*cos(tetta_2 - phi)*cos(phi) + v1*sin(tetta_1 - phi)*cos(phi + M_PI_2);
-						first->Uc[2] = v2*cos(tetta_2 - phi)*sin(phi) + v1*sin(tetta_1 - phi)*sin(phi + M_PI_2);
-						second->Uc[1] = v1*cos(tetta_1 - phi)*cos(phi) + v2*sin(tetta_2 - phi)*cos(phi + M_PI_2);
-						second->Uc[2] = v1*cos(tetta_1 - phi)*sin(phi) + v2*sin(tetta_2 - phi)*sin(phi + M_PI_2);
+						first->uc[1] = v2*cos(tetta_2 - phi)*cos(phi) + v1*sin(tetta_1 - phi)*cos(phi + M_PI_2);
+						first->uc[2] = v2*cos(tetta_2 - phi)*sin(phi) + v1*sin(tetta_1 - phi)*sin(phi + M_PI_2);
+						second->uc[1] = v1*cos(tetta_1 - phi)*cos(phi) + v2*sin(tetta_2 - phi)*cos(phi + M_PI_2);
+						second->uc[2] = v1*cos(tetta_1 - phi)*sin(phi) + v2*sin(tetta_2 - phi)*sin(phi + M_PI_2);
 					}
 				}
 			}
@@ -315,7 +311,7 @@ int main() {
 			double DistLower = one->xc[2];//<-------distance to lower wall
 			if (DistUpper < one->r || DistLower < one->r) {
 				if (Debug) cout << "COLLISION DETECTED";
-				one->Uc[2] = -one->Uc[2];
+				one->uc[2] = -one->uc[2];
 			}
 		}
 		///-------------end of collision with walls--------------------------
@@ -331,9 +327,9 @@ int main() {
 			if (it->moveSolid) {
 				//update position
 				for (int k = 0; k < grid.NF; ++k) {
-					it->Nodes[k].x += it->Uc * grid.d_t;
+					it->Nodes[k].x += it->uc * grid.d_t;
 				}
-				it->xc += it->Uc * grid.d_t;
+				it->xc += it->uc * grid.d_t;
 			}
 
 			//delete bodies which move 95% of length

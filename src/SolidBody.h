@@ -11,7 +11,9 @@ class Node
 {
 public:
 	GeomVec x;        // coordinates
-	GeomVec u;        // velocity
+	GeomVec U;        // velocity of the fluid in the Node
+
+	GeomVec f;        // force
 	GeomVec Integral; // value of integral when calculating force
 };
 
@@ -23,8 +25,8 @@ public:
 	bool moveSolid;
 	bool eraseSolid;
 	GeomVec xc;     // coordinates of the mass center
-	GeomVec Uc;     // velocity of the mass center
-	double omega;   // angular velocity
+	GeomVec uc;     // velocity of the mass center
+	GeomVec omega;  // angular velocity
 	vector<Node> Nodes;   // Nodes of the SolidBody mesh
 	
 	SolidBody(double x, double y, int n);

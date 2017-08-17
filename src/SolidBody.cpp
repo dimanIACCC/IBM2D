@@ -8,7 +8,8 @@ SolidBody::SolidBody(double x, double y, int n)
 	 start_n = n; // number of iteration, when solid added
 	 moveSolid = false;
 	 moveSolid = false;
-	 std::fill (Uc.begin(),Uc.end(), 0.0); // fill vector with zeros
+	 std::fill(uc.begin()   , uc.end()   , 0.0); // fill vector uc    with zeros
+	 std::fill(omega.begin(), omega.end(), 0.0); // fill vector omega with zeros
 	 xc[1] = x;
 	 xc[2] = y;
 }
