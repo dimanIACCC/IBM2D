@@ -14,6 +14,7 @@
 
 
 
+
 #pragma warning(disable : 4996)//for using <chrono>
 #pragma warning(disable : 4244)//for GetInfluenceArea
 
@@ -98,6 +99,12 @@ int main() {
 	ofstream press_output; // press
 	ofstream log;
 	ofstream fDrug, fLift;
+	//-----------creating Result folder --------------
+	char current_work_dir[FILENAME_MAX];
+	_getcwd(current_work_dir, sizeof(current_work_dir));
+	strcat_s(current_work_dir, "\\Result");
+	_mkdir(current_work_dir);
+	//-------------------------------------------------
 	string filename = "Result/coefficent.plt";
 	//string filepress = "Result/eps_pressure.plt";
 	string filelog = "Result/log.txt";
