@@ -24,9 +24,11 @@ bool InelasticCollision = false; //Perfectly inelastic collision --- абсолютно н
 using namespace std;
 
 
+
 // fuctions
 
 Circle InputData(Grid& grid, double &M, int &Re, double &alpha_f, double &beta_f, double& Zeidel_eps, int& output_step, int& N_max, int& N_Zeidel);
+double Summ(Matrix& force);
 void SetLog(ostream &log, Grid grid, double M, double Re, double alpha_f, double beta_f, double Zeidel_eps);
 void PushLog(ostream &log, int n, double eps_u, double eps_v);
 void ApplyInitialData(Matrix& u, Grid grid);
@@ -95,10 +97,13 @@ int main() {
 	ofstream output; // for Drag and Lift coefficents
 	ofstream press_output; // press
 	ofstream log;
+	ofstream fDrug, fLift;
 	string filename = "Result/coefficent.plt";
 	//string filepress = "Result/eps_pressure.plt";
 	string filelog = "Result/log.txt";
 	log.open(filelog, ios::out);
+	fDrug.open("Result/forceDrug.txt");
+	fLift.open("Result/forceLift.txt");
 	SetLog(log, grid, m, Re, alpha_f, beta_f, Zeidel_eps);
 	log << endl;
 
@@ -109,9 +114,11 @@ int main() {
 
 
 
-
+	cout << "flow over cylinder has been started\n";
 	CalculateForce_X(Force_x, solidList, U_new, r, Cd, grid, alpha_f, beta_f, m);
 	CalculateForce_Y(Force_y, solidList, V_new, r, Cl, grid, alpha_f, beta_f, m);
+	fDrug << n << " " << Summ(Force_x) << endl;
+	fLift << n << " " << Summ(Force_y) << endl;
 
 	OutputVelocity_U(U_new, -1, output_step, solidList, grid);
 	OutputVelocity_V(V_new, -1, output_step, solidList, grid);
@@ -202,6 +209,8 @@ int main() {
 
 		CalculateForce_X(Force_x, solidList, U_new, r, Cd, grid, alpha_f, beta_f, m);
 		CalculateForce_Y(Force_y, solidList, V_new, r, Cl, grid, alpha_f, beta_f, m);
+		fDrug << n+1 << " " << Summ(Force_x) << endl;
+		fLift << n+1 << " " << Summ(Force_y) << endl;
 
 
 
@@ -328,4 +337,16 @@ Circle InputData(Grid& grid, double &M, int &Re, double &alpha_f, double &beta_f
 	grid.d_y = grid.H / (grid.N2 - 1);
 
 	return cylinder;
+}
+
+double Summ(Matrix& force) {
+	double sum = 0;
+	for (int i = 0; i < force.size(); i++)
+		for (int j = 0; j < force[0].size(); j++)
+		{
+			sum += force[i][j];
+		}
+	
+
+	return abs(sum);
 }
