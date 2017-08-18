@@ -1,7 +1,9 @@
 src/Result/
+src/Release/
 src/Debug/
 src/.vs/ImmersedBoundaryMeth/
 FlowOverCylinder/Result/
+FlowOverCylinder/Release/
 FlowOverCylinder/Debug/
 FlowOverCylinder/.vs/
 *.user

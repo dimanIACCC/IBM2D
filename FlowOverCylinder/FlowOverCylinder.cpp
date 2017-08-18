@@ -48,7 +48,7 @@ int main() {
 	double Cl; // lift coefficent
 	double r = 0.5;
 	double m;
-	const double epsilon = 1e-3;
+	const double epsilon = 1e-7;
 	int output_step = 0; //frequency of output
 	Grid grid;
 	double eps_u = 0.0;
@@ -100,10 +100,10 @@ int main() {
 	ofstream log;
 	ofstream fDrug, fLift;
 	//-----------creating Result folder --------------
-	char current_work_dir[FILENAME_MAX];
-	_getcwd(current_work_dir, sizeof(current_work_dir));
+	/*char current_work_dir[FILENAME_MAX];
+	_getcwd(current_work_dir, sizeof(current_work_dir)); //not crossplatform solution
 	strcat_s(current_work_dir, "\\Result");
-	_mkdir(current_work_dir);
+	_mkdir(current_work_dir);*/
 	//-------------------------------------------------
 	string filename = "Result/coefficent.plt";
 	//string filepress = "Result/eps_pressure.plt";
@@ -216,9 +216,12 @@ int main() {
 
 		CalculateForce_X(Force_x, solidList, U_new, r, Cd, grid, alpha_f, beta_f, m);
 		CalculateForce_Y(Force_y, solidList, V_new, r, Cl, grid, alpha_f, beta_f, m);
-		fDrug << n+1 << " " << Summ(Force_x) << endl;
-		fLift << n+1 << " " << Summ(Force_y) << endl;
-
+		fDrug << n + 1 << " " << Summ(Force_x) << endl;
+		fLift << n + 1 << " " << Summ(Force_y) << endl;
+		CreateMatrix(F_x, grid.N1, grid.N2 + 1);
+		CreateMatrix(F_y, grid.N1 + 1, grid.N2);
+		F_x = Calculate_F_real_x(U_n, V_n, U_prev, P, grid, Re);
+		F_y = Calculate_F_real_y(U_n, V_n, V_prev, P, grid, Re);
 
 
 		if (n < 1000 || (n > 1000 && 0 == n % 100)) {
@@ -239,8 +242,6 @@ int main() {
 			OutputVelocity_V(V_new, n, output_step, solidList, grid);
 			OutputPressure(P, n, output_step, solidList, grid);
 		}
-
-
 
 		if (eps_u < epsilon && eps_v < epsilon) {
 			OutputVelocity_U(U_new, n, output_step, solidList, grid);
@@ -298,7 +299,7 @@ void PushLog(ostream& log, int n, double eps_u, double eps_v) {
 // Apply initial data for velocity
 void ApplyInitialData(Matrix &u, Grid grid) {
 
-	
+
 	for (int i = 0; i < grid.N1; ++i) {
 		for (int j = 1; j < grid.N2; ++j) {
 			u[i][j] = 1.0;
@@ -339,7 +340,7 @@ Circle InputData(Grid& grid, double &M, int &Re, double &alpha_f, double &beta_f
 	Circle cylinder(x, y, r, 0, grid);
 	input.close();
 
-	
+
 	grid.d_x = grid.L / (grid.N1 - 1);
 	grid.d_y = grid.H / (grid.N2 - 1);
 
@@ -348,12 +349,12 @@ Circle InputData(Grid& grid, double &M, int &Re, double &alpha_f, double &beta_f
 
 double Summ(Matrix& force) {
 	double sum = 0;
-	for (int i = 0; i < force.size(); i++)
-		for (int j = 0; j < force[0].size(); j++)
+	for (int i = 0; i < (int)force.size(); i++)
+		for (int j = 0; j < (int)force[0].size(); j++)
 		{
 			sum += force[i][j];
 		}
-	
+
 
 	return abs(sum);
 }

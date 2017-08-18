@@ -14,7 +14,6 @@
 #include <list>
 #include <string>
 #include <chrono>
-#include <direct.h>
 
 
 // TODO: Установите здесь ссылки на дополнительные заголовки, требующиеся для программы
