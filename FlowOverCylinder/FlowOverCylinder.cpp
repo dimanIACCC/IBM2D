@@ -4,9 +4,7 @@
 #include "stdafx.h"
 #include "SolidBody.h"
 #include "Grid.h"
-#include "Calculate_A.h"
 #include "CalculateForce.h"
-#include "Calculate_B.h"
 #include "Output.h"
 #include "BiCGStab.h"
 #include "Calculate_press.h"
@@ -109,8 +107,8 @@ int main() {
 	//string filepress = "Result/eps_pressure.plt";
 	string filelog = "Result/log.txt";
 	log.open(filelog, ios::out);
-	fDrug.open("Result/forceDrug.txt");
-	fLift.open("Result/forceLift.txt");
+	fDrug.open("Result/forceDrug.plt");
+	fLift.open("Result/forceLift.plt");
 	SetLog(log, grid, m, Re, alpha_f, beta_f, Zeidel_eps);
 	log << endl;
 
@@ -122,11 +120,11 @@ int main() {
 
 
 	cout << "flow over cylinder has been started\n";
-	CalculateForce_X(Force_x, solidList, U_new, r, Cd, grid, alpha_f, beta_f, m);
-	CalculateForce_Y(Force_y, solidList, V_new, r, Cl, grid, alpha_f, beta_f, m);
+	CalculateForce_X(Force_x, solidList, U_new, Cd, grid, alpha_f, beta_f, m);
+	CalculateForce_Y(Force_y, solidList, V_new, Cl, grid, alpha_f, beta_f, m);
 	fDrug << n << " " << Summ(Force_x) << endl;
 	fLift << n << " " << Summ(Force_y) << endl;
-
+	
 	OutputVelocity_U(U_new, -1, output_step, solidList, grid);
 	OutputVelocity_V(V_new, -1, output_step, solidList, grid);
 
@@ -142,11 +140,11 @@ int main() {
 
 #pragma omp section
 			{
-				BiCGStab(U_new, grid.N1, grid.N2 + 1, OperatorA_u, B_u, grid);
+				BiCGStab(U_new, grid.N1, grid.N2 + 1, OperatorA_u, B_u, grid,true);
 			}
 #pragma omp section
 			{
-				BiCGStab(V_new, grid.N1 + 1, grid.N2, OperatorA_v, B_v, grid);
+				BiCGStab(V_new, grid.N1 + 1, grid.N2, OperatorA_v, B_v, grid,true);
 			}
 
 		}
@@ -154,16 +152,15 @@ int main() {
 
 		//<----------end of prediction of velocity --------------------
 
-
 		P_Right = Calculate_Press_Right(U_n, V_n, grid);
-
 		for (int i = 0; i < (int)Delta_P.size(); ++i)
 			for (int j = 0; j < (int)Delta_P[i].size(); ++j) {
 				Delta_P[i][j] = 0.0;
 			}
 
+		
 
-		eps_p = Calculate_Press_correction(Delta_P, P_Right, N_Zeidel, Zeidel_eps, grid);
+		eps_p = Calculate_Press_correction(Delta_P, P_Right, N_Zeidel, Zeidel_eps, grid,true);
 		press_output << n << ' ' << eps_p << endl; //<---writing in closed stream
 
 
@@ -214,8 +211,9 @@ int main() {
 		}
 		//--------------------------------------------------------
 
-		CalculateForce_X(Force_x, solidList, U_new, r, Cd, grid, alpha_f, beta_f, m);
-		CalculateForce_Y(Force_y, solidList, V_new, r, Cl, grid, alpha_f, beta_f, m);
+		CalculateForce_X(Force_x, solidList, U_new, Cd, grid, alpha_f, beta_f, m);
+		CalculateForce_Y(Force_y, solidList, V_new, Cl, grid, alpha_f, beta_f, m);
+		
 		fDrug << n + 1 << " " << Summ(Force_x) << endl;
 		fLift << n + 1 << " " << Summ(Force_y) << endl;
 		CreateMatrix(F_x, grid.N1, grid.N2 + 1);
@@ -301,7 +299,7 @@ void ApplyInitialData(Matrix &u, Grid grid) {
 
 
 	for (int i = 0; i < grid.N1; ++i) {
-		for (int j = 1; j < grid.N2; ++j) {
+		for (int j = 0; j < grid.N2+1; ++j) {
 			u[i][j] = 1.0;
 		}
 	}

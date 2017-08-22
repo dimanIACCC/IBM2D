@@ -35,7 +35,7 @@ void GetInfluenceArea(int& i_min, int& i_max, int& j_min, int& j_max, double x, 
 	}
 }
 
-double CalculateForce_X(Matrix& force_x, list<Circle> &iList, Matrix& u, double r, double & Coeff, Grid grid, double alpha_f, double beta_f, double M) {
+double CalculateForce_X(Matrix& force_x, list<Circle> &iList, Matrix& u, double & Coeff, Grid grid, double alpha_f, double beta_f, double M) {
 
 	int const n1 = grid.N1;
 	int	const n2 = grid.N2 + 1;
@@ -163,9 +163,7 @@ double CalculateForce_X(Matrix& force_x, list<Circle> &iList, Matrix& u, double 
 		for (int i = i_min; i <= i_max; ++i) {
 			for (int j = j_min; j <= j_max; ++j) {
 
-
 				force_x[i][j] += force_x_temp[i][j];
-				//sum += force_x[i][j];
 				Coeff += force_x_temp[i][j] * grid.d_x * grid.d_y;
 
 			}
@@ -177,23 +175,22 @@ double CalculateForce_X(Matrix& force_x, list<Circle> &iList, Matrix& u, double 
 			solid.U = solid.U + (-Coeff * grid.d_t) / (M - M_PI * solid.r * solid.r);
 		}
 	}
-
+	auto one = iList.begin();
+	Coeff = -Coeff / one->r;
 	return 0;
 
 }
 
-double CalculateForce_Y(Matrix& force_y, list<Circle> &iList, Matrix& v, double r, double & Coeff, Grid grid, double alpha_f, double beta_f, double M) {
+double CalculateForce_Y(Matrix& force_y, list<Circle> &iList, Matrix& v, double & Coeff, Grid grid, double alpha_f, double beta_f, double M) {
 
 	int const n1 = grid.N1 + 1;
 	int	const n2 = grid.N2;
 	vector<double> bound_Force_y;
 
-	double bound_norm = 0.0;
-
-	double new_y = 0.0;
-
+	double bound_norm  = 0.0;
+	double new_y       = 0.0;
 	double new_v_bound = 0.0;
-	CreateMatrix(force_y_temp, n1, n2);
+	
 	bound_Force_y.resize(grid.NF);
 
 	for (int i = 0; i < n1; ++i) {
@@ -216,13 +213,7 @@ double CalculateForce_Y(Matrix& force_y, list<Circle> &iList, Matrix& v, double 
 	*/
 
 	for (auto& solid : iList) {
-		/*
-		for (int i = 0; i < n1; ++i){
-			for (int j = 0; j < n2; ++j){
-				force_y_temp[i][j] = 0.0;
-			}
-		}
-		*/
+		CreateMatrix(force_y_temp, n1, n2);
 		for (int k = 0; k < grid.NF; ++k) {
 
 			new_y = 0.0;
@@ -343,7 +334,8 @@ double CalculateForce_Y(Matrix& force_y, list<Circle> &iList, Matrix& v, double 
 			solid.V = solid.V + (-Coeff * grid.d_t) / (M - M_PI * solid.r * solid.r);
 		}
 	}
-
+	auto one = iList.begin();
+	Coeff = -Coeff / one->r;
 
 	return 0;
 

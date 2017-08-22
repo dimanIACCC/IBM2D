@@ -84,8 +84,6 @@
   <ItemGroup>
     <ClInclude Include="BiCGStab.h" />
     <ClInclude Include="CalculateForce.h" />
-    <ClInclude Include="Calculate_A.h" />
-    <ClInclude Include="Calculate_B.h" />
     <ClInclude Include="Calculate_press.h" />
     <ClInclude Include="Grid.h" />
     <ClInclude Include="PredictVel.h" />
@@ -97,8 +95,6 @@
   <ItemGroup>
     <ClCompile Include="BiCGStab.cpp" />
     <ClCompile Include="CalculateForce.cpp" />
-    <ClCompile Include="Calculate_A.cpp" />
-    <ClCompile Include="Calculate_B.cpp" />
     <ClCompile Include="Calculate_press.cpp" />
     <ClCompile Include="ImmersedBoundaryMeth.cpp" />
     <ClCompile Include="Output.cpp" />

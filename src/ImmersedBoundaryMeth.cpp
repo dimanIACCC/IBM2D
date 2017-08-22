@@ -1,9 +1,7 @@
 #include "stdafx.h"
 #include "SolidBody.h"
 #include "Grid.h"
-#include "Calculate_A.h"
 #include "CalculateForce.h"
-#include "Calculate_B.h"
 #include "Output.h"
 #include "BiCGStab.h"
 #include "Calculate_press.h"
@@ -118,33 +116,19 @@ int main() {
 
 
 	//Firstly adding some circles
-	if (!Debug) {
-		Circle c1(3.5, 2.1, r, n, grid);
-		Circle c2(3.5, 4.9, r, n, grid);
-		Circle c3(1.5, 1.9, r, n, grid);
-		Circle c4(1.5, 5.1, r, n, grid);
-		solidList.push_back(c1);
-		solidList.push_back(c2);
-		solidList.push_back(c3);
-		solidList.push_back(c4);
-	}
-	else {
-		/*Circle c1(1, 5, r, n, grid);
-		solidList.push_back(c1);
-		solidList.begin()->U = 1;
-		solidList.begin()->V = -1;
-		Circle c2(1, 1, r, n, grid);
-		solidList.push_back(c2);
-		next(solidList.begin())->U = 1;
-		next(solidList.begin())->V = 1;
-		eps_u = 1.0;
-		eps_v = 1.0;*/
-	}
+	Circle c1(3.5, 2.1, r, n, grid);
+	Circle c2(3.5, 4.9, r, n, grid);
+	Circle c3(1.5, 1.9, r, n, grid);
+	Circle c4(1.5, 5.1, r, n, grid);
+	solidList.push_back(c1);
+	solidList.push_back(c2);
+	solidList.push_back(c3);
+	solidList.push_back(c4);
 
 
 
-	CalculateForce_X(Force_x, solidList, U_new, r, Cd, grid, alpha_f, beta_f, m);
-	CalculateForce_Y(Force_y, solidList, V_new, r, Cl, grid, alpha_f, beta_f, m);
+	CalculateForce_X(Force_x, solidList, U_new, Cd, grid, alpha_f, beta_f, m);
+	CalculateForce_Y(Force_y, solidList, V_new, Cl, grid, alpha_f, beta_f, m);
 
 	OutputVelocity_U(U_new, -1, output_step, solidList, grid);
 	OutputVelocity_V(V_new, -1, output_step, solidList, grid);
@@ -152,42 +136,41 @@ int main() {
 	while (n <= N_max) {
 
 		//creation new solids
-		if (!Debug) {
-			if (n > 0 && fmod(n*grid.d_t, 1.5) == 0.0) {
-				int chance = 80;
-				int rnd;
-				rnd = rand() % 100 + 1;
-				if (rnd <= chance) {
-					x = 1 + ((rand() % 100 + 1) / 100.0);
-					y = 1 + ((rand() % 200 + 1) / 100.0);
-					Circle c(x, y, r, n, grid);
-					solidList.push_back(c);
-				}
-				rnd = rand() % 100 + 1;
-				if (rnd <= chance) {
-					x = 1 + ((rand() % 100 + 1) / 100.0);
-					y = 4 + ((rand() % 200 + 1) / 100.0);
-					Circle c(x, y, r, n, grid);
-					solidList.push_back(c);
-				}
+		if (n > 0 && fmod(n*grid.d_t, 1.5) == 0.0) {
+			int chance = 80;
+			int rnd;
+			rnd = rand() % 100 + 1;
+			if (rnd <= chance) {
+				x = 1 + ((rand() % 100 + 1) / 100.0);
+				y = 1 + ((rand() % 200 + 1) / 100.0);
+				Circle c(x, y, r, n, grid);
+				solidList.push_back(c);
+			}
+			rnd = rand() % 100 + 1;
+			if (rnd <= chance) {
+				x = 1 + ((rand() % 100 + 1) / 100.0);
+				y = 4 + ((rand() % 200 + 1) / 100.0);
+				Circle c(x, y, r, n, grid);
+				solidList.push_back(c);
+			}
 
-				rnd = rand() % 100 + 1;
-				if (rnd <= chance) {
-					x = 3 + ((rand() % 100 + 1) / 100.0);
-					y = 1 + ((rand() % 200 + 1) / 100.0);
-					Circle c(x, y, r, n, grid);
-					solidList.push_back(c);
-				}
+			rnd = rand() % 100 + 1;
+			if (rnd <= chance) {
+				x = 3 + ((rand() % 100 + 1) / 100.0);
+				y = 1 + ((rand() % 200 + 1) / 100.0);
+				Circle c(x, y, r, n, grid);
+				solidList.push_back(c);
+			}
 
-				rnd = rand() % 100 + 1;
-				if (rnd <= chance) {
-					x = 3 + ((rand() % 100 + 1) / 100.0);
-					y = 4 + ((rand() % 200 + 1) / 100.0);
-					Circle c(x, y, r, n, grid);
-					solidList.push_back(c);
-				}
+			rnd = rand() % 100 + 1;
+			if (rnd <= chance) {
+				x = 3 + ((rand() % 100 + 1) / 100.0);
+				y = 4 + ((rand() % 200 + 1) / 100.0);
+				Circle c(x, y, r, n, grid);
+				solidList.push_back(c);
 			}
 		}
+
 		eps_u = 0.0;
 		eps_v = 0.0;
 
@@ -199,11 +182,11 @@ int main() {
 
 #pragma omp section
 			{
-				BiCGStab(U_new, grid.N1, grid.N2 + 1, OperatorA_u, B_u, grid);
+				BiCGStab(U_new, grid.N1, grid.N2 + 1, OperatorA_u, B_u, grid, false);
 			}
 #pragma omp section
 			{
-				BiCGStab(V_new, grid.N1 + 1, grid.N2, OperatorA_v, B_v, grid);
+				BiCGStab(V_new, grid.N1 + 1, grid.N2, OperatorA_v, B_v, grid, false);
 			}
 
 		}
@@ -220,10 +203,7 @@ int main() {
 			}
 
 
-		eps_p = Calculate_Press_correction(Delta_P, P_Right, N_Zeidel, Zeidel_eps, grid);
-		press_output << n << ' ' << eps_p << endl; //<---writing in closed stream
-
-
+		eps_p = Calculate_Press_correction(Delta_P, P_Right, N_Zeidel, Zeidel_eps, grid,false);
 
 		for (int i = 0; i < grid.N1 + 1; ++i) {
 			for (int j = 0; j < grid.N2 + 1; ++j) {
@@ -271,8 +251,8 @@ int main() {
 		}
 		//--------------------------------------------------------
 
-		CalculateForce_X(Force_x, solidList, U_new, r, Cd, grid, alpha_f, beta_f, m);
-		CalculateForce_Y(Force_y, solidList, V_new, r, Cl, grid, alpha_f, beta_f, m);
+		CalculateForce_X(Force_x, solidList, U_new, Cd, grid, alpha_f, beta_f, m);
+		CalculateForce_Y(Force_y, solidList, V_new, Cl, grid, alpha_f, beta_f, m);
 
 
 

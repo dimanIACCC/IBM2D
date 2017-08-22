@@ -3,7 +3,7 @@
 
 
 
-double Calculate_Press_correction(Matrix& delta_p, Matrix &b_p, int const N_Zeidel, double const Zeidel_eps, Grid grid){
+double Calculate_Press_correction(Matrix& delta_p, Matrix &b_p, int const N_Zeidel, double const Zeidel_eps, Grid grid,bool OverFlow){
 
 	int n = 0;
 	double eps = 0.0;
@@ -33,8 +33,17 @@ double Calculate_Press_correction(Matrix& delta_p, Matrix &b_p, int const N_Zeid
 					help = delta_p[i + 1][j - 1];
 				}
 
-				if (n1 - 1 == i){
-					help = 0.0;					
+				if (n1 - 1 == i && 0 != j && n2 - 1 != j) {
+					if (OverFlow) help = delta_p[i - 1][j];
+					else help = 0.0;
+				}
+				if (n1 - 1 == i && 0 == j) {
+					if (OverFlow) help = delta_p[i - 1][j + 1];
+					else help = 0.0;
+				}
+				if (n1 - 1 == i && n2 - 1 == j) {
+					if (OverFlow) help = delta_p[i - 1][j - 1];
+					else help = 0.0;
 				}
 
 

@@ -30,12 +30,12 @@
     <ConfigurationType>Application</ConfigurationType>
     <UseDebugLibraries>true</UseDebugLibraries>
     <CharacterSet>Unicode</CharacterSet>
-    <PlatformToolset>v120</PlatformToolset>
+    <PlatformToolset>v140</PlatformToolset>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'" Label="Configuration">
     <ConfigurationType>Application</ConfigurationType>
     <UseDebugLibraries>false</UseDebugLibraries>
-    <PlatformToolset>v120</PlatformToolset>
+    <PlatformToolset>v140</PlatformToolset>
     <WholeProgramOptimization>true</WholeProgramOptimization>
     <CharacterSet>Unicode</CharacterSet>
   </PropertyGroup>
@@ -72,19 +72,20 @@
   <PropertyGroup Label="UserMacros" />
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
     <LinkIncremental>true</LinkIncremental>
-    <IncludePath>C:\Users\Lion\Documents\GitHub\diflow\src;$(IncludePath)</IncludePath>
+    <IncludePath>$(SolutionDir);$(IncludePath)</IncludePath>
     <LibraryPath>$(VC_LibraryPath_x86);$(WindowsSDK_LibraryPath_x86);$(NETFXKitsDir)Lib\um\x86;$(WindowsSdkDir)\lib</LibraryPath>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
     <LinkIncremental>true</LinkIncremental>
-    <IncludePath>C:\Users\Lion\Documents\GitHub\diflow\src\;$(IncludePath)</IncludePath>
+    <IncludePath>C:\Users\Anisytin\Documents\GitHub\diflow\src\;$(IncludePath)</IncludePath>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
     <LinkIncremental>false</LinkIncremental>
-    <IncludePath>$(VC_IncludePath);$(WindowsSDK_IncludePath);C:\Users\Lion\Documents\GitHub\diflow\src</IncludePath>
+    <IncludePath>$(VC_IncludePath);$(WindowsSDK_IncludePath);$(SolutionDir)</IncludePath>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
     <LinkIncremental>false</LinkIncremental>
+    <IncludePath>$(VC_IncludePath);$(WindowsSDK_IncludePath);C:\Users\Anisytin\Documents\GitHub\diflow</IncludePath>
   </PropertyGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
     <ClCompile>
@@ -149,6 +150,7 @@
     <ClInclude Include="..\src\Calculate_press.h" />
     <ClInclude Include="..\src\Grid.h" />
     <ClInclude Include="..\src\Output.h" />
+    <ClInclude Include="..\src\PredictVel.h" />
     <ClInclude Include="..\src\SolidBody.h" />
     <ClInclude Include="stdafx.h" />
     <ClInclude Include="targetver.h" />
@@ -156,10 +158,9 @@
   <ItemGroup>
     <ClCompile Include="..\src\BiCGStab.cpp" />
     <ClCompile Include="..\src\CalculateForce.cpp" />
-    <ClCompile Include="..\src\Calculate_A.cpp" />
-    <ClCompile Include="..\src\Calculate_B.cpp" />
     <ClCompile Include="..\src\Calculate_press.cpp" />
     <ClCompile Include="..\src\Output.cpp" />
+    <ClCompile Include="..\src\PredictVel.cpp" />
     <ClCompile Include="..\src\SolidBody.cpp" />
     <ClCompile Include="FlowOverCylinder.cpp" />
     <ClCompile Include="stdafx.cpp">
