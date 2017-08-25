@@ -54,6 +54,7 @@ GeomMat diada(GeomVec v1, GeomVec v2) {
 	return A;
 }
 
+
 GeomMat E = InitE(); // initialize unit matrix
 
 GeomMat M_rotate(GeomVec& o){
