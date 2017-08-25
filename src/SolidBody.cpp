@@ -3,10 +3,8 @@
 #include "SolidBody.h"
 
 
-SolidBody::SolidBody(double x, double y, int n)
+SolidBody::SolidBody(double x, double y)
 {
-	 start_n = n; // number of iteration, when solid added
-	 moveSolid = false;
 	 moveSolid = false;
 	 std::fill(uc.begin()   , uc.end()   , 0.0); // fill vector uc    with zeros
 	 std::fill(omega.begin(), omega.end(), 0.0); // fill vector omega with zeros
@@ -19,26 +17,29 @@ SolidBody::~SolidBody()
 {
 }
 
-Circle::Circle(double x, double y, double r, int n, Grid grid) : SolidBody(x, y, n){
+Circle::Circle(double x, double y, double r, int NF) : SolidBody(x, y){
 	this->r = r;
-	this->d_s = (2.0*M_PI*r) / grid.NF;
-	Nodes.resize(grid.NF);
+	this->Nn = NF;
+	this->d_s = (2.0*M_PI*r) / Nn;
+	Nodes.resize(Nn);
 
-	for (int i = 0; i < grid.NF; ++i){
-		Nodes[i].x[1] = x + cos(i * 2.0 * M_PI / grid.NF) * r;
-		Nodes[i].x[2] = y + sin(i * 2.0 * M_PI / grid.NF) * r;
+	for (int i = 0; i < Nn; ++i){
+		Nodes[i].x[1] = x + cos(i * 2.0 * M_PI / Nn) * r;
+		Nodes[i].x[2] = y + sin(i * 2.0 * M_PI / Nn) * r;
 	}
+	V = M_PI * r * r;
+	rho = 10.0 / V; // corresponds to old formula for force
+	I =  V * r * r / 2.0; // angular momentum for unit density
 }
  
 Circle::~Circle()
 {
 }
 
-// void Circle::AddSolid(list<Circle> &iList){
-//	 if (!iList.empty()) {
-//		 int a = prev(iList.end())->first;
-//		 iList.insert(make_pair(a + 1, this));
-//	 }
-//	 else
-//		iList.insert(make_pair(0, this));
-//}
+void SolidBody::velocities() {
+	for (int i = 0; i < Nn; ++i) {
+		GeomVec r;
+		r = Nodes[i].x - xc;
+		Nodes[i].us = uc + x_product(omega, r);
+	}
+}

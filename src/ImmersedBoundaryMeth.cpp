@@ -12,7 +12,6 @@
 #pragma warning(disable : 4996)//for using <chrono>
 #pragma warning(disable : 4244)//for GetInfluenceArea
 
-#define CreateMatrix(name, n, m) Matrix name(n,std::vector<double>(m, 0))
 
 bool Debug = false;
 bool InelasticCollision = false; //Perfectly inelastic collision --- абсолютно неупругие столкновения
@@ -37,8 +36,6 @@ int main() {
 	double beta_f;
 	int N_Zeidel; // Number of iterations in Zeidel method
 	double Zeidel_eps;
-	double Cd; //drag coefficent
-	double Cl; // lift coefficent
 	double x = 0.0;
 	double y = 0.0;
 	double r = 0.5;
@@ -111,21 +108,21 @@ int main() {
 
 	//Firstly adding some circles
 	if (!Debug) {
-		Circle c1(3.5, 2.1, r, n, grid);
-		Circle c2(3.5, 4.9, r, n, grid);
-		Circle c3(1.5, 1.9, r, n, grid);
-		Circle c4(1.5, 5.1, r, n, grid);
+		Circle c1(3.5, 2.1, r, grid.NF);
+		Circle c2(3.5, 4.9, r, grid.NF);
+		Circle c3(1.5, 1.9, r, grid.NF);
+		Circle c4(1.5, 5.1, r, grid.NF);
 		solidList.push_back(c1);
 		solidList.push_back(c2);
 		solidList.push_back(c3);
 		solidList.push_back(c4);
 	}
 	else {
-		/*Circle c1(1, 5, r, n, grid);
+		/*Circle c1(1, 5, r, grid.NF);
 		solidList.push_back(c1);
 		solidList.begin()->U = 1;
 		solidList.begin()->V = -1;
-		Circle c2(1, 1, r, n, grid);
+		Circle c2(1, 1, r, grid);
 		solidList.push_back(c2);
 		next(solidList.begin())->U = 1;
 		next(solidList.begin())->V = 1;
@@ -136,13 +133,13 @@ int main() {
 
 	/*
 	// BicGstab doesn`t work correctly with that initial data
-		Circle c4(1, 5, r, n, grid);
+		Circle c4(1, 5, r, grid.NF);
 		c4.AddSolid(solidList);
-		Circle c44(1, 4, r, n, grid);
+		Circle c44(1, 4, r, grid.NF);
 		c44.AddSolid(solidList);
 	*/
 
-	CalculateForce(Force_x, Force_y, solidList, U_new, V_new, r, Cd, Cl, grid, alpha_f, beta_f, m);
+	CalculateForce(Force_x, Force_y, solidList, U_new, V_new, grid, alpha_f, beta_f);
 
 	OutputVelocity_U(U_new, -1, output_step, solidList, grid);
 	OutputVelocity_V(V_new, -1, output_step, solidList, grid);
@@ -160,14 +157,14 @@ int main() {
 				if (rnd <= chance) {
 					x = 1 + ((rand() % 100 + 1) / 100.0);
 					y = 1 + ((rand() % 200 + 1) / 100.0);
-					Circle c(x, y, r, n, grid);
+					Circle c(x, y, r, grid.NF);
 					solidList.push_back(c);
 				}
 				rnd = rand() % 100 + 1;
 				if (rnd <= chance) {
 					x = 1 + ((rand() % 100 + 1) / 100.0);
 					y = 4 + ((rand() % 200 + 1) / 100.0);
-					Circle c(x, y, r, n, grid);
+					Circle c(x, y, r, grid.NF);
 					solidList.push_back(c);
 				}
 
@@ -175,7 +172,7 @@ int main() {
 				if (rnd <= chance) {
 					x = 3 + ((rand() % 100 + 1) / 100.0);
 					y = 1 + ((rand() % 200 + 1) / 100.0);
-					Circle c(x, y, r, n, grid);
+					Circle c(x, y, r, grid.NF);
 					solidList.push_back(c);
 				}
 
@@ -183,7 +180,7 @@ int main() {
 				if (rnd <= chance) {
 					x = 3 + ((rand() % 100 + 1) / 100.0);
 					y = 4 + ((rand() % 200 + 1) / 100.0);
-					Circle c(x, y, r, n, grid);
+					Circle c(x, y, r, grid.NF);
 					solidList.push_back(c);
 				}
 			}
@@ -256,7 +253,7 @@ int main() {
 				}
 			}
 
-			CalculateForce(Force_x, Force_y, solidList, U_new, V_new, r, Cd, Cl, grid, alpha_f, beta_f, m);
+			CalculateForce(Force_x, Force_y, solidList, U_new, V_new, grid, alpha_f, beta_f);
 		
 
 
@@ -320,13 +317,18 @@ int main() {
 
 
 		for (auto it = solidList.begin(); it != solidList.end();) {
-			if ((it->moveSolid == false)) {// && (n - it->start_n > 10)) { 
+			if ((it->moveSolid == false)) {
 				it->moveSolid = true;
 			}
 
 			if (it->moveSolid) {
 				//update position
 				for (int k = 0; k < grid.NF; ++k) {
+					//rotate
+					GeomVec r = it->Nodes[k].x - it->xc;
+					GeomVec x_temp = rotate_Vector_around_vector(r, it->omega  * length(r) * grid.d_t); //
+					// it->Nodes[k].x = it->xc + x_temp; // rotate solid by angle $omega$ * $dt$
+					// move
 					it->Nodes[k].x += it->uc * grid.d_t;
 				}
 				it->xc += it->uc * grid.d_t;
