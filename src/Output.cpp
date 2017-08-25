@@ -17,7 +17,6 @@ void OutputPressure(Matrix data, int n, double output_step, list<Circle> iList, 
 	output << "zone T=" << '"' << n << '"' << ",  i=" << grid.N1 + 1 << ", j=" << grid.N2 + 1 << ", f=point" << endl;
 	output << "SolutionTime = " << n << endl;
 
-
 	output << 0.0 << ' ' << 0.0 << ' ' << data[0][0] << endl;
 
 	for (i = 1; i < grid.N1; ++i){
@@ -79,6 +78,7 @@ void OutputVelocity_U(Matrix data, int n, int output_step, list<Circle> iList, G
 	output << "title = " << '"' << "sample mesh" << '"' << endl;
 	output << "Variables = x y u v" << endl;
 	output << "zone T=" << '"' << n << '"' << ",  i=" << grid.N1 << ", j=" << grid.N2 + 1 << ", f=point" << endl;
+	output << "SolutionTime = " << n << endl;
 
 	for (int i = 0; i < grid.N1; ++i){
 
@@ -127,7 +127,7 @@ void OutputVelocity_V(Matrix& data, int n, int output_step, list<Circle> iList, 
 	output << "title = " << '"' << "sample mesh" << '"' << endl;
 	output << "Variables = x y u v" << endl;
 	output << "zone T=" << '"' << n << '"' << ",  i=" << grid.N1 + 1 << ", j=" << grid.N2 << ", f=point" << endl;
-
+	output << "SolutionTime = " << n << endl;
 
 	for (int j = 0; j < grid.N2; ++j){
 
