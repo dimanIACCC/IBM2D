@@ -1,7 +1,7 @@
 #include "stdafx.h"
 #include "Output.h"
 
-void OutputPressure(Matrix data, int n, double output_step, list<Circle> iList, Grid grid){
+void OutputPressure(Matrix data, int n, list<Circle> iList, Grid grid){
 
 	ofstream output;
 	int i = 0;
@@ -66,7 +66,7 @@ void OutputPressure(Matrix data, int n, double output_step, list<Circle> iList, 
 }
 
 
-void OutputVelocity_U(Matrix data, int n, int output_step, list<Circle> iList, Grid grid){
+void OutputVelocity_U(Matrix data, int n, list<Circle> iList, Grid grid){
 
 	ofstream output;
 
@@ -115,7 +115,7 @@ void OutputVelocity_U(Matrix data, int n, int output_step, list<Circle> iList, G
 }
 
 
-void OutputVelocity_V(Matrix& data, int n, int output_step, list<Circle> iList, Grid grid){
+void OutputVelocity_V(Matrix data, int n, list<Circle> iList, Grid grid){
 
 	ofstream output;
 

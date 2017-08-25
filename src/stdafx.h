@@ -12,7 +12,6 @@
 #include <iostream>
 #include <string>
 #include <list>
-#include <string>
 #include <chrono>
 
 #include "GeomVec.h"

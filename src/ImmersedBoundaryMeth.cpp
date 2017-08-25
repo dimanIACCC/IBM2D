@@ -6,6 +6,7 @@
 #include "BiCGStab.h"
 #include "Calculate_press.h"
 #include "PredictVel.h"
+#include <boost/algorithm/string.hpp>
 
 
 
@@ -21,8 +22,8 @@ using namespace std;
 
 // fuctions
 
-void InputData(Grid& grid, double &M, int &Re, double &alpha_f, double &beta_f, double& Zeidel_eps, int& output_step, int& N_max, int& N_Zeidel);
-void SetLog(ostream &log, Grid grid, double M, double Re, double alpha_f, double beta_f, double Zeidel_eps);
+void InputData(Grid& grid);
+void SetLog(ostream &log, Grid grid);
 void PushLog(ostream &log, int n, double eps_u, double eps_v);
 void ApplyInitialData(Matrix& u, Grid grid);
 double ux_Poiseuille(double y, double H);
@@ -31,18 +32,8 @@ int sgn(double x);
 
 
 int main() {
-	int Re;
-	int N_max = 0; // number of total iterations
-	double alpha_f;
-	double beta_f;
-	int N_Zeidel; // Number of iterations in Zeidel method
-	double Zeidel_eps;
-	double x = 0.0;
-	double y = 0.0;
-	double r = 0.5;
-	double m;
+
 	const double epsilon = 1e-3;
-	int output_step = 0; //frequency of output
 
 	// declaring variables
 	Grid grid;
@@ -53,7 +44,7 @@ int main() {
 
 
 	int n = 0; // iteration counter
-	InputData(grid, m, Re, alpha_f, beta_f, Zeidel_eps, output_step, N_max, N_Zeidel); // Get value of some variables
+	InputData(grid); // Get value of some variables
 	CreateMatrix(U_n, grid.N1, grid.N2 + 1);
 	CreateMatrix(U_new, grid.N1, grid.N2 + 1);
 	CreateMatrix(U_prev, grid.N1, grid.N2 + 1);
@@ -85,8 +76,8 @@ int main() {
 			fill(OperatorA_v[i][j].begin(), OperatorA_v[i][j].end(), 0);
 		}
 	}
-	Calculate_A_u(OperatorA_u, grid, Re);
-	Calculate_A_v(OperatorA_v, grid, Re);
+	Calculate_A_u(OperatorA_u, grid, grid.Re);
+	Calculate_A_v(OperatorA_v, grid, grid.Re);
 
 
 	// list of immersed solids
@@ -104,7 +95,7 @@ int main() {
 	//string filepress = "Result/eps_pressure.plt";
 	string filelog = "Result/log.txt";
 	log.open(filelog, ios::out);
-	SetLog(log, grid, m, Re, alpha_f, beta_f, Zeidel_eps);
+	SetLog(log, grid);
 	log << endl;
 
 
@@ -118,28 +109,28 @@ int main() {
 	std::fill(uc.begin(), uc.end(), 0.0);
 
 	uc[1] = ux_Poiseuille(2.1, grid.H);
-	Circle c1(3.5, 2.1, r, grid.NF, uc);
+	Circle c1(3.5, 2.1, grid.R, grid.NF, uc);
 
 	uc[1] = ux_Poiseuille(4.9, grid.H);
-	Circle c2(3.5, 4.9, r, grid.NF, uc);
+	Circle c2(3.5, 4.9, grid.R, grid.NF, uc);
 
 	uc[1] = ux_Poiseuille(1.9, grid.H);
-	Circle c3(1.5, 1.9, r, grid.NF, uc);
+	Circle c3(1.5, 1.9, grid.R, grid.NF, uc);
 
 	uc[1] = ux_Poiseuille(5.1, grid.H);
-	Circle c4(1.5, 5.1, r, grid.NF, uc);
+	Circle c4(1.5, 5.1, grid.R, grid.NF, uc);
 
 	solidList.push_back(c1);
 	solidList.push_back(c2);
 	solidList.push_back(c3);
 	solidList.push_back(c4);
 
-	CalculateForce(Force_x, Force_y, solidList, U_new, V_new, grid, alpha_f, beta_f);
+	CalculateForce(Force_x, Force_y, solidList, U_new, V_new, grid);
 
-	OutputVelocity_U(U_new, -1, output_step, solidList, grid);
-	OutputVelocity_V(V_new, -1, output_step, solidList, grid);
+	OutputVelocity_U(U_new, -1, solidList, grid);
+	OutputVelocity_V(V_new, -1, solidList, grid);
 
-	while (n <= N_max) {
+	while (n <= grid.N_max) {
 
 		//creation new solids
 		if (n > 0 && fmod(n*grid.d_t, 1.5) == 0.0) {
@@ -147,36 +138,35 @@ int main() {
 			int rnd;
 			rnd = rand() % 100 + 1;
 			if (rnd <= chance) {
-				x = 1 + ((rand() % 100 + 1) / 100.0);
-				y = 1 + ((rand() % 200 + 1) / 100.0);
+				double x = 1 + ((rand() % 100 + 1) / 100.0);
+				double y = 1 + ((rand() % 200 + 1) / 100.0);
 				uc[1] = ux_Poiseuille(y, grid.H);
-				Circle c(x, y, r, grid.NF, uc);
+				Circle c(x, y, grid.R, grid.NF, uc);
 				solidList.push_back(c);
 			}
 			rnd = rand() % 100 + 1;
 			if (rnd <= chance) {
-				x = 1 + ((rand() % 100 + 1) / 100.0);
-				y = 4 + ((rand() % 200 + 1) / 100.0);
+				double x = 1 + ((rand() % 100 + 1) / 100.0);
+				double y = 4 + ((rand() % 200 + 1) / 100.0);
 				uc[1] = ux_Poiseuille(y, grid.H);
-				Circle c(x, y, r, grid.NF, uc);
+				Circle c(x, y, grid.R, grid.NF, uc);
+				solidList.push_back(c);
+			}
+			rnd = rand() % 100 + 1;
+			if (rnd <= chance) {
+				double x = 3 + ((rand() % 100 + 1) / 100.0);
+				double y = 1 + ((rand() % 200 + 1) / 100.0);
+				uc[1] = ux_Poiseuille(y, grid.H);
+				Circle c(x, y, grid.R, grid.NF, uc);
 				solidList.push_back(c);
 			}
 
 			rnd = rand() % 100 + 1;
 			if (rnd <= chance) {
-				x = 3 + ((rand() % 100 + 1) / 100.0);
-				y = 1 + ((rand() % 200 + 1) / 100.0);
+				double x = 3 + ((rand() % 100 + 1) / 100.0);
+				double y = 4 + ((rand() % 200 + 1) / 100.0);
 				uc[1] = ux_Poiseuille(y, grid.H);
-				Circle c(x, y, r, grid.NF, uc);
-				solidList.push_back(c);
-			}
-
-			rnd = rand() % 100 + 1;
-			if (rnd <= chance) {
-				x = 3 + ((rand() % 100 + 1) / 100.0);
-				y = 4 + ((rand() % 200 + 1) / 100.0);
-				uc[1] = ux_Poiseuille(y, grid.H);
-				Circle c(x, y, r, grid.NF, uc);
+				Circle c(x, y, grid.R, grid.NF, uc);
 				solidList.push_back(c);
 			}
 		}
@@ -185,8 +175,8 @@ int main() {
 		eps_v = 0.0;
 
 		//<---------- prediction of velocity --------------------------
-		B_u = CalculateB_u(U_n, V_n, U_prev, V_prev, P, Force_x, grid, Re);
-		B_v = CalculateB_v(U_n, V_n, U_prev, V_prev, P, Force_y, grid, Re);
+		B_u = CalculateB_u(U_n, V_n, U_prev, V_prev, P, Force_x, grid);
+		B_v = CalculateB_v(U_n, V_n, U_prev, V_prev, P, Force_y, grid);
 #pragma omp parallel sections num_threads(2)
 		{
 
@@ -213,7 +203,7 @@ int main() {
 			}
 
 
-		eps_p = Calculate_Press_correction(Delta_P, P_Right, N_Zeidel, Zeidel_eps, grid,false);
+		eps_p = Calculate_Press_correction(Delta_P, P_Right, grid,false);
 
 		for (int i = 0; i < grid.N1 + 1; ++i) {
 			for (int j = 0; j < grid.N2 + 1; ++j) {
@@ -261,7 +251,7 @@ int main() {
 		}
 		//--------------------------------------------------------
 
-		CalculateForce(Force_x, Force_y, solidList, U_new, V_new, grid, alpha_f, beta_f);
+		CalculateForce(Force_x, Force_y, solidList, U_new, V_new, grid);
 
 
 
@@ -366,18 +356,18 @@ int main() {
 			log.flush();
 		}
 
-		if (0 == n % output_step) {
-			OutputVelocity_U(U_new, n, output_step, solidList, grid);
-			OutputVelocity_V(V_new, n, output_step, solidList, grid);
-			OutputPressure(P, n, output_step, solidList, grid);
+		if (0 == n % grid.output_step) {
+			OutputVelocity_U(U_new, n, solidList, grid);
+			OutputVelocity_V(V_new, n, solidList, grid);
+			OutputPressure(P, n, solidList, grid);
 		}
 
 
 
 		if (eps_u < epsilon && eps_v < epsilon) {
-			OutputVelocity_U(U_new, n, output_step, solidList, grid);
-			OutputVelocity_V(V_new, n, output_step, solidList, grid);
-			OutputPressure(P, n, output_step, solidList, grid);
+			OutputVelocity_U(U_new, n, solidList, grid);
+			OutputVelocity_V(V_new, n, solidList, grid);
+			OutputPressure(P, n, solidList, grid);
 			break;
 		}
 
@@ -397,23 +387,22 @@ int main() {
 
 
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-void SetLog(ostream& log, Grid grid, double M, double Re, double alpha_f, double beta_f, double Zeidel_eps) {
+void SetLog(ostream& log, Grid grid) {
 
 	log << "The IBM program starts.		";
 	time_t t = chrono::system_clock::to_time_t(chrono::system_clock::now());   // get time now
 	log << ctime(&t) << endl;
 	log << "The parameters are the following:" << endl;
-	log << "Mass of a particle            : M   = " << M << endl;
-	log << "Reynolds number               : Re  = " << Re << endl;
+	log << "Reynolds number               : Re  = " << grid.Re << endl;
 	log << "Channel length                : L   = " << grid.L << endl;
 	log << "Channel width                 : W   = " << grid.H << endl;
-	log << "Number of nodes on            : Nõ  = " << grid.N1 << endl;
-	log << "Number of nodes on            : Ny  = " << grid.N2 << endl;
-	log << "Number of nodes for a particle: Np  = " << grid.NF << endl;
+	log << "Number of nodes on            : N1  = " << grid.N1 << endl;
+	log << "Number of nodes on            : N2  = " << grid.N2 << endl;
+	log << "Number of nodes for a particle: NF  = " << grid.NF << endl;
 	log << "Time step                     : tau = " << grid.d_t << endl;
-	log << "Force parameter alpha         : alpha = " << alpha_f << endl;
-	log << "Force parameter beta          : beta  = " << beta_f << endl;
-	log << "Tolerance for Zeidel method   : tol = " << Zeidel_eps << endl;
+	log << "Force parameter alpha         : alpha = " << grid.alpha_f << endl;
+	log << "Force parameter beta          : beta  = " << grid.beta_f << endl;
+	log << "Tolerance for Zeidel method   : tol = " << grid.Zeidel_eps << endl;
 
 }
 
@@ -449,27 +438,56 @@ int sgn(double x)
 	return x;
 }
 
-void InputData(Grid& grid, double &M, int &Re, double &alpha_f, double &beta_f, double& Zeidel_eps, int& output_step, int& N_max, int& N_Zeidel) {
-
+void InputData(Grid& grid) {
 	ifstream input;
 	string filename = "input.txt";
-	input.open(filename.c_str());
+	string line, value;
 
-	input >> M;
-	input >> Re;
-	input >> grid.L;
-	input >> grid.H;
-	input >> grid.N1;
-	input >> grid.N2;
-	input >> grid.NF;
-	input >> grid.d_t;
-	input >> alpha_f;
-	input >> beta_f;
-	input >> output_step;
-	input >> N_max;
-	input >> N_Zeidel;
-	input >> Zeidel_eps;
-	input.close();
+	// default parameters
+	grid.Re          = 20;
+	grid.L           = 30;
+	grid.H           = 7;
+	grid.N1          = 101;
+	grid.N2          = 21;
+	grid.d_t         = 0.00125;
+	grid.alpha_f     = 0;
+	grid.beta_f      = -2000;
+	grid.NF          = 50;
+	grid.R           = 0.5;
+	grid.output_step = 50;
+	grid.N_max       = 5000000;
+	grid.N_Zeidel    = 500000;
+	grid.Zeidel_eps  = 1e-5;
+
+
+	input.open(filename.c_str());
+	while (getline(input, line)) { // read line from file to string $line$
+		int i = line.find('=');
+		string par(line, 0, i - 1);
+		par = boost::trim_copy(par);
+		if (i > 0) {
+			string value(line, i + 1);
+			value = boost::trim_copy(value);
+			if      (par == "Re")           grid.Re          = stod(value);
+			else if (par == "L")            grid.L           = stod(value);
+			else if (par == "H")            grid.H           = stod(value);
+			else if (par == "N1")           grid.N1          = stoi(value);
+			else if (par == "N2")           grid.N2          = stoi(value);
+			else if (par == "d_t")          grid.d_t         = stod(value);
+			else if (par == "alpha_f")      grid.alpha_f     = stod(value);
+			else if (par == "beta_f")       grid.beta_f      = stod(value);
+			else if (par == "NF")           grid.NF          = stoi(value);
+			else if (par == "R")            grid.R           = stod(value);
+			else if (par == "output_step")  grid.output_step = stoi(value);
+			else if (par == "N_max")        grid.N_max       = stoi(value);
+			else if (par == "N_Zeidel")     grid.N_Zeidel    = stoi(value);
+			else if (par == "Zeidel_eps")   grid.Zeidel_eps  = stod(value);
+			else    std::cout << "unknown parameter " << par << std::endl;
+		}
+		else {
+			std::cout << "no value inputed" << std::endl;
+		}
+	}
 
 	grid.d_x = grid.L / (grid.N1 - 1);
 	grid.d_y = grid.H / (grid.N2 - 1);

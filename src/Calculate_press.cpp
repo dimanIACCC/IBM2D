@@ -3,7 +3,7 @@
 
 
 
-double Calculate_Press_correction(Matrix& delta_p, Matrix &b_p, int const N_Zeidel, double const Zeidel_eps, Grid grid,bool OverFlow){
+double Calculate_Press_correction(Matrix& delta_p, Matrix &b_p, Grid grid, bool OverFlow){
 
 	int n = 0;
 	double eps = 0.0;
@@ -17,7 +17,7 @@ double Calculate_Press_correction(Matrix& delta_p, Matrix &b_p, int const N_Zeid
 	int const n1 = grid.N1 + 1;
 	int const n2 = grid.N2 + 1;
 
-	while (n < N_Zeidel){
+	while (n < grid.N_Zeidel){
 		eps = 0.0;
 		for (int i = 0; i < n1; ++i){
 			for (int j = 0; j < n2; ++j){
@@ -95,7 +95,7 @@ double Calculate_Press_correction(Matrix& delta_p, Matrix &b_p, int const N_Zeid
 		}
 
 
-		if (eps < Zeidel_eps){
+		if (eps < grid.Zeidel_eps){
 			break;
 		}
 		n++;

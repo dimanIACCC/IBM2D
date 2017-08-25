@@ -41,7 +41,7 @@ void GetInfluenceArea(int& i_min, int& i_max, int& j_min, int& j_max, int const&
 }
 
 
-double CalculateForce(Matrix& force_x, Matrix& force_y, list<Circle> &iList, Matrix& u, Matrix& v, Grid grid, double alpha_f, double beta_f) {
+double CalculateForce(Matrix& force_x, Matrix& force_y, list<Circle> &iList, Matrix& u, Matrix& v, Grid grid) {
 
 	int const nx1 = grid.N1;
 	int	const nx2 = grid.N2 + 1;
@@ -94,7 +94,7 @@ double CalculateForce(Matrix& force_x, Matrix& force_y, list<Circle> &iList, Mat
 
 			//calculating Integral and force f in Lagrange nodes
 			solid.Nodes[k].Integral +=  (solid.Nodes[k].uf - solid.Nodes[k].us) * grid.d_t;
-			solid.Nodes[k].f = alpha_f * solid.Nodes[k].Integral + beta_f  *(solid.Nodes[k].uf - solid.Nodes[k].us);
+			solid.Nodes[k].f = grid.alpha_f * solid.Nodes[k].Integral + grid.beta_f  *(solid.Nodes[k].uf - solid.Nodes[k].us);
 
 			// calculating force force_temp for Euler nodes caused by k-th solid
 			for (int i = ix_min; i <= ix_max; ++i) {
