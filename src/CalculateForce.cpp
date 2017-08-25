@@ -41,7 +41,7 @@ void GetInfluenceArea(int& i_min, int& i_max, int& j_min, int& j_max, int const&
 }
 
 
-double CalculateForce(Matrix& force_x, Matrix& force_y, list<Circle> &iList, Matrix& u, Matrix& v, double r, double & Cd, double & Cl, Grid grid, double alpha_f, double beta_f, double M) {
+double CalculateForce(Matrix& force_x, Matrix& force_y, list<Circle> &iList, Matrix& u, Matrix& v, Grid grid, double alpha_f, double beta_f) {
 
 	int const nx1 = grid.N1;
 	int	const nx2 = grid.N2 + 1;
@@ -74,24 +74,27 @@ double CalculateForce(Matrix& force_x, Matrix& force_y, list<Circle> &iList, Mat
 			GetInfluenceArea(ix_min, ix_max, jx_min, jx_max, nx1, nx2, solid.Nodes[k].x, 3, grid);
 			GetInfluenceArea(iy_min, iy_max, jy_min, jy_max, ny1, ny2, solid.Nodes[k].x, 3, grid);
 
-			//calculating fluid velocity U in Lagrange nodes by using near Euler nodes and discrete delta function
-			solid.Nodes[k].U[1] = 0.0;
+			//calculating velocities us of the solid boundary
+			solid.velocities();
+
+			//calculating fluid velocity uf in Lagrange nodes by using near Euler nodes and discrete delta function
+			solid.Nodes[k].uf[1] = 0.0;
 			for (int i = ix_min; i <= ix_max; ++i) {
 				for (int j = jx_min; j <= jx_max; ++j) {
-					solid.Nodes[k].U[1] += u[i][j] * DeltaFunction(i*grid.d_x - solid.Nodes[k].x[1], (j - 0.5)*grid.d_y - solid.Nodes[k].x[2], grid) * grid.d_x * grid.d_y;
+					solid.Nodes[k].uf[1] += u[i][j] * DeltaFunction(i*grid.d_x - solid.Nodes[k].x[1], (j - 0.5)*grid.d_y - solid.Nodes[k].x[2], grid) * grid.d_x * grid.d_y;
 				}
 			}
 
-			solid.Nodes[k].U[2] = 0.0;
+			solid.Nodes[k].uf[2] = 0.0;
 			for (int i = iy_min; i <= iy_max; ++i) {
 				for (int j = jy_min; j <= jy_max; ++j) {
-					solid.Nodes[k].U[2] += v[i][j] * DeltaFunction((i - 0.5)*grid.d_x - solid.Nodes[k].x[1], j*grid.d_y - solid.Nodes[k].x[2], grid) * grid.d_x * grid.d_y;
+					solid.Nodes[k].uf[2] += v[i][j] * DeltaFunction((i - 0.5)*grid.d_x - solid.Nodes[k].x[1], j*grid.d_y - solid.Nodes[k].x[2], grid) * grid.d_x * grid.d_y;
 				}
 			}
 
 			//calculating Integral and force f in Lagrange nodes
-			solid.Nodes[k].Integral +=  (solid.Nodes[k].U - solid.uc) * grid.d_t;
-			solid.Nodes[k].f = alpha_f * solid.Nodes[k].Integral + beta_f  *(solid.Nodes[k].U - solid.uc);
+			solid.Nodes[k].Integral +=  (solid.Nodes[k].uf - solid.Nodes[k].us) * grid.d_t;
+			solid.Nodes[k].f = alpha_f * solid.Nodes[k].Integral + beta_f  *(solid.Nodes[k].uf - solid.Nodes[k].us);
 
 			// calculating force force_temp for Euler nodes caused by k-th solid
 			for (int i = ix_min; i <= ix_max; ++i) {
@@ -154,26 +157,41 @@ double CalculateForce(Matrix& force_x, Matrix& force_y, list<Circle> &iList, Mat
 			}
 		}
 
-		// summarizing force for Euler nodes and calculating drag (Cd) and lift (Cl) coefficients
-		Cd = 0.0;
-		Cl = 0.0;
+		// summarizing force for Euler nodes and for solids
+		std::fill(solid.f.begin(),   solid.f.end()  , 0.0);
+		std::fill(solid.tau.begin(), solid.tau.end(), 0.0);
 		for (int i = ix_min; i <= ix_max; ++i) {
 			for (int j = jx_min; j <= jx_max; ++j) {
 				force_x[i][j] += force_x_temp[i][j];
-				Cd += force_x_temp[i][j] * grid.d_x * grid.d_y;
+				solid.f[1]    += force_x_temp[i][j] * grid.d_x * grid.d_y;
+				GeomVec r, f;
+				r[1] =  i        * grid.d_x - solid.xc[1];
+				r[2] = (j - 0.5) * grid.d_y - solid.xc[2];
+				r[3] = 0.0;
+				f[1] = force_x_temp[i][j];
+				f[2] = 0.0;
+				f[3] = 0.0;
+				solid.tau += x_product(r, f) *  grid.d_x * grid.d_y;
 			}
 		}
-
 		for (int i = iy_min; i <= iy_max; ++i) {
 			for (int j = jy_min; j <= jy_max; ++j) {
 				force_y[i][j] += force_y_temp[i][j];
-				Cl += force_y_temp[i][j] * grid.d_x * grid.d_y;
+				solid.f[2]    += force_y_temp[i][j] * grid.d_x * grid.d_y;
+				GeomVec r, f;
+				r[1] = (i - 0.5) * grid.d_x - solid.xc[1];
+				r[2] =  j        * grid.d_y - solid.xc[2];
+				r[3] = 0.0;
+				f[1] = 0.0;
+				f[2] = force_y_temp[i][j];
+				f[3] = 0.0;
+				solid.tau += x_product(r, f) *  grid.d_x * grid.d_y;
 			}
 		}
 
 		if (solid.moveSolid) {
-			solid.uc[1] = solid.uc[1] + (-Cd * grid.d_t) / (M - M_PI * solid.r * solid.r);
-			solid.uc[2] = solid.uc[2] + (-Cl * grid.d_t) / (M - M_PI * solid.r * solid.r);
+			solid.uc    -= solid.f   * grid.d_t * 1 / (solid.rho - 1) / solid.V;  // fluid density equals 1
+			// solid.omega -= solid.tau * grid.d_t * 1 / (solid.rho - 1) / solid.I;  // angular moment I is normalized with density
 		}
 	}
 
