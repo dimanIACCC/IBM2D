@@ -1,12 +1,12 @@
 #include "stdafx.h"
 #include "SolidBody.h"
 #include "Grid.h"
-#include "Calculate_A.h"
 #include "CalculateForce.h"
-#include "Calculate_B.h"
 #include "Output.h"
 #include "BiCGStab.h"
 #include "Calculate_press.h"
+#include "PredictVel.h"
+
 
 
 #pragma warning(disable : 4996)//for using <chrono>
@@ -93,6 +93,12 @@ int main() {
 	ofstream output; // for Drag and Lift coefficents
 	ofstream press_output; // press
 	ofstream log;
+	//-----------creating Result folder --------------
+	//char current_work_dir[FILENAME_MAX];
+	//_getcwd(current_work_dir, sizeof(current_work_dir));
+	//strcat_s(current_work_dir, "\\Result");
+	//_mkdir(current_work_dir);
+	//-------------------------------------------------
 	string filename = "Result/coefficent.plt";
 	//string filepress = "Result/eps_pressure.plt";
 	string filelog = "Result/log.txt";
@@ -100,44 +106,21 @@ int main() {
 	SetLog(log, grid, m, Re, alpha_f, beta_f, Zeidel_eps);
 	log << endl;
 
-	
+
 	ApplyInitialData(U_new, grid); // Applying initial data to velocity 
 	U_n = U_new;
 	U_prev = U_new;
 
 
 	//Firstly adding some circles
-	if (!Debug) {
-		Circle c1(3.5, 2.1, r, grid.NF);
-		Circle c2(3.5, 4.9, r, grid.NF);
-		Circle c3(1.5, 1.9, r, grid.NF);
-		Circle c4(1.5, 5.1, r, grid.NF);
-		solidList.push_back(c1);
-		solidList.push_back(c2);
-		solidList.push_back(c3);
-		solidList.push_back(c4);
-	}
-	else {
-		/*Circle c1(1, 5, r, grid.NF);
-		solidList.push_back(c1);
-		solidList.begin()->U = 1;
-		solidList.begin()->V = -1;
-		Circle c2(1, 1, r, grid);
-		solidList.push_back(c2);
-		next(solidList.begin())->U = 1;
-		next(solidList.begin())->V = 1;
-		eps_u = 1.0;
-		eps_v = 1.0;*/
-	}
-
-
-	/*
-	// BicGstab doesn`t work correctly with that initial data
-		Circle c4(1, 5, r, grid.NF);
-		c4.AddSolid(solidList);
-		Circle c44(1, 4, r, grid.NF);
-		c44.AddSolid(solidList);
-	*/
+	Circle c1(3.5, 2.1, r, grid.NF);
+	Circle c2(3.5, 4.9, r, grid.NF);
+	Circle c3(1.5, 1.9, r, grid.NF);
+	Circle c4(1.5, 5.1, r, grid.NF);
+	solidList.push_back(c1);
+	solidList.push_back(c2);
+	solidList.push_back(c3);
+	solidList.push_back(c4);
 
 	CalculateForce(Force_x, Force_y, solidList, U_new, V_new, grid, alpha_f, beta_f);
 
@@ -147,117 +130,126 @@ int main() {
 	while (n <= N_max) {
 
 		//creation new solids
-		if (!Debug) {
-			if (n > 0 && fmod(n*grid.d_t, 1.5) == 0.0) {
-				//double tmp = fmod(1200*grid.d_t, 1.5);
-				//if (n > 0){
-				int chance = 80;
-				int rnd;
-				rnd = rand() % 100 + 1;
-				if (rnd <= chance) {
-					x = 1 + ((rand() % 100 + 1) / 100.0);
-					y = 1 + ((rand() % 200 + 1) / 100.0);
-					Circle c(x, y, r, grid.NF);
-					solidList.push_back(c);
-				}
-				rnd = rand() % 100 + 1;
-				if (rnd <= chance) {
-					x = 1 + ((rand() % 100 + 1) / 100.0);
-					y = 4 + ((rand() % 200 + 1) / 100.0);
-					Circle c(x, y, r, grid.NF);
-					solidList.push_back(c);
-				}
-
-				rnd = rand() % 100 + 1;
-				if (rnd <= chance) {
-					x = 3 + ((rand() % 100 + 1) / 100.0);
-					y = 1 + ((rand() % 200 + 1) / 100.0);
-					Circle c(x, y, r, grid.NF);
-					solidList.push_back(c);
-				}
-
-				rnd = rand() % 100 + 1;
-				if (rnd <= chance) {
-					x = 3 + ((rand() % 100 + 1) / 100.0);
-					y = 4 + ((rand() % 200 + 1) / 100.0);
-					Circle c(x, y, r, grid.NF);
-					solidList.push_back(c);
-				}
+		if (n > 0 && fmod(n*grid.d_t, 1.5) == 0.0) {
+			int chance = 80;
+			int rnd;
+			rnd = rand() % 100 + 1;
+			if (rnd <= chance) {
+				x = 1 + ((rand() % 100 + 1) / 100.0);
+				y = 1 + ((rand() % 200 + 1) / 100.0);
+				Circle c(x, y, r, grid.NF);
+				solidList.push_back(c);
 			}
-			}
-			eps_u = 0.0;
-			eps_v = 0.0;
-
-			B_u = CalculateB_u(U_n, V_n, U_prev, V_prev, P, Force_x, grid, Re);
-			B_v = CalculateB_v(U_n, V_n, U_prev, V_prev, P, Force_y, grid, Re);
-
-
-			BiCGStab(U_new, grid.N1, grid.N2 + 1, OperatorA_u, B_u, grid);
-			BiCGStab(V_new, grid.N1 + 1, grid.N2, OperatorA_v, B_v, grid);
-
-			P_Right = Calculate_Press_Right(U_n, V_n, grid);
-
-			for (int i = 0; i < (int)Delta_P.size(); ++i)
-				for (int j = 0; j < (int)Delta_P[i].size(); ++j) {
-					Delta_P[i][j] = 0.0;
-				}
-
-
-			eps_p = Calculate_Press_correction(Delta_P, P_Right, N_Zeidel, Zeidel_eps, grid); //Должна ли поправка зависеть от скорости? пока не зависит
-			press_output << n << ' ' << eps_p << endl; //<---writing in closed stream
-
-
-
-			for (int i = 0; i < grid.N1 + 1; ++i) {
-				for (int j = 0; j < grid.N2 + 1; ++j) {
-					P[i][j] = P[i][j] + 1.0 * Delta_P[i][j]; // 0.8 changed to 1.0
-				}
+			rnd = rand() % 100 + 1;
+			if (rnd <= chance) {
+				x = 1 + ((rand() % 100 + 1) / 100.0);
+				y = 4 + ((rand() % 200 + 1) / 100.0);
+				Circle c(x, y, r, grid.NF);
+				solidList.push_back(c);
 			}
 
-			for (int i = 1; i < grid.N1 - 1; ++i) {
-				for (int j = 1; j < grid.N2; ++j) {
-					U_new[i][j] = U_new[i][j] - grid.d_t * (Delta_P[i + 1][j] - Delta_P[i][j]) / grid.d_x;
-				}
+			rnd = rand() % 100 + 1;
+			if (rnd <= chance) {
+				x = 3 + ((rand() % 100 + 1) / 100.0);
+				y = 1 + ((rand() % 200 + 1) / 100.0);
+				Circle c(x, y, r, grid.NF);
+				solidList.push_back(c);
 			}
 
+			rnd = rand() % 100 + 1;
+			if (rnd <= chance) {
+				x = 3 + ((rand() % 100 + 1) / 100.0);
+				y = 4 + ((rand() % 200 + 1) / 100.0);
+				Circle c(x, y, r, grid.NF);
+				solidList.push_back(c);
+			}
+		}
+
+		eps_u = 0.0;
+		eps_v = 0.0;
+
+		//<---------- prediction of velocity --------------------------
+		B_u = CalculateB_u(U_n, V_n, U_prev, V_prev, P, Force_x, grid, Re);
+		B_v = CalculateB_v(U_n, V_n, U_prev, V_prev, P, Force_y, grid, Re);
+#pragma omp parallel sections num_threads(2)
+		{
+
+#pragma omp section
+			{
+				BiCGStab(U_new, grid.N1, grid.N2 + 1, OperatorA_u, B_u, grid, false);
+			}
+#pragma omp section
+			{
+				BiCGStab(V_new, grid.N1 + 1, grid.N2, OperatorA_v, B_v, grid, false);
+			}
+
+		}
+		//ExplicPredVel(U_new,V_new,U_n,V_n,P,Force_x,Force_y,grid);
+
+		//<----------end of prediction of velocity --------------------
+
+
+		P_Right = Calculate_Press_Right(U_n, V_n, grid);
+
+		for (int i = 0; i < (int)Delta_P.size(); ++i)
+			for (int j = 0; j < (int)Delta_P[i].size(); ++j) {
+				Delta_P[i][j] = 0.0;
+			}
+
+
+		eps_p = Calculate_Press_correction(Delta_P, P_Right, N_Zeidel, Zeidel_eps, grid,false);
+
+		for (int i = 0; i < grid.N1 + 1; ++i) {
+			for (int j = 0; j < grid.N2 + 1; ++j) {
+				P[i][j] = P[i][j] + 0.8 * Delta_P[i][j];
+			}
+		}
+
+		for (int i = 1; i < grid.N1 - 1; ++i) {
 			for (int j = 1; j < grid.N2; ++j) {
-				int i = grid.N1 - 1;
-				U_new[i][j] = U_new[i - 1][j];
+				U_new[i][j] = U_new[i][j] - grid.d_t * (Delta_P[i + 1][j] - Delta_P[i][j]) / grid.d_x;
 			}
+		}
 
-			for (int i = 1; i < grid.N1 + 1; ++i) {
-				for (int j = 1; j < grid.N2 - 1; ++j) {
-					V_new[i][j] = V_new[i][j] - grid.d_t * (Delta_P[i][j + 1] - Delta_P[i][j]) / grid.d_y;
+		for (int j = 1; j < grid.N2; ++j) {
+			int i = grid.N1 - 1;
+			U_new[i][j] = U_new[i - 1][j];
+		}
+
+		for (int i = 1; i < grid.N1 + 1; ++i) {
+			for (int j = 1; j < grid.N2 - 1; ++j) {
+				V_new[i][j] = V_new[i][j] - grid.d_t * (Delta_P[i][j + 1] - Delta_P[i][j]) / grid.d_y;
+			}
+		}
+
+		//------------calculaating eps_u--------------------------
+		for (int i = 0; i < grid.N1; ++i) {
+			for (int j = 0; j < grid.N2 + 1; ++j) {
+				if (fabs(U_n[i][j] - U_new[i][j]) > eps_u) {
+					eps_u = fabs(U_n[i][j] - U_new[i][j]);
 				}
+
+				U_prev[i][j] = U_n[i][j];
+				U_n[i][j] = U_new[i][j];
 			}
-
-			//calculaating eps_u
-			for (int i = 0; i < grid.N1; ++i) {
-				for (int j = 0; j < grid.N2 + 1; ++j) {
-					if (fabs(U_n[i][j] - U_new[i][j]) > eps_u) {
-						eps_u = fabs(U_n[i][j] - U_new[i][j]);
-					}
-
-					U_prev[i][j] = U_n[i][j];
-					U_n[i][j] = U_new[i][j];
+		}
+		//------------calculaating eps_v--------------------------
+		for (int i = 0; i < grid.N1 + 1; ++i) {
+			for (int j = 0; j < grid.N2; ++j) {
+				if (fabs(V_n[i][j] - V_new[i][j]) > eps_v) {
+					eps_v = fabs(V_n[i][j] - V_new[i][j]);
 				}
+				V_prev[i][j] = V_n[i][j];
+				V_n[i][j] = V_new[i][j];
 			}
-			//calculaating eps_v
-			for (int i = 0; i < grid.N1 + 1; ++i) {
-				for (int j = 0; j < grid.N2; ++j) {
-					if (fabs(V_n[i][j] - V_new[i][j]) > eps_v) {
-						eps_v = fabs(V_n[i][j] - V_new[i][j]);
-					}
-					V_prev[i][j] = V_n[i][j];
-					V_n[i][j] = V_new[i][j];
-				}
-			}
+		}
+		//--------------------------------------------------------
 
-			CalculateForce(Force_x, Force_y, solidList, U_new, V_new, grid, alpha_f, beta_f);
-		
+		CalculateForce(Force_x, Force_y, solidList, U_new, V_new, grid, alpha_f, beta_f);
 
 
-//--------------COLLISION CHECK---------------------------
+
+		//--------------COLLISION CHECK---------------------------
 		list<Circle>::iterator first;
 		list<Circle>::iterator second;
 		///--------------collisions between particles---------------------------------

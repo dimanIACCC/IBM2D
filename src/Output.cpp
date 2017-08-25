@@ -1,3 +1,4 @@
+#include "stdafx.h"
 #include "Output.h"
 
 void OutputPressure(Matrix data, int n, double output_step, list<Circle> iList, Grid grid){

@@ -2,34 +2,34 @@
 #include "GeomVec.h"
 #include "CalculateForce.h"
 
-double DeltaFunction(double x, double y, Grid grid){
+double DeltaFunction(double x, double y, Grid grid) {
 	return 1.0 / (grid.d_x*grid.d_y) * FunctionD(x / grid.d_x) * FunctionD(y / grid.d_y);
 }
 
-double FunctionD(double r){
-	if ((0.0 <= fabs(r)) && (fabs(r) < 1.0)){
+double FunctionD(double r) {
+	if ((0.0 <= fabs(r)) && (fabs(r) < 1.0)) {
 		return 1.0 / 8.0*(3.0 - 2.0 * fabs(r) + sqrt(1.0 + 4.0 * fabs(r) - 4.0 * r * r));
 	}
-	if ((1.0 <= fabs(r)) && (fabs(r) < 2.0)){
+	if ((1.0 <= fabs(r)) && (fabs(r) < 2.0)) {
 		return 1.0 / 8.0*(5.0 - 2.0 * fabs(r) - sqrt(-7.0 + 12.0 * fabs(r) - 4.0 * r * r));
 	}
-	if (2.0 <= fabs(r)){
+	if (2.0 <= fabs(r)) {
 		return 0.0;
 	}
 	return 0;
 }
-void GetInfluenceArea(int& i_min, int& i_max, int& j_min, int& j_max, int const& Ni, int const& Nj, GeomVec x, int size, Grid grid){
 
+void GetInfluenceArea(int& i_min, int& i_max, int& j_min, int& j_max, int const& Ni, int const& Nj, GeomVec x, int size, Grid grid){
 	i_max = (int)((x[1] / grid.d_x) + size);
 	i_min = (int)((x[1] / grid.d_x) - size);
 
 	j_max = (int)(x[2] / grid.d_y) + size;
 	j_min = (int)(x[2] / grid.d_y) - size;
 
-	if (i_min < 0){
+	if (i_min < 0) {
 		i_min = 0;
 	}
-	if (j_min < 0){
+	if (j_min < 0) {
 		j_min = 0;
 	}
 	if (i_max >= Ni) {
@@ -194,7 +194,119 @@ double CalculateForce(Matrix& force_x, Matrix& force_y, list<Circle> &iList, Mat
 			// solid.omega -= solid.tau * grid.d_t * 1 / (solid.rho - 1) / solid.I;  // angular moment I is normalized with density
 		}
 	}
-
 	return 0;
+}
+
+Matrix Calculate_F_real_x(Matrix& u_n, Matrix& v_n, Matrix& u_prev, Matrix& p, Grid g, double Re) {
+
+	double d_xx = 1.0 / (g.d_x*g.d_x);
+	double d_yy = 1.0 / (g.d_y*g.d_y);
+	int n1 = g.N1;
+	int n2 = g.N2 + 1;
+	double advective_term_n = 0.0;
+	double diffusion_term = 0.0;
+	double pressure = 0.0;
+	double v_help = 0.0;
+
+	CreateMatrix(result, n1, n2);
+
+	for (int j = 1; j < (n2 - 1); ++j) {
+		for (int i = 1; i < (n1 - 1); ++i) {
+
+			v_help = 0.25 * (v_n[i][j] + v_n[i + 1][j] + v_n[i][j - 1] + v_n[i + 1][j - 1]);
+			advective_term_n = u_n[i][j] * (u_n[i + 1][j] - u_n[i - 1][j]) / (2.0*g.d_x) + v_help * (u_n[i][j + 1] - u_n[i][j - 1]) / (2.0*g.d_y);
+			diffusion_term = d_xx * (u_n[i + 1][j] - 2.0 * u_n[i][j] + u_n[i - 1][j]) + d_yy * (u_n[i][j + 1] - 2.0 * u_n[i][j] + u_n[i][j - 1]);
+			pressure = (p[i + 1][j] - p[i][j]) / (g.d_x);
+			if (j == 1 || j == n2 - 2) {
+				v_help = 0.25 * (v_n[i][j] + v_n[i + 1][j] + v_n[i][j - 1] + v_n[i + 1][j - 1]);
+				advective_term_n = u_n[i][j] * (u_n[i + 1][j] - u_n[i - 1][j]) / (2.0*g.d_x) + v_help * (u_n[i][j + 1] - u_n[i][j - 1]) / (1.5*g.d_y);
+
+				if (j == 1) {
+					diffusion_term = d_xx * (u_n[i + 1][j] - 2.0 * u_n[i][j] + u_n[i - 1][j]) + d_yy * (4.0*u_n[i][j + 1] - 12.0 * u_n[i][j] + 8.0*u_n[i][j - 1]) / 3.0;
+				}
+				if (j == n2 - 2) {
+					diffusion_term = d_xx * (u_n[i + 1][j] - 2.0 * u_n[i][j] + u_n[i - 1][j]) + d_yy * (8.0*u_n[i][j + 1] - 12.0 * u_n[i][j] + 4.0*u_n[i][j - 1]) / 3.0;
+				}
+
+				result[i][j] = advective_term_n + pressure - 1.0 / (Re) * (diffusion_term);
+
+			}
+
+		}
+
+	}
+
+	// outflow du/dx = 0
+	//for (int j = 0; j < n2; ++j) {
+
+	//	// if ( j <= M2 ){
+	//	// 	continue;
+	//	// }
+
+	//	//result[n1 - 1][j] = 0.0;
+	//	// result[n1-1][j] = u_n[0][j];
+	//	//result[0][j] = u_n[0][j];
+	//	// result[0][j] = 1.0/Re * d_yy * ( u_n[0][j + 1] - 2.0 * u_n[0][j] + u_n[0][j - 1]);
+	//}
+
+	return result;
+
+
+}
+
+Matrix Calculate_F_real_y(Matrix& u_n, Matrix& v_n, Matrix& v_prev, Matrix& p, Grid g, double Re) {
+
+	double d_xx = 1.0 / (g.d_x*g.d_x);
+	double d_yy = 1.0 / (g.d_y*g.d_y);
+	int n1 = g.N1 + 1;
+	int n2 = g.N2;
+
+	double advective_term_n = 0.0;
+	double diffusion_term = 0.0;
+	double pressure = 0.0;
+	double u_help = 0.0;
+
+	CreateMatrix(result, n1, n2);
+
+
+	for (int j = 1; j < (n2 - 1); ++j) {
+		for (int i = 1; i < (n1 - 1); ++i) {
+
+			u_help           = 0.25 * (u_n[i][j] + u_n[i - 1][j] + u_n[i][j + 1] + u_n[i - 1][j + 1]);
+			advective_term_n = u_help * (v_n[i + 1][j] - v_n[i - 1][j]) / (2.0*g.d_x) + v_n[i][j] * (v_n[i][j + 1] - v_n[i][j - 1]) / (2.0*g.d_y);
+			diffusion_term   = d_xx * (v_n[i + 1][j] - 2.0 * v_n[i][j] + v_n[i - 1][j]) + d_yy * (v_n[i][j + 1] - 2.0 * v_n[i][j] + v_n[i][j - 1]);
+			pressure         = (p[i][j + 1] - p[i][j]) / (g.d_y);
+
+			if (i == 1 || i == n1 - 2) {
+				u_help           = 0.25 * (u_n[i][j] + u_n[i - 1][j] + u_n[i][j + 1] + u_n[i - 1][j + 1]);
+				advective_term_n = u_help * (v_n[i + 1][j] - v_n[i - 1][j]) / (1.5*g.d_x) + v_n[i][j] * (v_n[i][j + 1] - v_n[i][j - 1]) / (2.0*g.d_y);
+
+				if (i == 1) {
+					diffusion_term = d_xx * (4.0*v_n[i + 1][j] - 12.0 * v_n[i][j] + 8.0*v_n[i - 1][j]) / 3.0 + d_yy * (v_n[i][j + 1] - 2.0 * v_n[i][j] + v_n[i][j - 1]);
+				}
+				if (i == n1 - 2) {
+					diffusion_term = d_xx * (8.0*v_n[i + 1][j] - 12.0 * v_n[i][j] + 4.0*v_n[i - 1][j]) / 3.0 + d_yy * (v_n[i][j + 1] - 2.0 * v_n[i][j] + v_n[i][j - 1]);
+				}
+
+				result[i][j] = advective_term_n + pressure - 1.0 / (Re) * (diffusion_term);
+			}
+		}
+
+	}
+
+	// outflow du/dx = 0
+	//for (int j = 0; j < n2; ++j) {
+
+	//	// if ( j <= M2 ){
+	//	// 	continue;
+	//	// }
+
+	//	//result[n1 - 1][j] = 0.0;
+	//	// result[n1-1][j] = u_n[0][j];
+	//	//result[0][j] = v_n[0][j];
+	//}
+
+	return result;
+
 
 }

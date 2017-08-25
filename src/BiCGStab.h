@@ -2,7 +2,7 @@
 
 #include "stdafx.h"
 #include "Grid.h"
-#include "Calculate_A.h"
+#include "PredictVel.h"
 using namespace std;
 
 
@@ -13,5 +13,5 @@ Suppose in u first approximation ( in fact in u - velocity fromprevious step)
 r(0) = b - Au
 z(0) = r(0)
 in b_norm calculate Euclid norm of vector b*/
-void BiCGStab(Matrix& res, int const n1, int const n2, Matrix operator_A[5], Matrix &b,Grid grid);
+void BiCGStab(Matrix& res, int const n1, int const n2, Matrix operator_A[5], Matrix &b,Grid grid,bool OverFlow);
 double ScalarOperator(Matrix &a, Matrix &b, int const n1, int const n2);
