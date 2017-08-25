@@ -104,8 +104,8 @@ void OutputVelocity_U(Matrix data, int n, int output_step, list<Circle> iList, G
 		for (int i = 0; i < solid.Nn; ++i) {
 			output << solid.Nodes[i].x[1] << " "
 			       << solid.Nodes[i].x[2] << " "
-			       << solid.Nodes[i].uf[1] << " "
-			       << solid.Nodes[i].uf[2] << " " << endl;
+			       << solid.Nodes[i].us[1] << " "
+			       << solid.Nodes[i].us[2] << " " << endl;
 		}
 	}
 
@@ -152,8 +152,8 @@ void OutputVelocity_V(Matrix& data, int n, int output_step, list<Circle> iList, 
 		for (int i = 0; i < solid.Nn; ++i) {
 			output << solid.Nodes[i].x[1] << " "
 			       << solid.Nodes[i].x[2] << " "
-			       << solid.Nodes[i].uf[1] << " "
-			       << solid.Nodes[i].uf[2] << " " << endl;
+			       << solid.Nodes[i].us[1] << " "
+			       << solid.Nodes[i].us[2] << " " << endl;
 		}
 	}
 

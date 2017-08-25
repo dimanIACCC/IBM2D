@@ -42,7 +42,7 @@ class Circle : public SolidBody{
 public:
 	double r;
 	double d_s;
-	Circle(double x, double y,  double r, int NF);
+	Circle(double x, double y,  double r, int NF, GeomVec uc_in);
 	~Circle();
 };
 

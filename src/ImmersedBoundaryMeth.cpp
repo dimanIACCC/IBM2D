@@ -25,6 +25,7 @@ void InputData(Grid& grid, double &M, int &Re, double &alpha_f, double &beta_f, 
 void SetLog(ostream &log, Grid grid, double M, double Re, double alpha_f, double beta_f, double Zeidel_eps);
 void PushLog(ostream &log, int n, double eps_u, double eps_v);
 void ApplyInitialData(Matrix& u, Grid grid);
+double ux_Poiseuille(double y, double H);
 int sgn(double x);
 
 
@@ -113,10 +114,21 @@ int main() {
 
 
 	//Firstly adding some circles
-	Circle c1(3.5, 2.1, r, grid.NF);
-	Circle c2(3.5, 4.9, r, grid.NF);
-	Circle c3(1.5, 1.9, r, grid.NF);
-	Circle c4(1.5, 5.1, r, grid.NF);
+	GeomVec uc;
+	std::fill(uc.begin(), uc.end(), 0.0);
+
+	uc[1] = ux_Poiseuille(2.1, grid.H);
+	Circle c1(3.5, 2.1, r, grid.NF, uc);
+
+	uc[1] = ux_Poiseuille(4.9, grid.H);
+	Circle c2(3.5, 4.9, r, grid.NF, uc);
+
+	uc[1] = ux_Poiseuille(1.9, grid.H);
+	Circle c3(1.5, 1.9, r, grid.NF, uc);
+
+	uc[1] = ux_Poiseuille(5.1, grid.H);
+	Circle c4(1.5, 5.1, r, grid.NF, uc);
+
 	solidList.push_back(c1);
 	solidList.push_back(c2);
 	solidList.push_back(c3);
@@ -137,14 +149,16 @@ int main() {
 			if (rnd <= chance) {
 				x = 1 + ((rand() % 100 + 1) / 100.0);
 				y = 1 + ((rand() % 200 + 1) / 100.0);
-				Circle c(x, y, r, grid.NF);
+				uc[1] = ux_Poiseuille(y, grid.H);
+				Circle c(x, y, r, grid.NF, uc);
 				solidList.push_back(c);
 			}
 			rnd = rand() % 100 + 1;
 			if (rnd <= chance) {
 				x = 1 + ((rand() % 100 + 1) / 100.0);
 				y = 4 + ((rand() % 200 + 1) / 100.0);
-				Circle c(x, y, r, grid.NF);
+				uc[1] = ux_Poiseuille(y, grid.H);
+				Circle c(x, y, r, grid.NF, uc);
 				solidList.push_back(c);
 			}
 
@@ -152,7 +166,8 @@ int main() {
 			if (rnd <= chance) {
 				x = 3 + ((rand() % 100 + 1) / 100.0);
 				y = 1 + ((rand() % 200 + 1) / 100.0);
-				Circle c(x, y, r, grid.NF);
+				uc[1] = ux_Poiseuille(y, grid.H);
+				Circle c(x, y, r, grid.NF, uc);
 				solidList.push_back(c);
 			}
 
@@ -160,7 +175,8 @@ int main() {
 			if (rnd <= chance) {
 				x = 3 + ((rand() % 100 + 1) / 100.0);
 				y = 4 + ((rand() % 200 + 1) / 100.0);
-				Circle c(x, y, r, grid.NF);
+				uc[1] = ux_Poiseuille(y, grid.H);
+				Circle c(x, y, r, grid.NF, uc);
 				solidList.push_back(c);
 			}
 		}
@@ -319,7 +335,7 @@ int main() {
 					//rotate
 					GeomVec r = it->Nodes[k].x - it->xc;
 					GeomVec x_temp = rotate_Vector_around_vector(r, it->omega  * length(r) * grid.d_t); //
-					// it->Nodes[k].x = it->xc + x_temp; // rotate solid by angle $omega$ * $dt$
+					it->Nodes[k].x = it->xc + x_temp; // rotate solid by angle $omega$ * $dt$
 					// move
 					it->Nodes[k].x += it->uc * grid.d_t;
 				}
@@ -417,9 +433,14 @@ void ApplyInitialData(Matrix &u, Grid grid) {
 	// Poiseuille flow 
 	for (int i = 0; i < grid.N1; ++i) {
 		for (int j = 1; j < grid.N2; ++j) {
-			u[i][j] = (pow((grid.H) / 2.0, 2) - pow((j - 0.5)*grid.d_y - grid.H / 2.0, 2));
+			u[i][j] = ux_Poiseuille((j - 0.5)*grid.d_y, grid.H);
 		}
 	}
+}
+
+double ux_Poiseuille(double y, double H) {
+	double ux = (pow(H / 2.0, 2) - pow(y - H / 2.0, 2));
+	return ux;
 }
 
 int sgn(double x)

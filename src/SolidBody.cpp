@@ -17,7 +17,7 @@ SolidBody::~SolidBody()
 {
 }
 
-Circle::Circle(double x, double y, double r, int NF) : SolidBody(x, y){
+Circle::Circle(double x, double y, double r, int NF, GeomVec uc_in) : SolidBody(x, y){
 	this->r = r;
 	this->Nn = NF;
 	this->d_s = (2.0*M_PI*r) / Nn;
@@ -30,6 +30,7 @@ Circle::Circle(double x, double y, double r, int NF) : SolidBody(x, y){
 	V = M_PI * r * r;
 	rho = 10.0 / V; // corresponds to old formula for force
 	I =  V * r * r / 2.0; // angular momentum for unit density
+	uc = uc_in;
 }
  
 Circle::~Circle()
