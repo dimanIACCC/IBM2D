@@ -1,4 +1,3 @@
-#include "stdafx.h"
 #include "BiCGStab.h"
 
 void BiCGStab(Matrix &x, int const n1, int const n2, Matrix operator_A[5], Matrix &b, Param par,bool OverFlow){
@@ -151,7 +150,7 @@ void BiCGStab(Matrix &x, int const n1, int const n2, Matrix operator_A[5], Matri
 
 	if (10000 == n){
 
-		cout << "---------------- Ops. iteration exit in BiCGStab method (eps = " << eps << ") ----------------" << endl;
+		std::cout << "---------------- Ops. iteration exit in BiCGStab method (eps = " << eps << ") ----------------" << std::endl;
 	}
 
 }

@@ -1,5 +1,3 @@
-#define _USE_MATH_DEFINES
-#include "GeomVec.h"
 #include "CalculateForce.h"
 
 double DeltaFunction(double x, double y, Param par) {
@@ -41,7 +39,7 @@ void GetInfluenceArea(int& i_min, int& i_max, int& j_min, int& j_max, int const&
 }
 
 
-double CalculateForce(Matrix& force_x, Matrix& force_y, list<Circle> &iList, Matrix& u, Matrix& v, Param par) {
+double CalculateForce(Matrix& force_x, Matrix& force_y, std::list<Circle> &iList, Matrix& u, Matrix& v, Param par) {
 
 	int const nx1 = par.N1;
 	int	const nx2 = par.N2 + 1;

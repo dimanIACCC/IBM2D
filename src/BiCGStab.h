@@ -1,10 +1,6 @@
 #pragma once
 
-#include "stdafx.h"
-#include "Parameters.h"
 #include "PredictVel.h"
-using namespace std;
-
 
 /* We want to solve Poisson equation for velocity.
 Au = b, where A Matrix of coefficents of leap-frog scheme applyied to poisson equation. and b right side

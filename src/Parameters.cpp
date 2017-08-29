@@ -1,5 +1,3 @@
-#pragma once
-
 #include "Parameters.h"
 
 void InputData(Param& par) {

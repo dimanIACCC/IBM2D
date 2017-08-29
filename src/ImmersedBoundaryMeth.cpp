@@ -1,6 +1,3 @@
-#include "stdafx.h"
-#include "SolidBody.h"
-#include "Parameters.h"
 #include "CalculateForce.h"
 #include "Output.h"
 #include "BiCGStab.h"
@@ -16,14 +13,12 @@
 bool Debug = false;
 bool InelasticCollision = false; //Perfectly inelastic collision --- абсолютно неупругие столкновения
 
-using namespace std;
-
 
 // fuctions
 
 void InputData(Param& par);
-void SetLog(ostream &log, Param par);
-void PushLog(ostream &log, int n, double eps_u, double eps_v);
+void SetLog(std::ostream &log, Param par);
+void PushLog(std::ostream &log, int n, double eps_u, double eps_v);
 void ApplyInitialData(Matrix& u, Param par);
 double ux_Poiseuille(double y, double H);
 int sgn(double x);
@@ -80,22 +75,22 @@ int main() {
 
 
 	// list of immersed solids
-	list<Circle> solidList;
-	ofstream output; // for Drag and Lift coefficents
-	ofstream press_output; // press
-	ofstream log;
+	std::list<Circle> solidList;
+	std::ofstream output; // for Drag and Lift coefficents
+	std::ofstream press_output; // press
+	std::ofstream log;
 	//-----------creating Result folder --------------
 	//char current_work_dir[FILENAME_MAX];
 	//_getcwd(current_work_dir, sizeof(current_work_dir));
 	//strcat_s(current_work_dir, "\\Result");
 	//_mkdir(current_work_dir);
 	//-------------------------------------------------
-	string filename = "Result/coefficent.plt";
+	std::string filename = "Result/coefficent.plt";
 	//string filepress = "Result/eps_pressure.plt";
-	string filelog = "Result/log.txt";
-	log.open(filelog, ios::out);
+	std::string filelog = "Result/log.txt";
+	log.open(filelog, std::ios::out);
 	SetLog(log, par);
-	log << endl;
+	log << std::endl;
 
 
 	ApplyInitialData(U_new, par); // Applying initial data to velocity 
@@ -255,8 +250,8 @@ int main() {
 
 
 		//--------------COLLISION CHECK---------------------------
-		list<Circle>::iterator first;
-		list<Circle>::iterator second;
+		std::list<Circle>::iterator first;
+		std::list<Circle>::iterator second;
 		///--------------collisions between particles---------------------------------
 		for (auto one = solidList.begin(); one != solidList.end(); one++) {
 			for (auto two = next(one); two != solidList.end(); two++) {
@@ -271,7 +266,7 @@ int main() {
 					second = one;
 				}
 				if (distance <= (2 * first->r)) {
-					if (Debug) cout << "COLLISION DETECTED";
+					if (Debug) std::cout << "COLLISION DETECTED";
 					if (InelasticCollision) {
 						//Perfectly inelastic collision
 						first ->uc = (first->uc + second->uc) / 2;
@@ -304,7 +299,7 @@ int main() {
 			double DistUpper = par.H - one->xc[2];//<----distance to upper wall
 			double DistLower = one->xc[2];//<-------distance to lower wall
 			if (DistUpper < one->r || DistLower < one->r) {
-				if (Debug) cout << "COLLISION DETECTED";
+				if (Debug) std::cout << "COLLISION DETECTED";
 				one->uc[2] = -one->uc[2];
 			}
 		}
@@ -344,8 +339,8 @@ int main() {
 
 		if (n < 1000 || (n > 1000 && 0 == n % 100)) {
 			std::cout << "n  = " << n << " | eps_u = " << eps_u << " | eps_v = " << eps_v << "		";
-			time_t t = chrono::system_clock::to_time_t(chrono::system_clock::now());   // get time now
-			string s_time = ctime(&t);
+			time_t t = std::chrono::system_clock::to_time_t(std::chrono::system_clock::now());   // get time now
+			std::string s_time = ctime(&t);
 			s_time.erase(7, 1);
 			s_time.erase(0, 4);
 			s_time.erase(s_time.size() - 6, 5);
@@ -374,7 +369,7 @@ int main() {
 		++n;
 	}
 	log.close();
-	std::cout << "Over" << endl;
+	std::cout << "Over" << std::endl;
 	getchar();
 
 	return 0;
@@ -386,29 +381,29 @@ int main() {
 
 
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-void SetLog(ostream& log, Param par) {
+void SetLog(std::ostream& log, Param par) {
 
 	log << "The IBM program starts.		";
-	time_t t = chrono::system_clock::to_time_t(chrono::system_clock::now());   // get time now
-	log << ctime(&t) << endl;
-	log << "The parameters are the following:" << endl;
-	log << "Reynolds number               : Re  = " << par.Re << endl;
-	log << "Channel length                : L   = " << par.L << endl;
-	log << "Channel width                 : W   = " << par.H << endl;
-	log << "Number of nodes on            : N1  = " << par.N1 << endl;
-	log << "Number of nodes on            : N2  = " << par.N2 << endl;
-	log << "Number of nodes for a particle: NF  = " << par.NF << endl;
-	log << "Time step                     : tau = " << par.d_t << endl;
-	log << "Force parameter alpha         : alpha = " << par.alpha_f << endl;
-	log << "Force parameter beta          : beta  = " << par.beta_f << endl;
-	log << "Tolerance for Zeidel method   : tol = " << par.Zeidel_eps << endl;
+	time_t t = std::chrono::system_clock::to_time_t(std::chrono::system_clock::now());   // get time now
+	log << ctime(&t) << std::endl;
+	log << "The parameters are the following:" << std::endl;
+	log << "Reynolds number               : Re  = " << par.Re << std::endl;
+	log << "Channel length                : L   = " << par.L << std::endl;
+	log << "Channel width                 : W   = " << par.H << std::endl;
+	log << "Number of nodes on            : N1  = " << par.N1 << std::endl;
+	log << "Number of nodes on            : N2  = " << par.N2 << std::endl;
+	log << "Number of nodes for a particle: NF  = " << par.NF << std::endl;
+	log << "Time step                     : tau = " << par.d_t << std::endl;
+	log << "Force parameter alpha         : alpha = " << par.alpha_f << std::endl;
+	log << "Force parameter beta          : beta  = " << par.beta_f << std::endl;
+	log << "Tolerance for Zeidel method   : tol = " << par.Zeidel_eps << std::endl;
 
 }
 
-void PushLog(ostream& log, int n, double eps_u, double eps_v) {
-	time_t t = chrono::system_clock::to_time_t(chrono::system_clock::now());
+void PushLog(std::ostream& log, int n, double eps_u, double eps_v) {
+	time_t t = std::chrono::system_clock::to_time_t(std::chrono::system_clock::now());
 	log << "n  = " << n << " | eps_u = " << eps_u << " | eps_v = " << eps_v << '\t';
-	string s_time = ctime(&t);
+	std::string s_time = ctime(&t);
 	s_time.erase(7, 1);
 	s_time.erase(0, 4);
 	s_time.erase(s_time.size() - 6, 5);
@@ -436,4 +431,3 @@ int sgn(double x)
 	(x >= 0) ? x = 1 : x = -1;
 	return x;
 }
-

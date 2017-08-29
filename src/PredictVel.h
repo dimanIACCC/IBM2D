@@ -1,9 +1,7 @@
 #pragma once
 
-#include "stdafx.h"
 #include "Parameters.h"
-
-using namespace std;
+#include "GeomVec.h"
 
 void ExplicPredVel(Matrix& U_predict, Matrix& V_predict, Matrix& U_n, Matrix& V_n, Matrix& P, Matrix& Force_x, Matrix& Force_y, Param par);
 

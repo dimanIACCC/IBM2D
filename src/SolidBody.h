@@ -1,11 +1,6 @@
 #pragma once
 
-
-#include "stdafx.h"
-#include "Parameters.h"
-
-using namespace std;
-
+#include "GeomVec.h"
 
 class Node
 {
@@ -31,8 +26,8 @@ public:
 	double I;       // angular momentum
 	double rho;     // density
 	double V;       // volume
-	vector<Node> Nodes;   // Nodes of the SolidBody mesh
-	int Nn;               // Number of Nodes
+	std::vector<Node> Nodes;   // Nodes of the SolidBody mesh
+	int Nn;                    // Number of Nodes
 	
 	SolidBody(double x, double y);
 	~SolidBody();
@@ -45,4 +40,3 @@ public:
 	Circle(double x, double y,  double r, int NF, GeomVec uc_in);
 	~Circle();
 };
-
