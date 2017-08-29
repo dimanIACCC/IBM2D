@@ -16,7 +16,6 @@ bool InelasticCollision = false; //Perfectly inelastic collision --- абсолютно н
 
 // fuctions
 
-void InputData(Param& par);
 void SetLog(std::ostream &log, Param par);
 void PushLog(std::ostream &log, int n, double eps_u, double eps_v);
 void ApplyInitialData(Matrix& u, Param par);
@@ -30,7 +29,6 @@ int main() {
 	const double epsilon = 1e-3;
 
 	// declaring variables
-	Param par;
 	double eps_u = 0.0;
 	double eps_v = 0.0;
 	double eps_p = 0.0;
@@ -38,7 +36,7 @@ int main() {
 
 
 	int n = 0; // iteration counter
-	InputData(par); // Get value of some variables
+	Param par("input.txt"); // Construct Parameters using file input.txt
 	CreateMatrix(U_n, par.N1, par.N2 + 1);
 	CreateMatrix(U_new, par.N1, par.N2 + 1);
 	CreateMatrix(U_prev, par.N1, par.N2 + 1);

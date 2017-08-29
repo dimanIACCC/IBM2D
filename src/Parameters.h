@@ -21,6 +21,6 @@ public:
 	int N_max;                // number of total iterations
 	int N_Zeidel;             // number of iterations in Zeidel method
 	double Zeidel_eps;        // tolerance for Zeidel method
+	Param();
+	Param(std::string filename);
 };
-
-void InputData(Param& par);
