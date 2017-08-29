@@ -1,7 +1,7 @@
 #pragma once
 
 #include "stdafx.h"
-#include "Grid.h"
+#include "Parameters.h"
 #include "SolidBody.h"
 using namespace std;
 

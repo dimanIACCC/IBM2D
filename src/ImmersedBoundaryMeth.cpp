@@ -1,6 +1,6 @@
 #include "stdafx.h"
 #include "SolidBody.h"
-#include "Grid.h"
+#include "Parameters.h"
 #include "CalculateForce.h"
 #include "Output.h"
 #include "BiCGStab.h"

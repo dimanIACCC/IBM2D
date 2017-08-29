@@ -2,7 +2,7 @@
 
 
 #include "stdafx.h"
-#include "Grid.h"
+#include "Parameters.h"
 
 using namespace std;
 

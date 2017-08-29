@@ -1,7 +1,7 @@
 #pragma once
 
 #include "stdafx.h"
-#include "Grid.h"
+#include "Parameters.h"
 #include "PredictVel.h"
 using namespace std;
 
