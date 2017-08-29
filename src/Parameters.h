@@ -1,6 +1,6 @@
 #pragma once
 
-struct Grid{
+struct Param{
 	double Re;                // Reynolds number
 	double L;                 // length
 	double H;                 // height

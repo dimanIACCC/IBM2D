@@ -1,7 +1,7 @@
 #include "stdafx.h"
 #include "Output.h"
 
-void OutputPressure(Matrix data, int n, list<Circle> iList, Grid grid){
+void OutputPressure(Matrix data, int n, list<Circle> iList, Param par){
 
 	ofstream output;
 	int i = 0;
@@ -15,39 +15,39 @@ void OutputPressure(Matrix data, int n, list<Circle> iList, Grid grid){
 
 	output << "title = " << '"' << "sample mesh" << '"' << endl;
 	output << "Variables = x y p" << endl;
-	output << "zone T=" << '"' << n << '"' << ",  i=" << grid.N1 + 1 << ", j=" << grid.N2 + 1 << ", f=point" << endl;
+	output << "zone T=" << '"' << n << '"' << ",  i=" << par.N1 + 1 << ", j=" << par.N2 + 1 << ", f=point" << endl;
 	output << "SolutionTime = " << n << endl;
 
 	output << 0.0 << ' ' << 0.0 << ' ' << data[0][0] << endl;
 
-	for (i = 1; i < grid.N1; ++i){
+	for (i = 1; i < par.N1; ++i){
 
-		output << (i - 0.5)*grid.d_x << ' ' << 0.0 << ' ' << data[i][0] << endl;
+		output << (i - 0.5)*par.d_x << ' ' << 0.0 << ' ' << data[i][0] << endl;
 	}
-	i = grid.N1;
-	output << (i - 1)*grid.d_x << ' ' << 0.0 << ' ' << data[i][0] << endl;
+	i = par.N1;
+	output << (i - 1)*par.d_x << ' ' << 0.0 << ' ' << data[i][0] << endl;
 
 
-	for (j = 1; j < grid.N2; ++j){
+	for (j = 1; j < par.N2; ++j){
 
-		output << 0.0 << ' ' << (j - 0.5)*grid.d_y << ' ' << data[0][j] << endl;
+		output << 0.0 << ' ' << (j - 0.5)*par.d_y << ' ' << data[0][j] << endl;
 
-		for (i = 1; i < grid.N1; ++i){
-			output << (i - 0.5)*grid.d_x << ' ' << (j - 0.5)*grid.d_y << ' ' << data[i][j] << endl;
+		for (i = 1; i < par.N1; ++i){
+			output << (i - 0.5)*par.d_x << ' ' << (j - 0.5)*par.d_y << ' ' << data[i][j] << endl;
 		}
-		i = grid.N1;
-		output << (i - 1)*grid.d_x << ' ' << (j - 0.5)*grid.d_y << ' ' << data[i][j] << endl;
+		i = par.N1;
+		output << (i - 1)*par.d_x << ' ' << (j - 0.5)*par.d_y << ' ' << data[i][j] << endl;
 	}
 
 
-	j = grid.N2;
-	output << 0.0 << ' ' << (j - 1)*grid.d_y << ' ' << data[0][j] << endl;
-	for (i = 1; i < grid.N1; ++i){
+	j = par.N2;
+	output << 0.0 << ' ' << (j - 1)*par.d_y << ' ' << data[0][j] << endl;
+	for (i = 1; i < par.N1; ++i){
 
-		output << (i - 0.5)*grid.d_x << ' ' << (j - 1)*grid.d_y << ' ' << data[i][j] << endl;
+		output << (i - 0.5)*par.d_x << ' ' << (j - 1)*par.d_y << ' ' << data[i][j] << endl;
 	}
-	i = grid.N1;
-	output << (i - 1)*grid.d_x << ' ' << (j - 1)*grid.d_y << ' ' << data[i][j] << endl;
+	i = par.N1;
+	output << (i - 1)*par.d_x << ' ' << (j - 1)*par.d_y << ' ' << data[i][j] << endl;
 
 	for (auto& solid : iList){
 		output << "zone T = circle" << ",  i=" << solid.Nn << ", f=point" << endl;
@@ -66,7 +66,7 @@ void OutputPressure(Matrix data, int n, list<Circle> iList, Grid grid){
 }
 
 
-void OutputVelocity_U(Matrix data, int n, list<Circle> iList, Grid grid){
+void OutputVelocity_U(Matrix data, int n, list<Circle> iList, Param par){
 
 	ofstream output;
 
@@ -78,24 +78,24 @@ void OutputVelocity_U(Matrix data, int n, list<Circle> iList, Grid grid){
 
 	output << "title = " << '"' << "sample mesh" << '"' << endl;
 	output << "Variables = x y u v" << endl;
-	output << "zone T=" << '"' << n << '"' << ",  i=" << grid.N1 << ", j=" << grid.N2 + 1 << ", f=point" << endl;
+	output << "zone T=" << '"' << n << '"' << ",  i=" << par.N1 << ", j=" << par.N2 + 1 << ", f=point" << endl;
 	output << "SolutionTime = " << n << endl;
 
-	for (int i = 0; i < grid.N1; ++i){
+	for (int i = 0; i < par.N1; ++i){
 
-		output << i*grid.d_x << ' ' << 0.0 << ' ' << data[i][0] << ' ' << 0 << endl;
+		output << i*par.d_x << ' ' << 0.0 << ' ' << data[i][0] << ' ' << 0 << endl;
 	}
 
-	for (int j = 1; j < grid.N2; ++j){
-		for (int i = 0; i < grid.N1; ++i){
-			output << (i)*grid.d_x << ' ' << (j - 0.5)*grid.d_y << ' ' << data[i][j] << ' ' << 0 << endl;
+	for (int j = 1; j < par.N2; ++j){
+		for (int i = 0; i < par.N1; ++i){
+			output << (i)*par.d_x << ' ' << (j - 0.5)*par.d_y << ' ' << data[i][j] << ' ' << 0 << endl;
 		}
 	}
 
-	for (int i = 0; i < grid.N1; ++i){
+	for (int i = 0; i < par.N1; ++i){
 
-		int j = grid.N2;
-		output << i*grid.d_x << ' ' << (j - 1)*grid.d_y << ' ' << data[i][j] << ' ' << 0 << endl;
+		int j = par.N2;
+		output << i*par.d_x << ' ' << (j - 1)*par.d_y << ' ' << data[i][j] << ' ' << 0 << endl;
 	}
 
 	for (auto& solid : iList){
@@ -115,7 +115,7 @@ void OutputVelocity_U(Matrix data, int n, list<Circle> iList, Grid grid){
 }
 
 
-void OutputVelocity_V(Matrix data, int n, list<Circle> iList, Grid grid){
+void OutputVelocity_V(Matrix data, int n, list<Circle> iList, Param par){
 
 	ofstream output;
 
@@ -127,23 +127,23 @@ void OutputVelocity_V(Matrix data, int n, list<Circle> iList, Grid grid){
 
 	output << "title = " << '"' << "sample mesh" << '"' << endl;
 	output << "Variables = x y u v" << endl;
-	output << "zone T=" << '"' << n << '"' << ",  i=" << grid.N1 + 1 << ", j=" << grid.N2 << ", f=point" << endl;
+	output << "zone T=" << '"' << n << '"' << ",  i=" << par.N1 + 1 << ", j=" << par.N2 << ", f=point" << endl;
 	output << "SolutionTime = " << n << endl;
 
-	for (int j = 0; j < grid.N2; ++j){
+	for (int j = 0; j < par.N2; ++j){
 
 
-		output << 0.0 << ' ' << (j)*grid.d_y << ' ' << 0 << ' ' << data[0][j] << endl;
+		output << 0.0 << ' ' << (j)*par.d_y << ' ' << 0 << ' ' << data[0][j] << endl;
 
-		for (int i = 1; i < grid.N1; ++i){
+		for (int i = 1; i < par.N1; ++i){
 
-			output << (i - 0.5)*grid.d_x << ' ' << (j)*grid.d_y << ' ' << 0 << ' ' << data[i][j] << endl;
+			output << (i - 0.5)*par.d_x << ' ' << (j)*par.d_y << ' ' << 0 << ' ' << data[i][j] << endl;
 
 		}
 
-		int i = grid.N1;
+		int i = par.N1;
 
-		output << (i - 1)*grid.d_x << ' ' << (j)*grid.d_y << ' ' << 0 << ' ' << data[i][j] << endl;
+		output << (i - 1)*par.d_x << ' ' << (j)*par.d_y << ' ' << 0 << ' ' << data[i][j] << endl;
 	}
 
 	for (auto& solid : iList){

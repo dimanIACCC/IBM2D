@@ -2,8 +2,8 @@
 #include "GeomVec.h"
 #include "CalculateForce.h"
 
-double DeltaFunction(double x, double y, Grid grid) {
-	return 1.0 / (grid.d_x*grid.d_y) * FunctionD(x / grid.d_x) * FunctionD(y / grid.d_y);
+double DeltaFunction(double x, double y, Param par) {
+	return 1.0 / (par.d_x*par.d_y) * FunctionD(x / par.d_x) * FunctionD(y / par.d_y);
 }
 
 double FunctionD(double r) {
@@ -19,12 +19,12 @@ double FunctionD(double r) {
 	return 0;
 }
 
-void GetInfluenceArea(int& i_min, int& i_max, int& j_min, int& j_max, int const& Ni, int const& Nj, GeomVec x, int size, Grid grid){
-	i_max = (int)((x[1] / grid.d_x) + size);
-	i_min = (int)((x[1] / grid.d_x) - size);
+void GetInfluenceArea(int& i_min, int& i_max, int& j_min, int& j_max, int const& Ni, int const& Nj, GeomVec x, int size, Param par){
+	i_max = (int)((x[1] / par.d_x) + size);
+	i_min = (int)((x[1] / par.d_x) - size);
 
-	j_max = (int)(x[2] / grid.d_y) + size;
-	j_min = (int)(x[2] / grid.d_y) - size;
+	j_max = (int)(x[2] / par.d_y) + size;
+	j_min = (int)(x[2] / par.d_y) - size;
 
 	if (i_min < 0) {
 		i_min = 0;
@@ -41,13 +41,13 @@ void GetInfluenceArea(int& i_min, int& i_max, int& j_min, int& j_max, int const&
 }
 
 
-double CalculateForce(Matrix& force_x, Matrix& force_y, list<Circle> &iList, Matrix& u, Matrix& v, Grid grid) {
+double CalculateForce(Matrix& force_x, Matrix& force_y, list<Circle> &iList, Matrix& u, Matrix& v, Param par) {
 
-	int const nx1 = grid.N1;
-	int	const nx2 = grid.N2 + 1;
+	int const nx1 = par.N1;
+	int	const nx2 = par.N2 + 1;
 
-	int const ny1 = grid.N1 + 1;
-	int	const ny2 = grid.N2;
+	int const ny1 = par.N1 + 1;
+	int	const ny2 = par.N2;
 
 	for (int i = 0; i < nx1; ++i) {
 		for (int j = 0; j < nx2; ++j) {
@@ -63,7 +63,7 @@ double CalculateForce(Matrix& force_x, Matrix& force_y, list<Circle> &iList, Mat
 	for (auto& solid : iList) {
 		CreateMatrix(force_x_temp, nx1, nx2);
 		CreateMatrix(force_y_temp, ny1, ny2);
-		for (int k = 0; k < grid.NF; ++k) {
+		for (int k = 0; k < par.NF; ++k) {
 
 			int ix_max, ix_min;
 			int jx_max, jx_min;
@@ -71,8 +71,8 @@ double CalculateForce(Matrix& force_x, Matrix& force_y, list<Circle> &iList, Mat
 			int iy_max, iy_min;
 			int jy_max, jy_min;
 
-			GetInfluenceArea(ix_min, ix_max, jx_min, jx_max, nx1, nx2, solid.Nodes[k].x, 3, grid);
-			GetInfluenceArea(iy_min, iy_max, jy_min, jy_max, ny1, ny2, solid.Nodes[k].x, 3, grid);
+			GetInfluenceArea(ix_min, ix_max, jx_min, jx_max, nx1, nx2, solid.Nodes[k].x, 3, par);
+			GetInfluenceArea(iy_min, iy_max, jy_min, jy_max, ny1, ny2, solid.Nodes[k].x, 3, par);
 
 			//calculating velocities us of the solid boundary
 			solid.velocities();
@@ -81,31 +81,31 @@ double CalculateForce(Matrix& force_x, Matrix& force_y, list<Circle> &iList, Mat
 			solid.Nodes[k].uf[1] = 0.0;
 			for (int i = ix_min; i <= ix_max; ++i) {
 				for (int j = jx_min; j <= jx_max; ++j) {
-					solid.Nodes[k].uf[1] += u[i][j] * DeltaFunction(i*grid.d_x - solid.Nodes[k].x[1], (j - 0.5)*grid.d_y - solid.Nodes[k].x[2], grid) * grid.d_x * grid.d_y;
+					solid.Nodes[k].uf[1] += u[i][j] * DeltaFunction(i*par.d_x - solid.Nodes[k].x[1], (j - 0.5)*par.d_y - solid.Nodes[k].x[2], par) * par.d_x * par.d_y;
 				}
 			}
 
 			solid.Nodes[k].uf[2] = 0.0;
 			for (int i = iy_min; i <= iy_max; ++i) {
 				for (int j = jy_min; j <= jy_max; ++j) {
-					solid.Nodes[k].uf[2] += v[i][j] * DeltaFunction((i - 0.5)*grid.d_x - solid.Nodes[k].x[1], j*grid.d_y - solid.Nodes[k].x[2], grid) * grid.d_x * grid.d_y;
+					solid.Nodes[k].uf[2] += v[i][j] * DeltaFunction((i - 0.5)*par.d_x - solid.Nodes[k].x[1], j*par.d_y - solid.Nodes[k].x[2], par) * par.d_x * par.d_y;
 				}
 			}
 
 			//calculating Integral and force f in Lagrange nodes
-			solid.Nodes[k].Integral +=  (solid.Nodes[k].uf - solid.Nodes[k].us) * grid.d_t;
-			solid.Nodes[k].f = grid.alpha_f * solid.Nodes[k].Integral + grid.beta_f  *(solid.Nodes[k].uf - solid.Nodes[k].us);
+			solid.Nodes[k].Integral +=  (solid.Nodes[k].uf - solid.Nodes[k].us) * par.d_t;
+			solid.Nodes[k].f = par.alpha_f * solid.Nodes[k].Integral + par.beta_f  *(solid.Nodes[k].uf - solid.Nodes[k].us);
 
 			// calculating force force_temp for Euler nodes caused by k-th solid
 			for (int i = ix_min; i <= ix_max; ++i) {
 				for (int j = jx_min; j <= jx_max; ++j) {
-					force_x_temp[i][j] += solid.Nodes[k].f[1] * DeltaFunction(i*grid.d_x - solid.Nodes[k].x[1], (j - 0.5)*grid.d_y - solid.Nodes[k].x[2], grid) * solid.d_s * solid.d_s;
+					force_x_temp[i][j] += solid.Nodes[k].f[1] * DeltaFunction(i*par.d_x - solid.Nodes[k].x[1], (j - 0.5)*par.d_y - solid.Nodes[k].x[2], par) * solid.d_s * solid.d_s;
 				}
 			}
 
 			for (int i = iy_min; i <= iy_max; ++i) {
 				for (int j = jy_min; j <= jy_max; ++j) {
-					force_y_temp[i][j] += solid.Nodes[k].f[2] * DeltaFunction((i - 0.5)*grid.d_x - solid.Nodes[k].x[1], j*grid.d_y - solid.Nodes[k].x[2], grid) * solid.d_s * solid.d_s;
+					force_y_temp[i][j] += solid.Nodes[k].f[2] * DeltaFunction((i - 0.5)*par.d_x - solid.Nodes[k].x[1], j*par.d_y - solid.Nodes[k].x[2], par) * solid.d_s * solid.d_s;
 				}
 			}
 		}
@@ -120,15 +120,15 @@ double CalculateForce(Matrix& force_x, Matrix& force_y, list<Circle> &iList, Mat
 		int jy_max = 0;
 		int jy_min = ny2;
 
-		for (int k = 0; k < grid.NF; ++k) {
+		for (int k = 0; k < par.NF; ++k) {
 
 			int ix_max_temp, ix_min_temp;
 			int jx_max_temp, jx_min_temp;
 			int iy_max_temp, iy_min_temp;
 			int jy_max_temp, jy_min_temp;
 
-			GetInfluenceArea(ix_min_temp, ix_max_temp, jx_min_temp, jx_max_temp, nx1, nx2, solid.Nodes[k].x, 3, grid);
-			GetInfluenceArea(iy_min_temp, iy_max_temp, jy_min_temp, jy_max_temp, ny1, ny2, solid.Nodes[k].x, 3, grid);
+			GetInfluenceArea(ix_min_temp, ix_max_temp, jx_min_temp, jx_max_temp, nx1, nx2, solid.Nodes[k].x, 3, par);
+			GetInfluenceArea(iy_min_temp, iy_max_temp, jy_min_temp, jy_max_temp, ny1, ny2, solid.Nodes[k].x, 3, par);
 
 			if (ix_max_temp > ix_max) {
 				ix_max = ix_max_temp;
@@ -163,46 +163,46 @@ double CalculateForce(Matrix& force_x, Matrix& force_y, list<Circle> &iList, Mat
 		for (int i = ix_min; i <= ix_max; ++i) {
 			for (int j = jx_min; j <= jx_max; ++j) {
 				force_x[i][j] += force_x_temp[i][j];
-				solid.f[1]    += force_x_temp[i][j] * grid.d_x * grid.d_y;
+				solid.f[1]    += force_x_temp[i][j] * par.d_x * par.d_y;
 				GeomVec r, f;
-				r[1] =  i        * grid.d_x - solid.xc[1];
-				r[2] = (j - 0.5) * grid.d_y - solid.xc[2];
+				r[1] =  i        * par.d_x - solid.xc[1];
+				r[2] = (j - 0.5) * par.d_y - solid.xc[2];
 				r[3] = 0.0;
 				f[1] = force_x_temp[i][j];
 				f[2] = 0.0;
 				f[3] = 0.0;
-				solid.tau += x_product(r, f) *  grid.d_x * grid.d_y;
+				solid.tau += x_product(r, f) *  par.d_x * par.d_y;
 			}
 		}
 		for (int i = iy_min; i <= iy_max; ++i) {
 			for (int j = jy_min; j <= jy_max; ++j) {
 				force_y[i][j] += force_y_temp[i][j];
-				solid.f[2]    += force_y_temp[i][j] * grid.d_x * grid.d_y;
+				solid.f[2]    += force_y_temp[i][j] * par.d_x * par.d_y;
 				GeomVec r, f;
-				r[1] = (i - 0.5) * grid.d_x - solid.xc[1];
-				r[2] =  j        * grid.d_y - solid.xc[2];
+				r[1] = (i - 0.5) * par.d_x - solid.xc[1];
+				r[2] =  j        * par.d_y - solid.xc[2];
 				r[3] = 0.0;
 				f[1] = 0.0;
 				f[2] = force_y_temp[i][j];
 				f[3] = 0.0;
-				solid.tau += x_product(r, f) *  grid.d_x * grid.d_y;
+				solid.tau += x_product(r, f) *  par.d_x * par.d_y;
 			}
 		}
 
 		if (solid.moveSolid) {
-			solid.uc    -= solid.f   * grid.d_t * 1 / (solid.rho - 1) / solid.V;  // fluid density equals 1
-			solid.omega -= solid.tau * grid.d_t * 1 / (solid.rho - 1) / solid.I;  // angular moment I is normalized with density
+			solid.uc    -= solid.f   * par.d_t * 1 / (solid.rho - 1) / solid.V;  // fluid density equals 1
+			solid.omega -= solid.tau * par.d_t * 1 / (solid.rho - 1) / solid.I;  // angular moment I is normalized with density
 		}
 	}
 	return 0;
 }
 
-Matrix Calculate_F_real_x(Matrix& u_n, Matrix& v_n, Matrix& u_prev, Matrix& p, Grid g, double Re) {
+Matrix Calculate_F_real_x(Matrix& u_n, Matrix& v_n, Matrix& u_prev, Matrix& p, Param par, double Re) {
 
-	double d_xx = 1.0 / (g.d_x*g.d_x);
-	double d_yy = 1.0 / (g.d_y*g.d_y);
-	int n1 = g.N1;
-	int n2 = g.N2 + 1;
+	double d_xx = 1.0 / (par.d_x*par.d_x);
+	double d_yy = 1.0 / (par.d_y*par.d_y);
+	int n1 = par.N1;
+	int n2 = par.N2 + 1;
 	double advective_term_n = 0.0;
 	double diffusion_term = 0.0;
 	double pressure = 0.0;
@@ -214,12 +214,12 @@ Matrix Calculate_F_real_x(Matrix& u_n, Matrix& v_n, Matrix& u_prev, Matrix& p, G
 		for (int i = 1; i < (n1 - 1); ++i) {
 
 			v_help = 0.25 * (v_n[i][j] + v_n[i + 1][j] + v_n[i][j - 1] + v_n[i + 1][j - 1]);
-			advective_term_n = u_n[i][j] * (u_n[i + 1][j] - u_n[i - 1][j]) / (2.0*g.d_x) + v_help * (u_n[i][j + 1] - u_n[i][j - 1]) / (2.0*g.d_y);
+			advective_term_n = u_n[i][j] * (u_n[i + 1][j] - u_n[i - 1][j]) / (2.0*par.d_x) + v_help * (u_n[i][j + 1] - u_n[i][j - 1]) / (2.0*par.d_y);
 			diffusion_term = d_xx * (u_n[i + 1][j] - 2.0 * u_n[i][j] + u_n[i - 1][j]) + d_yy * (u_n[i][j + 1] - 2.0 * u_n[i][j] + u_n[i][j - 1]);
-			pressure = (p[i + 1][j] - p[i][j]) / (g.d_x);
+			pressure = (p[i + 1][j] - p[i][j]) / (par.d_x);
 			if (j == 1 || j == n2 - 2) {
 				v_help = 0.25 * (v_n[i][j] + v_n[i + 1][j] + v_n[i][j - 1] + v_n[i + 1][j - 1]);
-				advective_term_n = u_n[i][j] * (u_n[i + 1][j] - u_n[i - 1][j]) / (2.0*g.d_x) + v_help * (u_n[i][j + 1] - u_n[i][j - 1]) / (1.5*g.d_y);
+				advective_term_n = u_n[i][j] * (u_n[i + 1][j] - u_n[i - 1][j]) / (2.0*par.d_x) + v_help * (u_n[i][j + 1] - u_n[i][j - 1]) / (1.5*par.d_y);
 
 				if (j == 1) {
 					diffusion_term = d_xx * (u_n[i + 1][j] - 2.0 * u_n[i][j] + u_n[i - 1][j]) + d_yy * (4.0*u_n[i][j + 1] - 12.0 * u_n[i][j] + 8.0*u_n[i][j - 1]) / 3.0;
@@ -254,12 +254,12 @@ Matrix Calculate_F_real_x(Matrix& u_n, Matrix& v_n, Matrix& u_prev, Matrix& p, G
 
 }
 
-Matrix Calculate_F_real_y(Matrix& u_n, Matrix& v_n, Matrix& v_prev, Matrix& p, Grid g, double Re) {
+Matrix Calculate_F_real_y(Matrix& u_n, Matrix& v_n, Matrix& v_prev, Matrix& p, Param par, double Re) {
 
-	double d_xx = 1.0 / (g.d_x*g.d_x);
-	double d_yy = 1.0 / (g.d_y*g.d_y);
-	int n1 = g.N1 + 1;
-	int n2 = g.N2;
+	double d_xx = 1.0 / (par.d_x*par.d_x);
+	double d_yy = 1.0 / (par.d_y*par.d_y);
+	int n1 = par.N1 + 1;
+	int n2 = par.N2;
 
 	double advective_term_n = 0.0;
 	double diffusion_term = 0.0;
@@ -273,13 +273,13 @@ Matrix Calculate_F_real_y(Matrix& u_n, Matrix& v_n, Matrix& v_prev, Matrix& p, G
 		for (int i = 1; i < (n1 - 1); ++i) {
 
 			u_help           = 0.25 * (u_n[i][j] + u_n[i - 1][j] + u_n[i][j + 1] + u_n[i - 1][j + 1]);
-			advective_term_n = u_help * (v_n[i + 1][j] - v_n[i - 1][j]) / (2.0*g.d_x) + v_n[i][j] * (v_n[i][j + 1] - v_n[i][j - 1]) / (2.0*g.d_y);
+			advective_term_n = u_help * (v_n[i + 1][j] - v_n[i - 1][j]) / (2.0*par.d_x) + v_n[i][j] * (v_n[i][j + 1] - v_n[i][j - 1]) / (2.0*par.d_y);
 			diffusion_term   = d_xx * (v_n[i + 1][j] - 2.0 * v_n[i][j] + v_n[i - 1][j]) + d_yy * (v_n[i][j + 1] - 2.0 * v_n[i][j] + v_n[i][j - 1]);
-			pressure         = (p[i][j + 1] - p[i][j]) / (g.d_y);
+			pressure         = (p[i][j + 1] - p[i][j]) / (par.d_y);
 
 			if (i == 1 || i == n1 - 2) {
 				u_help           = 0.25 * (u_n[i][j] + u_n[i - 1][j] + u_n[i][j + 1] + u_n[i - 1][j + 1]);
-				advective_term_n = u_help * (v_n[i + 1][j] - v_n[i - 1][j]) / (1.5*g.d_x) + v_n[i][j] * (v_n[i][j + 1] - v_n[i][j - 1]) / (2.0*g.d_y);
+				advective_term_n = u_help * (v_n[i + 1][j] - v_n[i - 1][j]) / (1.5*par.d_x) + v_n[i][j] * (v_n[i][j + 1] - v_n[i][j - 1]) / (2.0*par.d_y);
 
 				if (i == 1) {
 					diffusion_term = d_xx * (4.0*v_n[i + 1][j] - 12.0 * v_n[i][j] + 8.0*v_n[i - 1][j]) / 3.0 + d_yy * (v_n[i][j + 1] - 2.0 * v_n[i][j] + v_n[i][j - 1]);
