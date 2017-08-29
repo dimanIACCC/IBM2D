@@ -1,6 +1,9 @@
 #pragma once
+#include "stdafx.h"
+#include <boost/algorithm/string.hpp>
 
-struct Param{
+class Param{
+public:
 	double Re;                // Reynolds number
 	double L;                 // length
 	double H;                 // height
@@ -18,3 +21,5 @@ struct Param{
 	int N_Zeidel;             // number of iterations in Zeidel method
 	double Zeidel_eps;        // tolerance for Zeidel method
 };
+
+void InputData(Param& par);
