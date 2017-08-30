@@ -1,6 +1,8 @@
 #pragma once
 
 #include "GeomVec.h"
+#include "Parameters.h"
+#include <boost/algorithm/string.hpp>
 
 class Node
 {
@@ -14,10 +16,8 @@ public:
 
 class SolidBody
 {
-
 public:
 	bool moveSolid;
-	bool eraseSolid;
 	GeomVec xc;     // coordinates of the mass center
 	GeomVec uc;     // velocity of the mass center
 	GeomVec omega;  // angular velocity
@@ -29,14 +29,18 @@ public:
 	std::vector<Node> Nodes;   // Nodes of the SolidBody mesh
 	int Nn;                    // Number of Nodes
 	
-	SolidBody(double x, double y);
+	SolidBody(double x, double y, double ux, double uy, double omega, double rho, int Nn, bool moveSolid);
 	~SolidBody();
 	void velocities();      // calculates the velocities in all Nodes of the SolidBody
 };
+
 class Circle : public SolidBody{
 public:
 	double r;
 	double d_s;
-	Circle(double x, double y,  double r, int NF, GeomVec uc_in);
+	Circle(double x, double y, double ux, double uy, double omega, double rho, int Nn, bool moveSolid, double r);
+	Circle::Circle(double x, double y, Param par);
 	~Circle();
 };
+
+void Read_Solids(std::string filename, std::list<Circle>& Solids, Param par);

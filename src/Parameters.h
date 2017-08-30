@@ -15,8 +15,9 @@ public:
 	double d_t;               // time step
 	double alpha_f;           // Force parameter
 	double beta_f;            // Force parameter
-	int NF;                   // number of points of Solid
-	double R;                 // default radius of Circle
+	int Nn;                   // number of nodes of Solid
+	double rho;               // default density of Solid
+	double r;                 // default radius of Circle
 	int output_step = 0;      // frequency of output
 	int N_max;                // number of total iterations
 	int N_Zeidel;             // number of iterations in Zeidel method
@@ -24,3 +25,5 @@ public:
 	Param();
 	Param(std::string filename);
 };
+
+double ux_Poiseuille(double y, double H);

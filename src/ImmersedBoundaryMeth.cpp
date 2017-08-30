@@ -19,7 +19,7 @@ bool InelasticCollision = false; //Perfectly inelastic collision --- абсолютно н
 void SetLog(std::ostream &log, Param par);
 void PushLog(std::ostream &log, int n, double eps_u, double eps_v);
 void ApplyInitialData(Matrix& u, Param par);
-double ux_Poiseuille(double y, double H);
+
 int sgn(double x);
 
 
@@ -33,9 +33,6 @@ int main() {
 	double eps_v = 0.0;
 	double eps_p = 0.0;
 
-
-
-	int n = 0; // iteration counter
 	Param par("input.txt"); // Construct Parameters using file input.txt
 	CreateMatrix(U_n, par.N1, par.N2 + 1);
 	CreateMatrix(U_new, par.N1, par.N2 + 1);
@@ -97,68 +94,25 @@ int main() {
 
 
 	//Firstly adding some circles
-	GeomVec uc;
-	std::fill(uc.begin(), uc.end(), 0.0);
-
-	uc[1] = ux_Poiseuille(2.1, par.H);
-	Circle c1(3.5, 2.1, par.R, par.NF, uc);
-
-	uc[1] = ux_Poiseuille(4.9, par.H);
-	Circle c2(3.5, 4.9, par.R, par.NF, uc);
-
-	uc[1] = ux_Poiseuille(1.9, par.H);
-	Circle c3(1.5, 1.9, par.R, par.NF, uc);
-
-	uc[1] = ux_Poiseuille(5.1, par.H);
-	Circle c4(1.5, 5.1, par.R, par.NF, uc);
-
-	solidList.push_back(c1);
-	solidList.push_back(c2);
-	solidList.push_back(c3);
-	solidList.push_back(c4);
+	Read_Solids("Solids.txt", solidList, par);
 
 	CalculateForce(Force_x, Force_y, solidList, U_new, V_new, par);
 
 	OutputVelocity_U(U_new, -1, solidList, par);
 	OutputVelocity_V(V_new, -1, solidList, par);
 
+	int n = 0; // iteration counter
 	while (n <= par.N_max) {
 
 		//creation new solids
-		if (n > 0 && fmod(n*par.d_t, 1.5) == 0.0) {
-			int chance = 80;
-			int rnd;
-			rnd = rand() % 100 + 1;
+		if (n > 0 && (n % 200) == 0.0) {
+			double chance = 0.8;
+			double rnd;
+			rnd = double(rand()) / RAND_MAX;
 			if (rnd <= chance) {
-				double x = 1 + ((rand() % 100 + 1) / 100.0);
-				double y = 1 + ((rand() % 200 + 1) / 100.0);
-				uc[1] = ux_Poiseuille(y, par.H);
-				Circle c(x, y, par.R, par.NF, uc);
-				solidList.push_back(c);
-			}
-			rnd = rand() % 100 + 1;
-			if (rnd <= chance) {
-				double x = 1 + ((rand() % 100 + 1) / 100.0);
-				double y = 4 + ((rand() % 200 + 1) / 100.0);
-				uc[1] = ux_Poiseuille(y, par.H);
-				Circle c(x, y, par.R, par.NF, uc);
-				solidList.push_back(c);
-			}
-			rnd = rand() % 100 + 1;
-			if (rnd <= chance) {
-				double x = 3 + ((rand() % 100 + 1) / 100.0);
-				double y = 1 + ((rand() % 200 + 1) / 100.0);
-				uc[1] = ux_Poiseuille(y, par.H);
-				Circle c(x, y, par.R, par.NF, uc);
-				solidList.push_back(c);
-			}
-
-			rnd = rand() % 100 + 1;
-			if (rnd <= chance) {
-				double x = 3 + ((rand() % 100 + 1) / 100.0);
-				double y = 4 + ((rand() % 200 + 1) / 100.0);
-				uc[1] = ux_Poiseuille(y, par.H);
-				Circle c(x, y, par.R, par.NF, uc);
+				double x = par.L/10 + par.L/10 * 0.9 * (double(rand()) - RAND_MAX / 2) / RAND_MAX;
+				double y = par.H/2  + par.H/2  * 0.9 * (double(rand()) - RAND_MAX / 2) / RAND_MAX;
+				Circle c(x, y, par);
 				solidList.push_back(c);
 			}
 		}
@@ -313,7 +267,7 @@ int main() {
 
 			if (it->moveSolid) {
 				//update position
-				for (int k = 0; k < par.NF; ++k) {
+				for (int k = 0; k < it->Nn; ++k) {
 					//rotate
 					GeomVec r = it->Nodes[k].x - it->xc;
 					GeomVec x_temp = rotate_Vector_around_vector(r, it->omega  * length(r) * par.d_t); //
@@ -390,7 +344,7 @@ void SetLog(std::ostream& log, Param par) {
 	log << "Channel width                 : W   = " << par.H << std::endl;
 	log << "Number of nodes on            : N1  = " << par.N1 << std::endl;
 	log << "Number of nodes on            : N2  = " << par.N2 << std::endl;
-	log << "Number of nodes for a particle: NF  = " << par.NF << std::endl;
+	log << "Number of nodes for a particle: Nn  = " << par.Nn << std::endl;
 	log << "Time step                     : tau = " << par.d_t << std::endl;
 	log << "Force parameter alpha         : alpha = " << par.alpha_f << std::endl;
 	log << "Force parameter beta          : beta  = " << par.beta_f << std::endl;
@@ -419,10 +373,7 @@ void ApplyInitialData(Matrix &u, Param par) {
 	}
 }
 
-double ux_Poiseuille(double y, double H) {
-	double ux = (pow(H / 2.0, 2) - pow(y - H / 2.0, 2));
-	return ux;
-}
+
 
 int sgn(double x)
 {

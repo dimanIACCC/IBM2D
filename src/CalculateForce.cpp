@@ -61,7 +61,7 @@ double CalculateForce(Matrix& force_x, Matrix& force_y, std::list<Circle> &iList
 	for (auto& solid : iList) {
 		CreateMatrix(force_x_temp, nx1, nx2);
 		CreateMatrix(force_y_temp, ny1, ny2);
-		for (int k = 0; k < par.NF; ++k) {
+		for (int k = 0; k < solid.Nn; ++k) {
 
 			int ix_max, ix_min;
 			int jx_max, jx_min;
@@ -118,7 +118,7 @@ double CalculateForce(Matrix& force_x, Matrix& force_y, std::list<Circle> &iList
 		int jy_max = 0;
 		int jy_min = ny2;
 
-		for (int k = 0; k < par.NF; ++k) {
+		for (int k = 0; k < solid.Nn; ++k) {
 
 			int ix_max_temp, ix_min_temp;
 			int jx_max_temp, jx_min_temp;
