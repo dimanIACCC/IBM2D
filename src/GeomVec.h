@@ -17,6 +17,7 @@ typedef  std::vector<std::vector<double>> Matrix;
 #define CreateMatrix(name, n, m) Matrix name(n,std::vector<double>(m, 0))
 
 double length(GeomVec x);                                         // length of the geometric vector
+double dot_product(GeomVec v1, GeomVec v2);                       // scalar product of two vectors
 GeomVec x_product(GeomVec v1, GeomVec v2);                        // vector product of two vectors
 GeomMat x_product_Vec_Mat(GeomVec v, GeomMat A);                  // returns x_product of Vector $v$ and Tensor $A$
 GeomVec get_column(GeomMat  A, int i);                            // returns column $i$ of Tensor $A$

@@ -9,6 +9,13 @@ double length(GeomVec x) {
 	return result;
 }
 
+double dot_product(GeomVec v1, GeomVec v2) {
+	double result;
+	result = v1[1]*v2[1] + v1[2]*v2[2] + v1[3]*v2[3];
+	return result;
+}
+
+
 GeomVec x_product(GeomVec v1, GeomVec v2){
 	GeomVec result;
 	result[0] = 0;

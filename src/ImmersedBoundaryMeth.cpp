@@ -105,15 +105,24 @@ int main() {
 	while (n <= par.N_max) {
 
 		//creation new solids
-		if (n > 0 && (n % 200) == 0.0) {
-			double chance = 0.8;
-			double rnd;
-			rnd = double(rand()) / RAND_MAX;
-			if (rnd <= chance) {
-				double x = par.L/10 + par.L/10 * 0.9 * (double(rand()) - RAND_MAX / 2) / RAND_MAX;
-				double y = par.H/2  + par.H/2  * 0.9 * (double(rand()) - RAND_MAX / 2) / RAND_MAX;
-				Circle c(x, y, par);
-				solidList.push_back(c);
+		if ( (n % 200) == 0.0) {
+			for (int i = 0; i < 20; i++) {
+				GeomVec x;
+				x[0] = 0;
+				x[1] = par.L / 10 + par.L / 10 * 0.95 * (double(rand()) - RAND_MAX / 2) / RAND_MAX;
+				x[2] = par.H /  2 + par.H /  2 * 0.95 * (double(rand()) - RAND_MAX / 2) / RAND_MAX;
+				x[3] = 0;
+				Circle c(x[1], x[2], par);
+				bool add = true;
+				for (auto solid = solidList.begin(); solid != solidList.end(); solid++) {
+					if (length(x - solid->xc) < par.r + solid->r) {
+						add = false;
+						break;
+					}
+				}
+				if (add) {
+					solidList.push_back(c);
+				}
 			}
 		}
 
@@ -202,44 +211,29 @@ int main() {
 
 
 		//--------------COLLISION CHECK---------------------------
-		std::list<Circle>::iterator first;
-		std::list<Circle>::iterator second;
 		///--------------collisions between particles---------------------------------
 		for (auto one = solidList.begin(); one != solidList.end(); one++) {
 			for (auto two = next(one); two != solidList.end(); two++) {
-				double distance = length(one->xc - two->xc); //<----distance between two particles 
-				if (one->xc[1] < two->xc[1]) {
-					first = one;
-					second = two;
-				}
-				else
-				{
-					first = two;
-					second = one;
-				}
-				if (distance <= (2 * first->r)) {
+				GeomVec r = one->xc - two->xc;
+				double distance = length(r); //<----distance between two particles
+				if (distance <= 1.1*(one->r + two->r)) {
 					if (Debug) std::cout << "COLLISION DETECTED";
 					if (InelasticCollision) {
 						//Perfectly inelastic collision
-						first ->uc = (first->uc + second->uc) / 2;
-						second->uc =  first->uc;
+						one->uc = (one->uc + two->uc) / 2;
+						two->uc =  one->uc;
 					}
 					else {
 						//this is perfectly elastic impact
-						double v1, v2;
-						v1 = sgn(first ->uc[1])*length(first ->uc);
-						v2 = sgn(second->uc[1])*length(second->uc);
-
-						double tetta_1, tetta_2, phi;
-						if (v1 != 0) { tetta_1 = atan(first->uc[2] / first->uc[1]); }
-						else { tetta_1 = 0; } //??if (v1 == 0) { tetta_1 = M_PI_2 - tetta_2 / 2; }
-						if (v2 != 0) { tetta_2 = atan(second->uc[2] / second->uc[1]); }
-						else { tetta_2 = 0; } //??if (v2 == 0) { tetta_2 = M_PI_2 - tetta_1 / 2; }
-						phi = atan((second->xc[2] - first->xc[2]) / (second->xc[1] - first->xc[1]));
-						first->uc[1] = v2*cos(tetta_2 - phi)*cos(phi) + v1*sin(tetta_1 - phi)*cos(phi + M_PI_2);
-						first->uc[2] = v2*cos(tetta_2 - phi)*sin(phi) + v1*sin(tetta_1 - phi)*sin(phi + M_PI_2);
-						second->uc[1] = v1*cos(tetta_1 - phi)*cos(phi) + v2*sin(tetta_2 - phi)*cos(phi + M_PI_2);
-						second->uc[2] = v1*cos(tetta_1 - phi)*sin(phi) + v2*sin(tetta_2 - phi)*sin(phi + M_PI_2);
+						r = r / distance;
+						double u1_before = dot_product(one->uc, r);
+						double u2_before = dot_product(two->uc, r);
+						double m1 = one->rho * one->V;
+						double m2 = two->rho * two->V;
+						double u1_after = (u1_before * (m1 - m2) + 2 * m2 * u2_before) / (m1 + m2);
+						double u2_after = (u2_before * (m2 - m1) + 2 * m1 * u1_before) / (m1 + m2);
+						one->uc += (u1_after - u1_before) * r;
+						two->uc += (u2_after - u2_before) * r;
 					}
 				}
 			}
@@ -261,11 +255,8 @@ int main() {
 
 
 		for (auto it = solidList.begin(); it != solidList.end();) {
-			if ((it->moveSolid == false)) {
-				it->moveSolid = true;
-			}
 
-			if (it->moveSolid) {
+			if (it->move) {
 				//update position
 				for (int k = 0; k < it->Nn; ++k) {
 					//rotate

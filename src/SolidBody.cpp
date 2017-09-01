@@ -1,7 +1,7 @@
 #include "SolidBody.h"
 
 
-SolidBody::SolidBody(double x, double y, double ux, double uy, double omega, double rho, int Nn, bool moveSolid)
+SolidBody::SolidBody(double x, double y, double ux, double uy, double omega, double rho, int Nn, bool move)
 {
 	std::fill(this->xc.begin()   , this->xc.end(),    0.0); // fill vector xc    with zeros
 	std::fill(this->uc.begin()   , this->uc.end()   , 0.0); // fill vector uc    with zeros
@@ -14,7 +14,7 @@ SolidBody::SolidBody(double x, double y, double ux, double uy, double omega, dou
 	this->rho = rho;
 	this->Nn = Nn;
 	Nodes.resize(Nn);
-	moveSolid = false;
+	this->move = move;
 }
 
 
@@ -23,8 +23,8 @@ SolidBody::~SolidBody()
 
 }
 
-Circle::Circle(double x, double y, double ux, double uy, double omega, double rho, int Nn, bool moveSolid, double r) :
-     SolidBody(       x,        y,        ux,        uy,        omega,        rho,     Nn,      moveSolid) {
+Circle::Circle(double x, double y, double ux, double uy, double omega, double rho, int Nn, bool move, double r) :
+     SolidBody(       x,        y,        ux,        uy,        omega,        rho,     Nn,      move) {
 	this->r = r;
 	this->d_s = (2.0*M_PI*r) / Nn;
 
@@ -33,11 +33,11 @@ Circle::Circle(double x, double y, double ux, double uy, double omega, double rh
 		Nodes[i].x[2] = y + sin(i * 2.0 * M_PI / Nn) * r;
 	}
 	V = M_PI * r * r;
-	//rho = 10.0 / V; // corresponds to old formula for force
 	I =  V * r * r / 2.0; // angular momentum for unit density
 }
 
-Circle::Circle(double x, double y, Param par): Circle(x, y, 0.0, 0.0, 0.0, par.rho, par.Nn, false, par.r) {
+Circle::Circle(double x, double y, Param par):
+	    Circle(       x,        y, 0.0, 0.0, 0.0, par.rho, par.Nn, true, par.r) {
 	this->uc[1] = ux_Poiseuille(y, par.H);
 }
  
@@ -68,7 +68,7 @@ void Read_Solids(std::string filename, std::list<Circle>& Solids, Param par) {
 				double omega = 0;
 				double rho = par.rho;
 				int Nn = par.Nn;
-				bool move = false;
+				bool move = true;
 				double r = par.r;
 
 				while (line != "}") {
@@ -92,7 +92,10 @@ void Read_Solids(std::string filename, std::list<Circle>& Solids, Param par) {
 						std::cout << "Read_Solids: no value inputed" << std::endl;
 					}
 				}
-				ux = ux_Poiseuille(y, par.H);  // recalculate $ux$ for new $y$
+				if (move == false) {
+					ux = 0;
+					uy = 0;
+				}
 				Circle c(x, y, ux, uy, omega, rho, Nn, move, r);
 				Solids.push_back(c);
 			}
