@@ -74,12 +74,9 @@ void Read_Solids(std::string filename, std::list<Circle>& Solids, Param par) {
 				while (line != "}") {
 					getline(input, line);
 					if (line == "}") break;
-					int i = line.find('=');
-					std::string PAR(line, 0, i - 1);
-					PAR = boost::trim_copy(PAR);
-					if (i > 0) {
-						std::string VALUE(line, i + 1);
-						VALUE = boost::trim_copy(VALUE);
+					std::string PAR, VALUE;
+					GetParValue(line, PAR, VALUE);
+					if (VALUE.size() > 0) {
 						if      (PAR == "x")          x            = stod(VALUE);
 						else if (PAR == "y")          y            = stod(VALUE);
 						else if (PAR == "ux")         ux           = stod(VALUE);

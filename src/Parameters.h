@@ -1,7 +1,7 @@
 #pragma once
 
 #include "stdafx.h"
-#include <boost/algorithm/string.hpp>
+#include "String.h"
 
 class Param{
 public:

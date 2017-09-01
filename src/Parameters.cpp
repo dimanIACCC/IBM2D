@@ -30,13 +30,10 @@ Param::Param(std::string filename): Param(){
 	input.open(filename.c_str());
 	if (input.is_open()) {
 		while (getline(input, line)) { // read line from file to string $line$
-			int i = line.find('=');
-			std::string PAR(line, 0, i - 1);
-			PAR = boost::trim_copy(PAR);
-			if (i > 0) {
-				std::string VALUE(line, i + 1);
-				VALUE = boost::trim_copy(VALUE);
-				if (PAR == "Re")                Re = stod(VALUE);
+			std::string PAR, VALUE;
+			GetParValue(line, PAR, VALUE);
+			if (VALUE.size() > 0) {
+				if      (PAR == "Re")           Re = stod(VALUE);
 				else if (PAR == "L")            L = stod(VALUE);
 				else if (PAR == "H")            H = stod(VALUE);
 				else if (PAR == "N1")           N1 = stoi(VALUE);
@@ -54,7 +51,7 @@ Param::Param(std::string filename): Param(){
 				else    std::cout << "unknown parameter " << PAR << std::endl;
 			}
 			else {
-				std::cout << "no value inputed" << std::endl;
+				std::cout << filename << ": no value inputed" << std::endl;
 			}
 		}
 	}
