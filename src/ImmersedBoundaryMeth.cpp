@@ -10,7 +10,7 @@
 #pragma warning(disable : 4244)//for GetInfluenceArea
 
 
-bool Debug = false;
+bool Debug = true;
 bool InelasticCollision = false; //Perfectly inelastic collision --- абсолютно неупругие столкновения
 
 
@@ -27,6 +27,7 @@ int sgn(double x);
 int main() {
 
 	const double epsilon = 1e-3;
+	double k_dist = 1.1; // coefficient for minimal distance between Solids
 
 	// declaring variables
 	double eps_u = 0.0;
@@ -115,7 +116,7 @@ int main() {
 				Circle c(x[1], x[2], par);
 				bool add = true;
 				for (auto solid = solidList.begin(); solid != solidList.end(); solid++) {
-					if (length(x - solid->xc) < par.r + solid->r) {
+					if (length(x - solid->xc) < k_dist * (par.r + solid->r)) {
 						add = false;
 						break;
 					}
@@ -216,8 +217,8 @@ int main() {
 			for (auto two = next(one); two != solidList.end(); two++) {
 				GeomVec r = one->xc - two->xc;
 				double distance = length(r); //<----distance between two particles
-				if (distance <= 1.1*(one->r + two->r)) {
-					if (Debug) std::cout << "COLLISION DETECTED";
+				if (distance <= k_dist*(one->r + two->r)) {
+					if (Debug) std::cout << "COLLISION DETECTED" << std::endl;
 					if (InelasticCollision) {
 						//Perfectly inelastic collision
 						one->uc = (one->uc + two->uc) / 2;
@@ -228,12 +229,14 @@ int main() {
 						r = r / distance;
 						double u1_before = dot_product(one->uc, r);
 						double u2_before = dot_product(two->uc, r);
-						double m1 = one->rho * one->V;
-						double m2 = two->rho * two->V;
-						double u1_after = (u1_before * (m1 - m2) + 2 * m2 * u2_before) / (m1 + m2);
-						double u2_after = (u2_before * (m2 - m1) + 2 * m1 * u1_before) / (m1 + m2);
-						one->uc += (u1_after - u1_before) * r;
-						two->uc += (u2_after - u2_before) * r;
+						if (u1_before - u2_before < 0.0) {
+							double m1 = one->rho * one->V;
+							double m2 = two->rho * two->V;
+							double u1_after = (u1_before * (m1 - m2) + 2 * m2 * u2_before) / (m1 + m2);
+							double u2_after = (u2_before * (m2 - m1) + 2 * m1 * u1_before) / (m1 + m2);
+							one->uc += (u1_after - u1_before) * r;
+							two->uc += (u2_after - u2_before) * r;
+						}
 					}
 				}
 			}
@@ -244,8 +247,8 @@ int main() {
 		for (auto one = solidList.begin(); one != solidList.end(); one++) {
 			double DistUpper = par.H - one->xc[2];//<----distance to upper wall
 			double DistLower = one->xc[2];//<-------distance to lower wall
-			if (DistUpper < one->r || DistLower < one->r) {
-				if (Debug) std::cout << "COLLISION DETECTED";
+			if (DistUpper < k_dist * one->r || DistLower < k_dist * one->r) {
+				if (Debug) std::cout << "COLLISION WITH WALL DETECTED" << std::endl;
 				one->uc[2] = -one->uc[2];
 			}
 		}
@@ -278,33 +281,17 @@ int main() {
 			}
 		}
 
+		PushLog(log, n, eps_u, eps_v);
+		log.flush();
 
-
-		if (n < 1000 || (n > 1000 && 0 == n % 100)) {
-			std::cout << "n  = " << n << " | eps_u = " << eps_u << " | eps_v = " << eps_v << "		";
-			time_t t = std::chrono::system_clock::to_time_t(std::chrono::system_clock::now());   // get time now
-			std::string s_time = ctime(&t);
-			s_time.erase(7, 1);
-			s_time.erase(0, 4);
-			s_time.erase(s_time.size() - 6, 5);
-			std::cout << s_time;
-
-			PushLog(log, n, eps_u, eps_v);
-			log.flush();
-		}
-
-		if (0 == n % par.output_step) {
-			OutputVelocity_U(U_new, n, solidList, par);
-			OutputVelocity_V(V_new, n, solidList, par);
-			OutputPressure(P, n, solidList, par);
+		if (n % par.output_step == 0) {
+			Output(P, U_new, V_new, n, solidList, par);
 		}
 
 
 
 		if (eps_u < epsilon && eps_v < epsilon) {
-			OutputVelocity_U(U_new, n, solidList, par);
-			OutputVelocity_V(V_new, n, solidList, par);
-			OutputPressure(P, n, solidList, par);
+			Output(P, U_new, V_new, n, solidList, par);
 			break;
 		}
 
@@ -344,13 +331,13 @@ void SetLog(std::ostream& log, Param par) {
 }
 
 void PushLog(std::ostream& log, int n, double eps_u, double eps_v) {
-	time_t t = std::chrono::system_clock::to_time_t(std::chrono::system_clock::now());
-	log << "n  = " << n << " | eps_u = " << eps_u << " | eps_v = " << eps_v << '\t';
+	time_t t = std::chrono::system_clock::to_time_t(std::chrono::system_clock::now()); // get time now
 	std::string s_time = ctime(&t);
 	s_time.erase(7, 1);
 	s_time.erase(0, 4);
 	s_time.erase(s_time.size() - 6, 5);
-	log << s_time;
+	log       << "n = " << std::setw(6) << n << "\t eps_u = " << std::fixed << eps_u << "\t eps_v = " << std::fixed << eps_v << "\t" << s_time;
+	std::cout << "n = " << std::setw(6) << n << "\t eps_u = " << std::fixed << eps_u << "\t eps_v = " << std::fixed << eps_v << "\t" << s_time;
 }
 
 // Apply initial data for velocity
@@ -359,7 +346,8 @@ void ApplyInitialData(Matrix &u, Param par) {
 	// Poiseuille flow 
 	for (int i = 0; i < par.N1; ++i) {
 		for (int j = 1; j < par.N2; ++j) {
-			u[i][j] = ux_Poiseuille((j - 0.5)*par.d_y, par.H);
+			GeomVec xu = x_u(i, j, par);
+			u[i][j] = ux_Poiseuille(xu[2], par.H);
 		}
 	}
 }

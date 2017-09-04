@@ -1,13 +1,8 @@
 #include "Output.h"
 
-void OutputPressure(Matrix data, int n, std::list<Circle> iList, Param par){
+void OutputPressure(Matrix p, int n, std::list<Circle> iList, Param par){
 
 	std::ofstream output;
-	int i = 0;
-	int j = 0;
-
-	// Solution p
-
 	std::string filename = "Result/solution_pressure" + std::to_string(n) + ".plt";
 
 	output.open(filename.c_str());
@@ -17,36 +12,12 @@ void OutputPressure(Matrix data, int n, std::list<Circle> iList, Param par){
 	output << "zone T=" << '"' << n << '"' << ",  i=" << par.N1 + 1 << ", j=" << par.N2 + 1 << ", f=point" << std::endl;
 	output << "SolutionTime = " << n << std::endl;
 
-	output << 0.0 << ' ' << 0.0 << ' ' << data[0][0] << std::endl;
-
-	for (i = 1; i < par.N1; ++i){
-
-		output << (i - 0.5)*par.d_x << ' ' << 0.0 << ' ' << data[i][0] << std::endl;
-	}
-	i = par.N1;
-	output << (i - 1)*par.d_x << ' ' << 0.0 << ' ' << data[i][0] << std::endl;
-
-
-	for (j = 1; j < par.N2; ++j){
-
-		output << 0.0 << ' ' << (j - 0.5)*par.d_y << ' ' << data[0][j] << std::endl;
-
-		for (i = 1; i < par.N1; ++i){
-			output << (i - 0.5)*par.d_x << ' ' << (j - 0.5)*par.d_y << ' ' << data[i][j] << std::endl;
+	for (int j = 0; j <= par.N2; ++j){
+		for (int i = 0; i <= par.N1; ++i){
+			GeomVec xp = x_p(i, j, par);
+			output << xp[1] << ' ' << xp[2] << ' ' << p[i][j] << std::endl;
 		}
-		i = par.N1;
-		output << (i - 1)*par.d_x << ' ' << (j - 0.5)*par.d_y << ' ' << data[i][j] << std::endl;
 	}
-
-
-	j = par.N2;
-	output << 0.0 << ' ' << (j - 1)*par.d_y << ' ' << data[0][j] << std::endl;
-	for (i = 1; i < par.N1; ++i){
-
-		output << (i - 0.5)*par.d_x << ' ' << (j - 1)*par.d_y << ' ' << data[i][j] << std::endl;
-	}
-	i = par.N1;
-	output << (i - 1)*par.d_x << ' ' << (j - 1)*par.d_y << ' ' << data[i][j] << std::endl;
 
 	for (auto& solid : iList){
 		output << "zone T = circle" << ",  i=" << solid.Nn << ", f=point" << std::endl;
@@ -58,19 +29,13 @@ void OutputPressure(Matrix data, int n, std::list<Circle> iList, Param par){
 		}
 	}
 
-
 	output.close();
-
-
 }
 
 
-void OutputVelocity_U(Matrix data, int n, std::list<Circle> iList, Param par){
+void OutputVelocity_U(Matrix u, int n, std::list<Circle> iList, Param par){
 
 	std::ofstream output;
-
-	// Solution u
-
 	std::string filename = "Result/solution_velocity_u" + std::to_string(n) + ".plt";
 
 	output.open(filename.c_str());
@@ -80,21 +45,11 @@ void OutputVelocity_U(Matrix data, int n, std::list<Circle> iList, Param par){
 	output << "zone T=" << '"' << n << '"' << ",  i=" << par.N1 << ", j=" << par.N2 + 1 << ", f=point" << std::endl;
 	output << "SolutionTime = " << n << std::endl;
 
-	for (int i = 0; i < par.N1; ++i){
-
-		output << i*par.d_x << ' ' << 0.0 << ' ' << data[i][0] << ' ' << 0 << std::endl;
-	}
-
-	for (int j = 1; j < par.N2; ++j){
+	for (int j = 0; j <= par.N2; ++j){
 		for (int i = 0; i < par.N1; ++i){
-			output << (i)*par.d_x << ' ' << (j - 0.5)*par.d_y << ' ' << data[i][j] << ' ' << 0 << std::endl;
+			GeomVec xu = x_u(i, j, par);
+			output << xu[1] << ' ' << xu[2] << ' ' << u[i][j] << ' ' << 0 << std::endl;
 		}
-	}
-
-	for (int i = 0; i < par.N1; ++i){
-
-		int j = par.N2;
-		output << i*par.d_x << ' ' << (j - 1)*par.d_y << ' ' << data[i][j] << ' ' << 0 << std::endl;
 	}
 
 	for (auto& solid : iList){
@@ -109,12 +64,10 @@ void OutputVelocity_U(Matrix data, int n, std::list<Circle> iList, Param par){
 	}
 
 	output.close();
-
-
 }
 
 
-void OutputVelocity_V(Matrix data, int n, std::list<Circle> iList, Param par){
+void OutputVelocity_V(Matrix v, int n, std::list<Circle> iList, Param par){
 
 	std::ofstream output;
 
@@ -130,19 +83,10 @@ void OutputVelocity_V(Matrix data, int n, std::list<Circle> iList, Param par){
 	output << "SolutionTime = " << n << std::endl;
 
 	for (int j = 0; j < par.N2; ++j){
-
-
-		output << 0.0 << ' ' << (j)*par.d_y << ' ' << 0 << ' ' << data[0][j] << std::endl;
-
-		for (int i = 1; i < par.N1; ++i){
-
-			output << (i - 0.5)*par.d_x << ' ' << (j)*par.d_y << ' ' << 0 << ' ' << data[i][j] << std::endl;
-
+		for (int i = 0; i <= par.N1; ++i){
+			GeomVec xv = x_v(i, j, par);
+			output << xv[1] << ' ' << xv[2] << ' ' << 0 << ' ' << v[i][j] << std::endl;
 		}
-
-		int i = par.N1;
-
-		output << (i - 1)*par.d_x << ' ' << (j)*par.d_y << ' ' << 0 << ' ' << data[i][j] << std::endl;
 	}
 
 	for (auto& solid : iList){
@@ -157,6 +101,45 @@ void OutputVelocity_V(Matrix data, int n, std::list<Circle> iList, Param par){
 	}
 
 	output.close();
+}
 
+void Output(Matrix p, Matrix u, Matrix v, int n, std::list<Circle> iList, Param par) {
 
+	std::ofstream output;
+	std::string filename = "Result/step" + std::to_string(n) + ".plt";
+
+	output.open(filename.c_str());
+
+	output << "title = " << '"' << "sample mesh" << '"' << std::endl;
+	output << "Variables = x y p u v" << std::endl;
+	output << "zone T=" << '"' << n << '"' << ",  i=" << par.N1 + 1 << ", j=" << par.N2 + 1 << ", f=point" << std::endl;
+	output << "SolutionTime = " << n << std::endl;
+
+	for (int j = 0; j <= par.N2; ++j) {
+		for (int i = 0; i <= par.N1; ++i) {
+			GeomVec xp = x_p(i, j, par);
+			double u_, v_;
+			if      (i == 0)      u_ =  u[0][j];
+			else if (i == par.N1) u_ =  u[par.N1 - 1][j];
+			else                  u_ = (u[i - 1][j] + u[i][j]) * 0.5;
+			if      (j == 0)      v_ =  v[i][0];
+			else if (j == par.N2) v_ =  v[i][par.N2 - 1];
+			else                  v_ = (v[i][j - 1] + v[i][j]) * 0.5;
+			output << xp[1] << " " << xp[2] << " " << p[i][j] << " " << u_ << " " << v_ << std::endl;
+		}
+	}
+
+	for (auto& solid : iList) {
+		output << "zone T = circle" << ",  i=" << solid.Nn << ", f=point" << std::endl;
+		output << "SolutionTime = " << n << std::endl;
+		for (int i = 0; i < solid.Nn; ++i) {
+			output << solid.Nodes[i].x[1] << " "
+			       << solid.Nodes[i].x[2] << " "
+			       << solid.omega[3]      << " "
+			       << solid.Nodes[i].us[1] << " "
+			       << solid.Nodes[i].us[2] << " " << std::endl;
+		}
+	}
+
+	output.close();
 }

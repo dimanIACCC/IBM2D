@@ -69,3 +69,38 @@ double ux_Poiseuille(double y, double H) {
 	double ux = (pow(H / 2.0, 2) - pow(y - H / 2.0, 2));
 	return ux;
 }
+
+GeomVec x_p(int i, int j, Param par) {
+	GeomVec result;
+	result[0] = 0.0;
+	result[1] = (i - 0.5) * par.d_x;
+	result[2] = (j - 0.5) * par.d_y;
+	result[3] = 0.0;
+	if (i == 0     ) result[1] = 0.0;
+	if (j == 0     ) result[2] = 0.0;
+	if (i == par.N1) result[1] = (i - 1) * par.d_x;
+	if (j == par.N2) result[2] = (j - 1) * par.d_y;
+	return result;
+}
+
+GeomVec x_u(int i, int j, Param par) {
+	GeomVec result;
+	result[0] = 0.0;
+	result[1] =  i        * par.d_x;
+	result[2] = (j - 0.5) * par.d_y;
+	result[3] = 0.0;
+	if (j == 0     ) result[2] = 0.0;
+	if (j == par.N2) result[2] = (j - 1) * par.d_y;
+	return result;
+}
+
+GeomVec x_v(int i, int j, Param par) {
+	GeomVec result;
+	result[0] = 0.0;
+	result[1] = (i - 0.5) * par.d_x;
+	result[2] =  j        * par.d_y;
+	result[3] = 0.0;
+	if (i == 0) result[1] = 0.0;
+	if (i == par.N1) result[1] = (i - 1) * par.d_x;
+	return result;
+}

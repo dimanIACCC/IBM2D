@@ -1,6 +1,6 @@
 #pragma once
 
-#include "stdafx.h"
+#include "GeomVec.h"
 #include "String.h"
 
 class Param{
@@ -27,3 +27,6 @@ public:
 };
 
 double ux_Poiseuille(double y, double H);
+GeomVec x_p(int i, int j, Param par); // coordinates of (i,j)-th node for pressure p mesh
+GeomVec x_u(int i, int j, Param par); // coordinates of (i,j)-th node for velocity u mesh
+GeomVec x_v(int i, int j, Param par); // coordinates of (i,j)-th node for velocity v mesh
