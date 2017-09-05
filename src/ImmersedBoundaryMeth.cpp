@@ -6,6 +6,7 @@
 #include "BiCGStab.h"
 #include "Calculate_press.h"
 #include "PredictVel.h"
+#include "Testing.h"
 
 
 
@@ -30,7 +31,13 @@ int sgn(double x);
 
 
 
-int main() {
+int main(int argc, char *argv[]) {
+
+	for (int i = 1; i < argc; i++) {
+		if((string)argv[i] == (string)"-d") DoSomeTest();
+}
+
+#pragma region Variables
 	int Re;
 	int N_max = 0; // number of total iterations
 	double alpha_f;
@@ -51,11 +58,19 @@ int main() {
 	double eps_u = 0.0;
 	double eps_v = 0.0;
 	double eps_p = 0.0;
-
-
-
 	int n = 0; // iteration counter
+
+	list<Circle> solidList;  // list of immersed solids
+	ofstream output; // for Drag and Lift coefficents
+	ofstream press_output; // press
+	ofstream log;
+	string filename = "Result/coefficent.plt";
+	//string filepress = "Result/eps_pressure.plt";
+	string filelog = "Result/log.txt";
+#pragma endregion Variables
+
 	InputData(grid, m, Re, alpha_f, beta_f, Zeidel_eps, output_step, N_max, N_Zeidel); // Get value of some variables
+#pragma region SetMatrices
 	CreateMatrix(U_n, grid.N1, grid.N2 + 1);
 	CreateMatrix(U_new, grid.N1, grid.N2 + 1);
 	CreateMatrix(U_prev, grid.N1, grid.N2 + 1);
@@ -78,7 +93,6 @@ int main() {
 			fill(OperatorA_u[i][j].begin(), OperatorA_u[i][j].end(), 0);
 		}
 	}
-
 	Matrix OperatorA_v[5];
 	for (int i = 0; i < 5; i++) {
 		OperatorA_v[i].resize(grid.N1 + 1);
@@ -87,24 +101,12 @@ int main() {
 			fill(OperatorA_v[i][j].begin(), OperatorA_v[i][j].end(), 0);
 		}
 	}
+#pragma endregion SetMatrices
+
 	Calculate_A_u(OperatorA_u, grid, Re);
 	Calculate_A_v(OperatorA_v, grid, Re);
 
 
-	// list of immersed solids
-	list<Circle> solidList;
-	ofstream output; // for Drag and Lift coefficents
-	ofstream press_output; // press
-	ofstream log;
-	//-----------creating Result folder --------------
-	//char current_work_dir[FILENAME_MAX];
-	//_getcwd(current_work_dir, sizeof(current_work_dir));
-	//strcat_s(current_work_dir, "\\Result");
-	//_mkdir(current_work_dir);
-	//-------------------------------------------------
-	string filename = "Result/coefficent.plt";
-	//string filepress = "Result/eps_pressure.plt";
-	string filelog = "Result/log.txt";
 	log.open(filelog, ios::out);
 	SetLog(log, grid, m, Re, alpha_f, beta_f, Zeidel_eps);
 	log << endl;
@@ -174,7 +176,7 @@ int main() {
 		eps_u = 0.0;
 		eps_v = 0.0;
 
-		//<---------- prediction of velocity --------------------------
+#pragma region Prediction of velocity 
 		B_u = CalculateB_u(U_n, V_n, U_prev, V_prev, P, Force_x, grid, Re);
 		B_v = CalculateB_v(U_n, V_n, U_prev, V_prev, P, Force_y, grid, Re);
 #pragma omp parallel sections num_threads(2)
@@ -192,16 +194,15 @@ int main() {
 		}
 		//ExplicPredVel(U_new,V_new,U_n,V_n,P,Force_x,Force_y,grid);
 
-		//<----------end of prediction of velocity --------------------
-
+#pragma endregion Prediction of velocity
 
 		P_Right = Calculate_Press_Right(U_n, V_n, grid);
 
-		for (int i = 0; i < (int)Delta_P.size(); ++i)
-			for (int j = 0; j < (int)Delta_P[i].size(); ++j) {
-				Delta_P[i][j] = 0.0;
-			}
 
+
+		for (int i = 0; i < (int)Delta_P.size(); ++i) {
+			fill(Delta_P[i].begin(), Delta_P[i].end(), 0);
+		}
 
 		eps_p = Calculate_Press_correction(Delta_P, P_Right, N_Zeidel, Zeidel_eps, grid,false);
 
@@ -256,7 +257,7 @@ int main() {
 
 
 
-		//--------------COLLISION CHECK---------------------------
+//----------------COLLISION CHECK----------------------------------------------------------
 		list<Circle>::iterator first;
 		list<Circle>::iterator second;
 		///--------------collisions between particles---------------------------------
@@ -428,6 +429,8 @@ void ApplyInitialData(Matrix &u, Grid grid) {
 		}
 	}
 }
+
+
 
 int sgn(double x)
 {

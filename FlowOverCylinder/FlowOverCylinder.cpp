@@ -36,6 +36,7 @@ int sgn(double x);
 
 
 int main() {
+#pragma region variables
 	int Re;
 	int N_max = 0; // number of total iterations
 	double alpha_f;
@@ -52,8 +53,8 @@ int main() {
 	double eps_u = 0.0;
 	double eps_v = 0.0;
 	double eps_p = 0.0;
-
 	list<Circle> solidList;
+#pragma endregion variables
 	Circle cylinder(0, 0, 0, 0, grid);
 	int n = 0; // iteration counter
 	cylinder = InputData(grid, m, Re, alpha_f, beta_f, Zeidel_eps, output_step, N_max, N_Zeidel); // Get value of some variables
@@ -234,7 +235,6 @@ int main() {
 			PushLog(log, n, eps_u, eps_v);
 			log.flush();
 		}
-
 		if (0 == n % output_step) {
 			OutputVelocity_U(U_new, n, output_step, solidList, grid);
 			OutputVelocity_V(V_new, n, output_step, solidList, grid);
