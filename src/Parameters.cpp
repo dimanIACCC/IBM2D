@@ -17,6 +17,8 @@ Param::Param() {
 	N_max = 5000000;
 	N_Zeidel = 500000;
 	Zeidel_eps = 1e-5;
+	InelasticCollision = false;
+	k_dist = 1.1;
 
 	d_x = L / (N1 - 1);
 	d_y = H / (N2 - 1);
@@ -48,6 +50,8 @@ Param::Param(std::string filename): Param(){
 				else if (PAR == "N_max")        N_max = stoi(VALUE);
 				else if (PAR == "N_Zeidel")     N_Zeidel = stoi(VALUE);
 				else if (PAR == "Zeidel_eps")   Zeidel_eps = stod(VALUE);
+				else if (PAR == "InelasticCollision")   InelasticCollision = bool(stoi(VALUE));
+				else if (PAR == "k_dist")       k_dist = (stod(VALUE));
 				else    std::cout << "unknown parameter " << PAR << std::endl;
 			}
 			else {

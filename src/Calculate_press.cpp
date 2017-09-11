@@ -100,7 +100,9 @@ double Calculate_Press_correction(Matrix& delta_p, Matrix &b_p, Param par, bool 
 		n++;
 	}
 
-
+	if (eps > par.Zeidel_eps) {
+		std::cout << "Zeidel has not converged, eps_p = " << eps << std::endl;
+	}
 
 	return eps;
 

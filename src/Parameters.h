@@ -22,6 +22,8 @@ public:
 	int N_max;                // number of total iterations
 	int N_Zeidel;             // number of iterations in Zeidel method
 	double Zeidel_eps;        // tolerance for Zeidel method
+	bool InelasticCollision;  // Inelastic - true, elastic - false
+	double k_dist;            // coefficient for minimal distance between Solids
 	Param();
 	Param(std::string filename);
 };

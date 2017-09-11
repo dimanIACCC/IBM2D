@@ -187,7 +187,7 @@ double CalculateForce(Matrix& force_x, Matrix& force_y, std::list<Circle> &iList
 			}
 		}
 
-		if (solid.move) {
+		if (solid.moving) {
 			solid.uc    -= solid.f   * par.d_t * 1 / (solid.rho - 1) / solid.V;  // fluid density equals 1
 			solid.omega -= solid.tau * par.d_t * 1 / (solid.rho - 1) / solid.I;  // angular moment I is normalized with density
 		}

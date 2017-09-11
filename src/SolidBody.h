@@ -17,7 +17,7 @@ public:
 class SolidBody
 {
 public:
-	bool move;
+	bool moving;
 	GeomVec xc;     // coordinates of the mass center
 	GeomVec uc;     // velocity of the mass center
 	GeomVec omega;  // angular velocity
@@ -29,18 +29,21 @@ public:
 	std::vector<Node> Nodes;   // Nodes of the SolidBody mesh
 	int Nn;                    // Number of Nodes
 	
-	SolidBody(double x, double y, double ux, double uy, double omega, double rho, int Nn, bool move);
+	SolidBody(double x, double y, double ux, double uy, double omega, double rho, int Nn, bool moving);
 	~SolidBody();
 	void velocities();      // calculates the velocities in all Nodes of the SolidBody
+	void move(double d_t); // move Solid using $uc$ and $omega$
 };
 
 class Circle : public SolidBody{
 public:
 	double r;
 	double d_s;
-	Circle(double x, double y, double ux, double uy, double omega, double rho, int Nn, bool move, double r);
+	Circle(double x, double y, double ux, double uy, double omega, double rho, int Nn, bool moving, double r);
 	Circle(double x, double y, Param par);
 	~Circle();
 };
 
 void Read_Solids(std::string filename, std::list<Circle>& Solids, Param par);
+void Add_Solids(std::list<Circle>& Solids, int nSolids, int n, int n_start, int n_interval, Param par);
+bool Collide(Circle& s1, Circle& s2, Param par);

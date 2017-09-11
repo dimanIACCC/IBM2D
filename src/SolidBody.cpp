@@ -1,7 +1,7 @@
 #include "SolidBody.h"
 
 
-SolidBody::SolidBody(double x, double y, double ux, double uy, double omega, double rho, int Nn, bool move)
+SolidBody::SolidBody(double x, double y, double ux, double uy, double omega, double rho, int Nn, bool moving)
 {
 	std::fill(this->xc.begin()   , this->xc.end(),    0.0); // fill vector xc    with zeros
 	std::fill(this->uc.begin()   , this->uc.end()   , 0.0); // fill vector uc    with zeros
@@ -14,7 +14,7 @@ SolidBody::SolidBody(double x, double y, double ux, double uy, double omega, dou
 	this->rho = rho;
 	this->Nn = Nn;
 	Nodes.resize(Nn);
-	this->move = move;
+	this->moving = moving;
 }
 
 
@@ -23,8 +23,8 @@ SolidBody::~SolidBody()
 
 }
 
-Circle::Circle(double x, double y, double ux, double uy, double omega, double rho, int Nn, bool move, double r) :
-     SolidBody(       x,        y,        ux,        uy,        omega,        rho,     Nn,      move) {
+Circle::Circle(double x, double y, double ux, double uy, double omega, double rho, int Nn, bool moving, double r) :
+     SolidBody(       x,        y,        ux,        uy,        omega,        rho,     Nn,      moving) {
 	this->r = r;
 	this->d_s = (2.0*M_PI*r) / Nn;
 
@@ -53,6 +53,20 @@ void SolidBody::velocities() {
 	}
 }
 
+void SolidBody::move(double d_t) {
+	if (moving) {
+		//update position
+		for (int k = 0; k < Nn; ++k) {
+			//rotate
+			GeomVec r = Nodes[k].x - xc;
+			GeomVec x_temp = rotate_Vector_around_vector(r, omega  * length(r) * d_t); //
+			Nodes[k].x = xc + x_temp; // rotate solid by angle $omega$ * $dt$
+			Nodes[k].x += uc * d_t; // move
+		}
+		xc += uc * d_t;
+	}
+}
+
 void Read_Solids(std::string filename, std::list<Circle>& Solids, Param par) {
 	std::ifstream input;
 	std::string line;
@@ -68,7 +82,7 @@ void Read_Solids(std::string filename, std::list<Circle>& Solids, Param par) {
 				double omega = 0;
 				double rho = par.rho;
 				int Nn = par.Nn;
-				bool move = true;
+				bool moving = true;
 				double r = par.r;
 
 				while (line != "}") {
@@ -84,7 +98,7 @@ void Read_Solids(std::string filename, std::list<Circle>& Solids, Param par) {
 						else if (PAR == "omega")      omega        = stod(VALUE);
 						else if (PAR == "rho")        rho          = stod(VALUE);
 						else if (PAR == "Nn")         Nn           = stoi(VALUE);
-						else if (PAR == "move")       move         = stoi(VALUE);
+						else if (PAR == "moving")     moving       = bool(stoi(VALUE));
 						else if (PAR == "r")          r            = stod(VALUE);
 						else    std::cout << "Read_Solids: unknown parameter " << PAR << std::endl;
 					}
@@ -92,11 +106,11 @@ void Read_Solids(std::string filename, std::list<Circle>& Solids, Param par) {
 						std::cout << "Read_Solids: no value inputed" << std::endl;
 					}
 				}
-				if (move == false) {
+				if (moving == false) {
 					ux = 0;
 					uy = 0;
 				}
-				Circle c(x, y, ux, uy, omega, rho, Nn, move, r);
+				Circle c(x, y, ux, uy, omega, rho, Nn, moving, r);
 				Solids.push_back(c);
 			}
 		}
@@ -105,4 +119,56 @@ void Read_Solids(std::string filename, std::list<Circle>& Solids, Param par) {
 		std::cout << "Read_Solids: File " << filename << " is not found" << std::endl;
 	}
 
+}
+
+void Add_Solids(std::list<Circle>& Solids, int nSolids, int n, int n_start, int n_interval, Param par) {
+	if ((n % n_interval) == n_start) { //create new solids starting from $n_start$ iteration with interval of $n_interval$ iterations
+		for (int i = 0; i < nSolids; i++) { // add $nSolids$ solids
+			GeomVec x;
+			x[0] = 0;
+			x[1] = par.L / 10 + par.L / 10 * 0.95 * (double(rand()) - RAND_MAX / 2) / RAND_MAX;
+			x[2] = par.H / 2  + par.H / 2  * 0.95 * (double(rand()) - RAND_MAX / 2) / RAND_MAX;
+			x[3] = 0;
+			Circle c(x[1], x[2], par);
+			// check if new Solid does not cross other Solids
+			bool add = true;
+			for (auto solid = Solids.begin(); solid != Solids.end(); solid++) {
+				if (length(x - solid->xc) < par.k_dist * (par.r + solid->r)) {
+					add = false;
+					break;
+				}
+			}
+			if (add) {
+				Solids.push_back(c);
+			}
+		}
+	}
+
+}
+
+bool Collide(Circle& s1, Circle& s2, Param par) {
+	bool result = false;
+	GeomVec r = s1.xc - s2.xc;
+	double distance = length(r); //<----distance between two particles
+	if (distance <= par.k_dist*(s1.r + s2.r)) {
+		result = true;
+		if (par.InelasticCollision) { //Perfectly inelastic collision
+			s1.uc = (s1.uc + s2.uc) / 2;
+			s2.uc = s1.uc;
+		}
+		else { //Perfectly elastic collision
+			r = r / distance;
+			double u1_before = dot_product(s1.uc, r);
+			double u2_before = dot_product(s2.uc, r);
+			if (u1_before - u2_before < 0.0) { // if Solids move to each other
+				double m1 = s1.rho * s1.V;
+				double m2 = s2.rho * s2.V;
+				double u1_after = (u1_before * (m1 - m2) + 2 * m2 * u2_before) / (m1 + m2);
+				double u2_after = (u2_before * (m2 - m1) + 2 * m1 * u1_before) / (m1 + m2);
+				s1.uc += (u1_after - u1_before) * r;
+				s2.uc += (u2_after - u2_before) * r;
+			}
+		}
+	}
+	return result;
 }

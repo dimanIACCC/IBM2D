@@ -48,6 +48,13 @@ void Calculate_A_u(Matrix A[5], Param par, double Re) {
 	int const n1 = par.N1;
 	int const n2 = par.N2 + 1;
 
+	for (int i = 0; i < 5; i++) {
+		A[i].resize(n1);
+		for (int j = 0; j < n1; j++) {
+			A[i][j].resize(n2);
+			fill(A[i][j].begin(), A[i][j].end(), 0);
+		}
+	}
 
 	for (int j = 1; j < (n2 - 1); ++j) {
 		for (int i = 1; i < (n1 - 1); ++i) {
@@ -106,6 +113,14 @@ void Calculate_A_v(Matrix A[5], Param par, double Re) {
 	double d_yy = 1.0 / (par.d_y*par.d_y);
 	int const n1 = par.N1 + 1;
 	int const n2 = par.N2;
+
+	for (int i = 0; i < 5; i++) {
+		A[i].resize(n1);
+		for (int j = 0; j < n1; j++) {
+			A[i][j].resize(n2);
+			fill(A[i][j].begin(), A[i][j].end(), 0);
+		}
+	}
 
 
 	for (int j = 1; j < (n2 - 1); ++j) {

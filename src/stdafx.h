@@ -10,3 +10,5 @@
 #include <list>
 #include <chrono>
 #include <iomanip>
+
+const bool Debug = true;
