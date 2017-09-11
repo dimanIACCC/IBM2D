@@ -26,7 +26,6 @@ SolidBody::~SolidBody()
 Circle::Circle(double x, double y, double ux, double uy, double omega, double rho, int Nn, bool moving, double r) :
      SolidBody(       x,        y,        ux,        uy,        omega,        rho,     Nn,      moving) {
 	this->r = r;
-	this->d_s = (2.0*M_PI*r) / Nn;
 
 	for (int i = 0; i < Nn; ++i){
 		Nodes[i].x[1] = x + cos(i * 2.0 * M_PI / Nn) * r;
@@ -65,6 +64,16 @@ void SolidBody::move(double d_t) {
 		}
 		xc += uc * d_t;
 	}
+}
+
+double SolidBody::ds(int i) {
+	GeomVec xL, xR;
+	if (i > 0)    xL = Nodes[i-1].x;
+	else          xL = Nodes[Nn-1].x;
+	if (i < Nn-1) xR = Nodes[i+1].x;
+	else          xR = Nodes[0].x;
+	double result = length(xL - xR) / 2;
+	return result;
 }
 
 void Read_Solids(std::string filename, std::list<Circle>& Solids, Param par) {

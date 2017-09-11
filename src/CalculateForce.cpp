@@ -96,18 +96,20 @@ double CalculateForce(Matrix& force_x, Matrix& force_y, std::list<Circle> &iList
 			solid.Nodes[k].Integral +=  (solid.Nodes[k].uf - solid.Nodes[k].us) * par.d_t;
 			solid.Nodes[k].f = par.alpha_f * solid.Nodes[k].Integral + par.beta_f  *(solid.Nodes[k].uf - solid.Nodes[k].us);
 
+
+			double ds = solid.ds(k);
 			// calculating force force_temp for Euler nodes caused by k-th solid
 			for (int i = ix_min; i <= ix_max; ++i) {
 				for (int j = jx_min; j <= jx_max; ++j) {
 					GeomVec xu = x_u(i, j, par);
-					force_x_temp[i][j] += solid.Nodes[k].f[1] * DeltaFunction(xu[1] - solid.Nodes[k].x[1], xu[2] - solid.Nodes[k].x[2], par) * solid.d_s * solid.d_s;
+					force_x_temp[i][j] += solid.Nodes[k].f[1] * DeltaFunction(xu[1] - solid.Nodes[k].x[1], xu[2] - solid.Nodes[k].x[2], par) * ds * ds;
 				}
 			}
 
 			for (int i = iy_min; i <= iy_max; ++i) {
 				for (int j = jy_min; j <= jy_max; ++j) {
 					GeomVec xv = x_v(i, j, par);
-					force_y_temp[i][j] += solid.Nodes[k].f[2] * DeltaFunction(xv[1] - solid.Nodes[k].x[1], xv[2] - solid.Nodes[k].x[2], par) * solid.d_s * solid.d_s;
+					force_y_temp[i][j] += solid.Nodes[k].f[2] * DeltaFunction(xv[1] - solid.Nodes[k].x[1], xv[2] - solid.Nodes[k].x[2], par) * ds * ds;
 				}
 			}
 		}
