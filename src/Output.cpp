@@ -1,171 +1,145 @@
 #include "Output.h"
 
-void OutputPressure(Matrix data, int n, double output_step, list<Circle> iList, Grid grid){
+void OutputPressure(Matrix p, int n, std::list<Circle> iList, Param par){
 
-	ofstream output;
-	int i = 0;
-	int j = 0;
-
-	// Solution p
-
-	string filename = "Result/solution_pressure" + to_string(n) + ".plt";
+	std::ofstream output;
+	std::string filename = "Result/solution_pressure" + std::to_string(n) + ".plt";
 
 	output.open(filename.c_str());
 
-	output << "title = " << '"' << "sample mesh" << '"' << endl;
-	output << "Variables=" << '"' << 'x' << '"' << ',' << '"' << 'y' << '"' << ',' << '"' << 'p' << '"' << endl;
-	output << "zone T=" << '"' << n << '"' << ",  i=" << grid.N1 + 1 << ", j=" << grid.N2 + 1 << ", f=point" << endl;
+	output << "title = " << '"' << "sample mesh" << '"' << std::endl;
+	output << "Variables = x y p" << std::endl;
+	output << "zone T=" << '"' << n << '"' << ",  i=" << par.N1 + 1 << ", j=" << par.N2 + 1 << ", f=point" << std::endl;
+	output << "SolutionTime = " << n << std::endl;
 
-
-	output << 0.0 << ' ' << 0.0 << ' ' << data[0][0] << endl;
-
-	for (i = 1; i < grid.N1; ++i){
-
-		output << (i - 0.5)*grid.d_x << ' ' << 0.0 << ' ' << data[i][0] << endl;
-	}
-	i = grid.N1;
-	output << (i - 1)*grid.d_x << ' ' << 0.0 << ' ' << data[i][0] << endl;
-
-
-	for (j = 1; j < grid.N2; ++j){
-
-		output << 0.0 << ' ' << (j - 0.5)*grid.d_y << ' ' << data[0][j] << endl;
-
-		for (i = 1; i < grid.N1; ++i){
-			output << (i - 0.5)*grid.d_x << ' ' << (j - 0.5)*grid.d_y << ' ' << data[i][j] << endl;
+	for (int j = 0; j <= par.N2; ++j){
+		for (int i = 0; i <= par.N1; ++i){
+			GeomVec xp = x_p(i, j, par);
+			output << xp[1] << ' ' << xp[2] << ' ' << p[i][j] << std::endl;
 		}
-		i = grid.N1;
-		output << (i - 1)*grid.d_x << ' ' << (j - 0.5)*grid.d_y << ' ' << data[i][j] << endl;
 	}
-
-
-	j = grid.N2;
-	output << 0.0 << ' ' << (j - 1)*grid.d_y << ' ' << data[0][j] << endl;
-	for (i = 1; i < grid.N1; ++i){
-
-		output << (i - 0.5)*grid.d_x << ' ' << (j - 1)*grid.d_y << ' ' << data[i][j] << endl;
-	}
-	i = grid.N1;
-	output << (i - 1)*grid.d_x << ' ' << (j - 1)*grid.d_y << ' ' << data[i][j] << endl;
 
 	for (auto& solid : iList){
-
-		output << "GEOMETRY ZN = " << n / output_step + 1 << ", X=" << solid.Bound[0][0] << ", Y=" << solid.Bound[1][0] << ", T=LINE, LT = 0.3, CS=GRID" << endl;
-		output << "1" << endl << grid.NF + 1 << endl;
-		output << 0 << " " << 0 << endl;
-		for (int i = 1; i < grid.NF; ++i){
-
-			output << solid.Bound[0][i] - solid.Bound[0][0] << " " << solid.Bound[1][i] - solid.Bound[1][0] << endl;
-
+		output << "zone T = circle" << ",  i=" << solid.Nn << ", f=point" << std::endl;
+		output << "SolutionTime = " << n << std::endl;
+		for (int i = 0; i < solid.Nn; ++i){
+			output << solid.Nodes[i].x[1] << " "
+			       << solid.Nodes[i].x[2] << " "
+			       << 0 << std::endl;
 		}
-		output << 0 << " " << 0 << endl;
-		output << endl;
 	}
 
-
 	output.close();
-
-
 }
 
 
-void OutputVelocity_U(Matrix data, int n, int output_step, list<Circle> iList, Grid grid){
+void OutputVelocity_U(Matrix u, int n, std::list<Circle> iList, Param par){
 
-	ofstream output;
-
-	// Solution u
-
-	string filename = "Result/solution_velocity_u" + to_string(n) + ".plt";
+	std::ofstream output;
+	std::string filename = "Result/solution_velocity_u" + std::to_string(n) + ".plt";
 
 	output.open(filename.c_str());
 
-	output << "title = " << '"' << "sample mesh" << '"' << endl;
-	output << "Variables=" << '"' << 'x' << '"' << ',' << '"' << 'y' << '"' << ',' << '"' << 'u' << '"' << endl;
-	output << "zone T=" << '"' << n << '"' << ",  i=" << grid.N1 << ", j=" << grid.N2 + 1 << ", f=point" << endl;
+	output << "title = " << '"' << "sample mesh" << '"' << std::endl;
+	output << "Variables = x y u v" << std::endl;
+	output << "zone T=" << '"' << n << '"' << ",  i=" << par.N1 << ", j=" << par.N2 + 1 << ", f=point" << std::endl;
+	output << "SolutionTime = " << n << std::endl;
 
-	for (int i = 0; i < grid.N1; ++i){
-
-		output << i*grid.d_x << ' ' << 0.0 << ' ' << data[i][0] << endl;
-	}
-
-	for (int j = 1; j < grid.N2; ++j){
-		for (int i = 0; i < grid.N1; ++i){
-			output << (i)*grid.d_x << ' ' << (j - 0.5)*grid.d_y << ' ' << data[i][j] << endl;
+	for (int j = 0; j <= par.N2; ++j){
+		for (int i = 0; i < par.N1; ++i){
+			GeomVec xu = x_u(i, j, par);
+			output << xu[1] << ' ' << xu[2] << ' ' << u[i][j] << ' ' << 0 << std::endl;
 		}
-	}
-
-	for (int i = 0; i < grid.N1; ++i){
-
-		int j = grid.N2;
-		output << i*grid.d_x << ' ' << (j - 1)*grid.d_y << ' ' << data[i][j] << endl;
 	}
 
 	for (auto& solid : iList){
-
-		output << "GEOMETRY ZN = " << n / output_step + 1 << ", X=" << solid.Bound[0][0] << ", Y=" << solid.Bound[1][0] << ", T=LINE, LT = 0.3, CS=GRID" << endl;
-		output << "1" << endl << grid.NF + 1 << endl;
-		output << 0 << " " << 0 << endl;
-		for (int i = 1; i < grid.NF; ++i){
-
-			output << solid.Bound[0][i] - solid.Bound[0][0] << " " << solid.Bound[1][i] - solid.Bound[1][0] << endl;
-
+		output << "zone T = circle" << ",  i=" << solid.Nn << ", f=point" << std::endl;
+		output << "SolutionTime = " << n << std::endl;
+		for (int i = 0; i < solid.Nn; ++i) {
+			output << solid.Nodes[i].x[1] << " "
+			       << solid.Nodes[i].x[2] << " "
+			       << solid.Nodes[i].us[1] << " "
+			       << solid.Nodes[i].us[2] << " " << std::endl;
 		}
-		output << 0 << " " << 0 << endl;
-		output << endl;
 	}
 
 	output.close();
-
-
 }
 
 
-void OutputVelocity_V(Matrix& data, int n, int output_step, list<Circle> iList, Grid grid){
+void OutputVelocity_V(Matrix v, int n, std::list<Circle> iList, Param par){
 
-	ofstream output;
+	std::ofstream output;
 
 	// Solution v
 
-	string filename = "Result/solution_velocity_v" + to_string(n) + ".plt";
+	std::string filename = "Result/solution_velocity_v" + std::to_string(n) + ".plt";
 
 	output.open(filename.c_str());
 
-	output << "title = " << '"' << "sample mesh" << '"' << endl;
-	output << "Variables=" << '"' << 'x' << '"' << ',' << '"' << 'y' << '"' << ',' << '"' << 'v' << '"' << endl;
-	output << "zone T=" << '"' << n << '"' << ",  i=" << grid.N1 + 1 << ", j=" << grid.N2 << ", f=point" << endl;
+	output << "title = " << '"' << "sample mesh" << '"' << std::endl;
+	output << "Variables = x y u v" << std::endl;
+	output << "zone T=" << '"' << n << '"' << ",  i=" << par.N1 + 1 << ", j=" << par.N2 << ", f=point" << std::endl;
+	output << "SolutionTime = " << n << std::endl;
 
-
-	for (int j = 0; j < grid.N2; ++j){
-
-
-		output << 0.0 << ' ' << (j)*grid.d_y << ' ' << data[0][j] << endl;
-
-		for (int i = 1; i < grid.N1; ++i){
-
-			output << (i - 0.5)*grid.d_x << ' ' << (j)*grid.d_y << ' ' << data[i][j] << endl;
-
+	for (int j = 0; j < par.N2; ++j){
+		for (int i = 0; i <= par.N1; ++i){
+			GeomVec xv = x_v(i, j, par);
+			output << xv[1] << ' ' << xv[2] << ' ' << 0 << ' ' << v[i][j] << std::endl;
 		}
-
-		int i = grid.N1;
-
-		output << (i - 1)*grid.d_x << ' ' << (j)*grid.d_y << ' ' << data[i][j] << endl;
 	}
 
 	for (auto& solid : iList){
-
-		output << "GEOMETRY ZN = " << n / output_step + 1 << ", X=" << solid.Bound[0][0] << ", Y=" << solid.Bound[1][0] << ", T=LINE, LT = 0.3, CS=GRID" << endl;
-		output << "1" << endl << grid.NF + 1 << endl;
-		output << 0 << " " << 0 << endl;
-		for (int i = 1; i < grid.NF; ++i){
-
-			output << solid.Bound[0][i] - solid.Bound[0][0] << " " << solid.Bound[1][i] - solid.Bound[1][0] << endl;
-
+		output << "zone T = circle" << ",  i=" << solid.Nn << ", f=point" << std::endl;
+		output << "SolutionTime = " << n << std::endl;
+		for (int i = 0; i < solid.Nn; ++i) {
+			output << solid.Nodes[i].x[1] << " "
+			       << solid.Nodes[i].x[2] << " "
+			       << solid.Nodes[i].us[1] << " "
+			       << solid.Nodes[i].us[2] << " " << std::endl;
 		}
-		output << 0 << " " << 0 << endl;
-		output << endl;
 	}
 
 	output.close();
+}
 
+void Output(Matrix p, Matrix u, Matrix v, int n, std::list<Circle> iList, Param par) {
 
+	std::ofstream output;
+	std::string filename = "Result/step" + std::to_string(n) + ".plt";
+
+	output.open(filename.c_str());
+
+	output << "title = " << '"' << "sample mesh" << '"' << std::endl;
+	output << "Variables = x y p u v" << std::endl;
+	output << "zone T=" << '"' << n << '"' << ",  i=" << par.N1 + 1 << ", j=" << par.N2 + 1 << ", f=point" << std::endl;
+	output << "SolutionTime = " << n << std::endl;
+
+	for (int j = 0; j <= par.N2; ++j) {
+		for (int i = 0; i <= par.N1; ++i) {
+			GeomVec xp = x_p(i, j, par);
+			double u_, v_;
+			if      (i == 0)      u_ =  u[0][j];
+			else if (i == par.N1) u_ =  u[par.N1 - 1][j];
+			else                  u_ = (u[i - 1][j] + u[i][j]) * 0.5;
+			if      (j == 0)      v_ =  v[i][0];
+			else if (j == par.N2) v_ =  v[i][par.N2 - 1];
+			else                  v_ = (v[i][j - 1] + v[i][j]) * 0.5;
+			output << xp[1] << " " << xp[2] << " " << p[i][j] << " " << u_ << " " << v_ << std::endl;
+		}
+	}
+
+	for (auto& solid : iList) {
+		output << "zone T = circle" << ",  i=" << solid.Nn << ", f=point" << std::endl;
+		output << "SolutionTime = " << n << std::endl;
+		for (int i = 0; i < solid.Nn; ++i) {
+			output << solid.Nodes[i].x[1] << " "
+			       << solid.Nodes[i].x[2] << " "
+			       << solid.omega[3]      << " "
+			       << solid.Nodes[i].us[1] << " "
+			       << solid.Nodes[i].us[2] << " " << std::endl;
+		}
+	}
+
+	output.close();
 }

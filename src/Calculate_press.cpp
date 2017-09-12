@@ -2,21 +2,21 @@
 
 
 
-double Calculate_Press_correction(Matrix& delta_p, Matrix &b_p, int const N_Zeidel, double const Zeidel_eps, Grid grid){
+double Calculate_Press_correction(Matrix& delta_p, Matrix &b_p, Param par, bool OverFlow){
 
 	int n = 0;
 	double eps = 0.0;
 
-	double a = (1.0 / (grid.d_x*grid.d_x) + 1.0 / (grid.d_y*grid.d_y));
-	double b = 1.0 / (grid.d_x*grid.d_x);
-	double c = 1.0 / (grid.d_y*grid.d_y);
+	double a = (1.0 / (par.d_x*par.d_x) + 1.0 / (par.d_y*par.d_y));
+	double b = 1.0 / (par.d_x*par.d_x);
+	double c = 1.0 / (par.d_y*par.d_y);
 	double d = 0.0;
 	double help;
 
-	int const n1 = grid.N1 + 1;
-	int const n2 = grid.N2 + 1;
+	int const n1 = par.N1 + 1;
+	int const n2 = par.N2 + 1;
 
-	while (n < N_Zeidel){
+	while (n < par.N_Zeidel){
 		eps = 0.0;
 		for (int i = 0; i < n1; ++i){
 			for (int j = 0; j < n2; ++j){
@@ -32,8 +32,17 @@ double Calculate_Press_correction(Matrix& delta_p, Matrix &b_p, int const N_Zeid
 					help = delta_p[i + 1][j - 1];
 				}
 
-				if (n1 - 1 == i){
-					help = 0.0;					
+				if (n1 - 1 == i && 0 != j && n2 - 1 != j) {
+					if (OverFlow) help = delta_p[i - 1][j];
+					else help = 0.0;
+				}
+				if (n1 - 1 == i && 0 == j) {
+					if (OverFlow) help = delta_p[i - 1][j + 1];
+					else help = 0.0;
+				}
+				if (n1 - 1 == i && n2 - 1 == j) {
+					if (OverFlow) help = delta_p[i - 1][j - 1];
+					else help = 0.0;
 				}
 
 
@@ -85,33 +94,35 @@ double Calculate_Press_correction(Matrix& delta_p, Matrix &b_p, int const N_Zeid
 		}
 
 
-		if (eps < Zeidel_eps){
+		if (eps < par.Zeidel_eps){
 			break;
 		}
 		n++;
 	}
 
-
+	if (eps > par.Zeidel_eps) {
+		std::cout << "Zeidel has not converged, eps_p = " << eps << std::endl;
+	}
 
 	return eps;
 
 }
 
 
-Matrix Calculate_Press_Right(Matrix &u, Matrix &v, Grid grid){
+Matrix Calculate_Press_Right(Matrix &u, Matrix &v, Param par){
 	double d = 0.0;
 
-	int const n1 = grid.N1 + 1;
-	int const n2 = grid.N2 + 1;
+	int const n1 = par.N1 + 1;
+	int const n2 = par.N2 + 1;
 	CreateMatrix(result, n1, n2);
 
 
 	for (int i = 1; i < n1 - 1; ++i){
 		for (int j = 1; j < n2 - 1; ++j){
 
-			d = (1.0 / grid.d_x) * (u[i][j] - u[i - 1][j]) + (1.0 / grid.d_y) * (v[i][j] - v[i][j - 1]);
+			d = (1.0 / par.d_x) * (u[i][j] - u[i - 1][j]) + (1.0 / par.d_y) * (v[i][j] - v[i][j - 1]);
 
-			result[i][j] = d / grid.d_t;
+			result[i][j] = d / par.d_t;
 
 		}
 

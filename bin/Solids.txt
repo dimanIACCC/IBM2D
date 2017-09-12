@@ -1,0 +1,7 @@
+circle{
+   x = 15
+   y =        3.5
+   moving = 0
+   r = 1.2
+   rho = 1e9
+}
