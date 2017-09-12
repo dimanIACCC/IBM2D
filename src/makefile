@@ -6,8 +6,8 @@
 cc = g++
 
 # Object files
-obj = stdafx.o BiCGStab.o SolidBody.o Calculate_A.o Calculate_B.o CalculateForce.o Calculate_press.o \
-      Output.o ImmersedBoundaryMeth.o
+obj = stdafx.o BiCGStab.o GeomVec.o String.o Parameters.o SolidBody.o PredictVel.o \
+      Calculate_press.o CalculateForce.o Output.o ImmersedBoundaryMeth.o
 
 ibm: $(obj)
 	$(cc) -O2 -o ibm $(obj)
