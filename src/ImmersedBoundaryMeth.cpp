@@ -3,6 +3,7 @@
 #include "BiCGStab.h"
 #include "Calculate_press.h"
 #include "PredictVel.h"
+#include "Testing.h"
 
 
 
@@ -19,11 +20,17 @@ int sgn(double x);
 
 
 
-int main() {
+int main(int argc, char *argv[]) {
+
+	for (int i = 1; i < argc; i++) {
+		if((std::string)argv[i] == (std::string)"-d") DoSomeTest();
+	}
 
 	const double epsilon = 1e-3;
 
 	Param par("input.txt"); // Construct Parameters using file input.txt
+
+	#pragma region SetMatrices
 	CreateMatrix(U_n, par.N1, par.N2 + 1);
 	CreateMatrix(U_new, par.N1, par.N2 + 1);
 	CreateMatrix(U_prev, par.N1, par.N2 + 1);
@@ -37,25 +44,21 @@ int main() {
 	CreateMatrix(P, par.N1 + 1, par.N2 + 1);
 	CreateMatrix(Delta_P, par.N1 + 1, par.N2 + 1);
 	CreateMatrix(P_Right, par.N1 + 1, par.N2 + 1);
-
 	Matrix OperatorA_u[5];
 	Matrix OperatorA_v[5];
 	Calculate_A_u(OperatorA_u, par, par.Re);
 	Calculate_A_v(OperatorA_v, par, par.Re);
-
+	#pragma endregion SetMatrices
 
 	std::ofstream log;
-	//-----------creating Result folder --------------
-	//char current_work_dir[FILENAME_MAX];
-	//_getcwd(current_work_dir, sizeof(current_work_dir));
-	//strcat_s(current_work_dir, "\\Result");
-	//_mkdir(current_work_dir);
-	//-------------------------------------------------
-	std::string filelog = "Result/log.txt";
-	log.open(filelog, std::ios::out);
+	log.open("Result/log.txt", std::ios::out);
 	SetLog(log, par);
 
-	ApplyInitialData(U_new, par); // Applying initial data to velocity 
+	std::ofstream force;
+	force.open("Result/force.plt", std::ios::out);
+	force << "Variables = n, Fx, Fy" << std::endl;
+
+	ApplyInitialData(U_new, par); // Applying initial data to velocity
 	U_n = U_new;
 	U_prev = U_new;
 
@@ -70,18 +73,20 @@ int main() {
 		Add_Solids(solidList, 20, n, 0, 200, par);
 
 		CalculateForce(Force_x, Force_y, solidList, U_new, V_new, par);
+		force << n << " " << Summ(Force_x) << " " << Summ(Force_y) << std::endl;
 
-		//<---------- prediction of velocity --------------------------
+		#pragma region Prediction of velocity
 		B_u = CalculateB_u(U_n, V_n, U_prev, V_prev, P, Force_x, par);
 		B_v = CalculateB_v(U_n, V_n, U_prev, V_prev, P, Force_y, par);
-#pragma omp parallel sections num_threads(2)
+
+		#pragma omp parallel sections num_threads(2)
 		{
 
-#pragma omp section
+			#pragma omp section
 			{
 				BiCGStab(U_new, par.N1, par.N2 + 1, OperatorA_u, B_u, par, false);
 			}
-#pragma omp section
+			#pragma omp section
 			{
 				BiCGStab(V_new, par.N1 + 1, par.N2, OperatorA_v, B_v, par, false);
 			}
@@ -89,15 +94,12 @@ int main() {
 		}
 		//ExplicPredVel(U_new,V_new,U_n,V_n,P,Force_x,Force_y,par);
 
-		//<----------end of prediction of velocity --------------------
-
+		#pragma endregion Prediction of velocity
 
 		P_Right = Calculate_Press_Right(U_n, V_n, par);
 
 		for (int i = 0; i < (int)Delta_P.size(); ++i) {
-			for (int j = 0; j < (int)Delta_P[i].size(); ++j) {
-				Delta_P[i][j] = 0.0;
-			}
+			std::fill(Delta_P[i].begin(), Delta_P[i].end(), 0);
 		}
 
 		double eps_p = Calculate_Press_correction(Delta_P, P_Right, par,false);
@@ -125,7 +127,7 @@ int main() {
 			}
 		}
 
-		//------------calculating eps_u--------------------------
+		#pragma region calculating eps_u and eps_v
 		double eps_u = 0.0;
 		for (int i = 0; i < par.N1; ++i) {
 			for (int j = 0; j < par.N2 + 1; ++j) {
@@ -137,7 +139,6 @@ int main() {
 				U_n[i][j] = U_new[i][j];
 			}
 		}
-		//------------calculating eps_v--------------------------
 		double eps_v = 0.0;
 		for (int i = 0; i < par.N1 + 1; ++i) {
 			for (int j = 0; j < par.N2; ++j) {
@@ -148,18 +149,16 @@ int main() {
 				V_n[i][j] = V_new[i][j];
 			}
 		}
-		//--------------------------------------------------------
+		#pragma endregion calculating eps_u and eps_v
 
 
-		//--------------COLLISION CHECK---------------------------
-		///--------------collisions between particles---------------------------------
+		#pragma region collisions check
+		///--------------collisions between particles-----------------
 		for (auto one = solidList.begin(); one != solidList.end(); one++) {
 			for (auto two = next(one); two != solidList.end(); two++) {
 				if (Collide(*one, *two, par)) if (Debug) std::cout << "Collision detected" << std::endl;
 			}
 		}
-		///--------------end of collisions between particles---------------------------------
-
 		///-------------collision with walls--------------------------
 		for (auto one = solidList.begin(); one != solidList.end(); one++) {
 			double DistUpper = par.H - one->xc[2];//<----distance to upper wall
@@ -169,9 +168,7 @@ int main() {
 				one->uc[2] = -one->uc[2];
 			}
 		}
-		///-------------end of collision with walls--------------------------
-
-//--------------END OF COLLISION CHECK---------------------------------------------------
+		#pragma endregion collisions check
 
 
 		for (auto it = solidList.begin(); it != solidList.end();) {
