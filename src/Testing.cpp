@@ -1,6 +1,4 @@
-#include "stdafx.h"
 #include "Testing.h"
-#include "CalculateForce.h"
 
 void DoSomeTest() {
 	DoTestForce();

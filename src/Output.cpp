@@ -1,9 +1,9 @@
 #include "Output.h"
 
-void OutputPressure(Matrix p, int n, std::list<Circle> iList, Param par){
+void OutputPressure(Matrix p, int n, std::list<Circle> iList, Param par, std::string WorkDir){
 
 	std::ofstream output;
-	std::string filename = "Result/solution_pressure" + std::to_string(n) + ".plt";
+	std::string filename = WorkDir + "solution_pressure" + std::to_string(n) + ".plt";
 
 	output.open(filename.c_str());
 
@@ -33,10 +33,10 @@ void OutputPressure(Matrix p, int n, std::list<Circle> iList, Param par){
 }
 
 
-void OutputVelocity_U(Matrix u, int n, std::list<Circle> iList, Param par){
+void OutputVelocity_U(Matrix u, int n, std::list<Circle> iList, Param par, std::string WorkDir){
 
 	std::ofstream output;
-	std::string filename = "Result/solution_velocity_u" + std::to_string(n) + ".plt";
+	std::string filename = WorkDir + "solution_velocity_u" + std::to_string(n) + ".plt";
 
 	output.open(filename.c_str());
 
@@ -67,13 +67,13 @@ void OutputVelocity_U(Matrix u, int n, std::list<Circle> iList, Param par){
 }
 
 
-void OutputVelocity_V(Matrix v, int n, std::list<Circle> iList, Param par){
+void OutputVelocity_V(Matrix v, int n, std::list<Circle> iList, Param par, std::string WorkDir){
 
 	std::ofstream output;
 
 	// Solution v
 
-	std::string filename = "Result/solution_velocity_v" + std::to_string(n) + ".plt";
+	std::string filename = WorkDir + "solution_velocity_v" + std::to_string(n) + ".plt";
 
 	output.open(filename.c_str());
 
@@ -103,10 +103,10 @@ void OutputVelocity_V(Matrix v, int n, std::list<Circle> iList, Param par){
 	output.close();
 }
 
-void Output(Matrix p, Matrix u, Matrix v, int n, std::list<Circle> iList, Param par) {
+void Output(Matrix p, Matrix u, Matrix v, int n, std::list<Circle> iList, Param par, std::string WorkDir) {
 
 	std::ofstream output;
-	std::string filename = "Result/step" + std::to_string(n) + ".plt";
+	std::string filename = WorkDir + "step" + std::to_string(n) + ".plt";
 
 	output.open(filename.c_str());
 

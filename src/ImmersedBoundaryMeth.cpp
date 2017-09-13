@@ -22,13 +22,16 @@ int sgn(double x);
 
 int main(int argc, char *argv[]) {
 
+	std::string WorkDir = "";
 	for (int i = 1; i < argc; i++) {
-		if((std::string)argv[i] == (std::string)"-d") DoSomeTest();
+		std::string line, PAR, VALUE;
+		line = (std::string)argv[i];
+		GetParValue(line, PAR, VALUE);
+		if      (PAR == "-d") DoSomeTest();
+		else if (PAR == "-dir") if (VALUE.size() > 0) WorkDir = VALUE + '/';
 	}
 
-	const double epsilon = 1e-3;
-
-	Param par("input.txt"); // Construct Parameters using file input.txt
+	Param par(WorkDir + "input.txt"); // Construct Parameters using file input.txt
 
 	#pragma region SetMatrices
 	CreateMatrix(U_n, par.N1, par.N2 + 1);
@@ -51,11 +54,11 @@ int main(int argc, char *argv[]) {
 	#pragma endregion SetMatrices
 
 	std::ofstream log;
-	log.open("Result/log.txt", std::ios::out);
+	log.open(WorkDir + "log.txt", std::ios::out);
 	SetLog(log, par);
 
 	std::ofstream force;
-	force.open("Result/force.plt", std::ios::out);
+	force.open(WorkDir + "force.plt", std::ios::out);
 	force << "Variables = n, Fx, Fy" << std::endl;
 
 	ApplyInitialData(U_new, par); // Applying initial data to velocity
@@ -63,9 +66,9 @@ int main(int argc, char *argv[]) {
 	U_prev = U_new;
 
 	std::list<Circle> solidList; // list of immersed solids
-	Read_Solids("Solids.txt", solidList, par); // read Solids from file
+	Read_Solids(WorkDir + "Solids.txt", solidList, par); // read Solids from file
 
-	Output(P, U_new, V_new, -1, solidList, par);
+	Output(P, U_new, V_new, -1, solidList, par, WorkDir);
 
 	int n = 0; // iteration counter
 	while (n <= par.N_max) {
@@ -188,13 +191,13 @@ int main(int argc, char *argv[]) {
 		log.flush();
 
 		if (n % par.output_step == 0) {
-			Output(P, U_new, V_new, n, solidList, par);
+			Output(P, U_new, V_new, n, solidList, par, WorkDir);
 		}
 
 
-
+		const double epsilon = 1e-3;
 		if (eps_u < epsilon && eps_v < epsilon) {
-			Output(P, U_new, V_new, n, solidList, par);
+			Output(P, U_new, V_new, n, solidList, par, WorkDir);
 			break;
 		}
 

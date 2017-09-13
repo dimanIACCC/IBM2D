@@ -1,6 +1,5 @@
 #pragma once
-#include "stdafx.h"
-#include "Parameters.h"
+#include "CalculateForce.h"
 
 void DoTestForce();
 void DoSomeTest();
