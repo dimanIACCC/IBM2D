@@ -24,6 +24,9 @@ public:
 	double Zeidel_eps;        // tolerance for Zeidel method
 	bool InelasticCollision;  // Inelastic - true, elastic - false
 	double k_dist;            // coefficient for minimal distance between Solids
+	int AddSolids_N;          // number of added Solids
+	int AddSolids_start;      // step when Solids start to add
+	int AddSolids_interval;   // interval for Solids adding
 	Param();
 	Param(std::string filename);
 };

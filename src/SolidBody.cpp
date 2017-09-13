@@ -130,9 +130,9 @@ void Read_Solids(std::string filename, std::list<Circle>& Solids, Param par) {
 
 }
 
-void Add_Solids(std::list<Circle>& Solids, int nSolids, int n, int n_start, int n_interval, Param par) {
-	if ((n % n_interval) == n_start) { //create new solids starting from $n_start$ iteration with interval of $n_interval$ iterations
-		for (int i = 0; i < nSolids; i++) { // add $nSolids$ solids
+void Add_Solids(std::list<Circle>& Solids, int n, Param par) {
+	if ((n % par.AddSolids_interval) == par.AddSolids_start) { //create new solids starting from $AddSolids_start$ iteration with interval of $AddSolids_interval$ iterations
+		for (int i = 0; i < par.AddSolids_N; i++) { // add $AddSolids_N$ solids
 			GeomVec x;
 			x[0] = 0;
 			x[1] = par.L / 10 + par.L / 10 * 0.95 * (double(rand()) - RAND_MAX / 2) / RAND_MAX;

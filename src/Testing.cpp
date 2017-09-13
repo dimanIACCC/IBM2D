@@ -56,6 +56,5 @@ double Summ(Matrix& force) {
 			sum += force[i][j];
 		}
 
-
-	return abs(sum);
+	return sum;
 }

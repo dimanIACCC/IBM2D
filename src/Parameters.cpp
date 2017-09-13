@@ -19,6 +19,9 @@ Param::Param() {
 	Zeidel_eps = 1e-5;
 	InelasticCollision = false;
 	k_dist = 1.1;
+	AddSolids_N = 0;
+	AddSolids_start = 0;
+	AddSolids_interval = 200;
 
 	d_x = L / (N1 - 1);
 	d_y = H / (N2 - 1);
@@ -52,6 +55,9 @@ Param::Param(std::string filename): Param(){
 				else if (PAR == "Zeidel_eps")   Zeidel_eps = stod(VALUE);
 				else if (PAR == "InelasticCollision")   InelasticCollision = bool(stoi(VALUE));
 				else if (PAR == "k_dist")       k_dist = (stod(VALUE));
+				else if (PAR == "AddSolids_N")          AddSolids_N = stoi(VALUE);
+				else if (PAR == "AddSolids_start")      AddSolids_start = stoi(VALUE);
+				else if (PAR == "AddSolids_interval")   AddSolids_interval = stoi(VALUE);
 				else    std::cout << "unknown parameter " << PAR << std::endl;
 			}
 			else {

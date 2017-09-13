@@ -10,7 +10,7 @@
 #pragma warning(disable : 4996)//for using <chrono>
 #pragma warning(disable : 4244)//for GetInfluenceArea
 
-// fuctions
+// functions
 
 void SetLog(std::ostream &log, Param par);
 void PushLog(std::ostream &log, int n, double eps_u, double eps_v);
@@ -73,7 +73,7 @@ int main(int argc, char *argv[]) {
 	int n = 0; // iteration counter
 	while (n <= par.N_max) {
 
-		Add_Solids(solidList, 20, n, 0, 200, par);
+		Add_Solids(solidList, n, par);
 
 		CalculateForce(Force_x, Force_y, solidList, U_new, V_new, par);
 		force << n << " " << Summ(Force_x) << " " << Summ(Force_y) << std::endl;
