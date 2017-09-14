@@ -111,7 +111,7 @@ int main(int argc, char *argv[]) {
 
 		for (int i = 1; i < par.N1 - 1; ++i) {
 			for (int j = 1; j < par.N2; ++j) {
-				U_new[i][j] = U_new[i][j] - par.d_t * (Delta_P[i + 1][j] - Delta_P[i][j]) / par.d_x;
+				U_new[i][j] -= par.d_t * (Delta_P[i + 1][j] - Delta_P[i][j]) / par.d_x;
 			}
 		}
 
@@ -122,7 +122,7 @@ int main(int argc, char *argv[]) {
 
 		for (int i = 1; i < par.N1 + 1; ++i) {
 			for (int j = 1; j < par.N2 - 1; ++j) {
-				V_new[i][j] = V_new[i][j] - par.d_t * (Delta_P[i][j + 1] - Delta_P[i][j]) / par.d_y;
+				V_new[i][j] -= par.d_t * (Delta_P[i][j + 1] - Delta_P[i][j]) / par.d_y;
 			}
 		}
 

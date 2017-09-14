@@ -221,43 +221,27 @@ Matrix CalculateB_u(Matrix &u_n, Matrix &v_n, Matrix &u_prev, Matrix &v_prev, Ma
 	int const n1 = par.N1;
 	int const n2 = par.N2 + 1;
 
-	double advective_term_n = 0.0;
-	double advective_term_prev = 0.0;
-	double diffusion_term = 0.0;
-	double pressure = 0.0;
-	double v_help = 0.0;
-
+	double advective_term_n;
+	double advective_term_prev;
+	double diffusion_term;
+	double pressure_term;
+	double k, kp, k0, km;
 
 	CreateMatrix(result, n1, n2);
 
 	for (int j = 1; j < (n2 - 1); ++j) {
 		for (int i = 1; i < (n1 - 1); ++i) {
-
-			v_help              = 0.25 * (v_n[i][j] + v_n[i + 1][j] + v_n[i][j - 1] + v_n[i + 1][j - 1]);
-			advective_term_n    = u_n[i][j] * (u_n[i + 1][j] - u_n[i - 1][j]) / (2.0*par.d_x) + v_help * (u_n[i][j + 1] - u_n[i][j - 1]) / (2.0*par.d_y);
-			v_help              = 0.25 * (v_prev[i][j] + v_prev[i + 1][j] + v_prev[i][j - 1] + v_prev[i + 1][j - 1]);
-			advective_term_prev = u_prev[i][j] * (u_prev[i + 1][j] - u_prev[i - 1][j]) / (2.0*par.d_x) + v_help * (u_prev[i][j + 1] - u_prev[i][j - 1]) / (2.0*par.d_y);
-			diffusion_term      = d_xx * (u_n[i + 1][j] - 2.0 * u_n[i][j] + u_n[i - 1][j]) + d_yy * (u_n[i][j + 1] - 2.0 * u_n[i][j] + u_n[i][j - 1]);
-			pressure            = (p[i + 1][j] - p[i][j]) / (par.d_x);
-			
-			result[i][j]        = -(3.0 / 2.0 * advective_term_n - 1.0 / 2.0 * advective_term_prev) - pressure + 1.0 / (2.0*par.Re) * (diffusion_term)+u_n[i][j] / par.d_t;
-
-			if (j == 1 || j == n2 - 2) {
-				v_help              = 0.25 * (v_n[i][j] + v_n[i + 1][j] + v_n[i][j - 1] + v_n[i + 1][j - 1]);
-				advective_term_n    = u_n[i][j] * (u_n[i + 1][j] - u_n[i - 1][j]) / (2.0*par.d_x) + v_help * (u_n[i][j + 1] - u_n[i][j - 1]) / (1.5*par.d_y);
-				v_help              = 0.25 * (v_prev[i][j] + v_prev[i + 1][j] + v_prev[i][j - 1] + v_prev[i + 1][j - 1]);
-				advective_term_prev = u_prev[i][j] * (u_prev[i + 1][j] - u_prev[i - 1][j]) / (2.0*par.d_x) + v_help * (u_prev[i][j + 1] - u_prev[i][j - 1]) / (1.5*par.d_y);
-				if (j == 1) {
-
-					diffusion_term = d_xx * (u_n[i + 1][j] - 2.0 * u_n[i][j] + u_n[i - 1][j]) + d_yy * (4.0*u_n[i][j + 1] - 12.0 * u_n[i][j] + 8.0*u_n[i][j - 1]) / 3.0;
-				}
-				if (j == n2 - 2) {
-
-					diffusion_term = d_xx * (u_n[i + 1][j] - 2.0 * u_n[i][j] + u_n[i - 1][j]) + d_yy * (8.0*u_n[i][j + 1] - 12.0 * u_n[i][j] + 4.0*u_n[i][j - 1]) / 3.0;
-				}
-
-				result[i][j] = -(3.0 / 2.0 * advective_term_n - 1.0 / 2.0 * advective_term_prev) - pressure + 1.0 / (2.0*par.Re) * (diffusion_term)+u_n[i][j] / par.d_t;
-			}
+			B_coefficients(j, n2, k, kp, k0, km);
+			advective_term_n    = advective_term_u(u_n   , v_n   , i, j, par.d_x, par.d_y, k);
+			advective_term_prev = advective_term_u(u_prev, v_prev, i, j, par.d_x, par.d_y, k);
+			diffusion_term      = diffusion_term_u(u_n, i, j, d_xx, d_yy, kp, k0, km);
+			pressure_term       = (p[i + 1][j] - p[i][j]) / par.d_x;
+			result[i][j] = -(3.0 / 2.0 * advective_term_n
+			               - 1.0 / 2.0 * advective_term_prev)
+			                           - pressure_term
+			                           + diffusion_term / (2.0*par.Re)
+			                           + u_n[i][j] / par.d_t
+			                           + force[i][j];
 		}
 	}
 
@@ -266,14 +250,6 @@ Matrix CalculateB_u(Matrix &u_n, Matrix &v_n, Matrix &u_prev, Matrix &v_prev, Ma
 		result[n1 - 1][j] = 0.0;
 		result[0][j] = u_n[0][j];
 	}
-
-	for (int i = 1; i < n1 - 1; ++i) {
-		for (int j = 1; j < n2 - 1; ++j) {
-
-			result[i][j] += force[i][j];
-		}
-	}
-
 
 	return result;
 }
@@ -285,59 +261,71 @@ Matrix CalculateB_v(Matrix &u_n, Matrix &v_n, Matrix &u_prev, Matrix &v_prev, Ma
 	int const n1 = par.N1 + 1;
 	int const n2 = par.N2;
 
-	double advective_term_n = 0.0;
-	double advective_term_prev = 0.0;
-	double diffusion_term = 0.0;
-	double pressure = 0.0;
-	double u_help = 0.0;
+	double advective_term_n;
+	double advective_term_prev;
+	double diffusion_term;
+	double pressure_term;
+	double k, kp, k0, km;
 
 	CreateMatrix(result, n1, n2);
 
-
 	for (int j = 1; j < (n2 - 1); ++j) {
 		for (int i = 1; i < (n1 - 1); ++i) {
-			u_help = 0.25 * (u_n[i][j] + u_n[i - 1][j] + u_n[i][j + 1] + u_n[i - 1][j + 1]);
-			advective_term_n = u_help * (v_n[i + 1][j] - v_n[i - 1][j]) / (2.0*par.d_x) + v_n[i][j] * (v_n[i][j + 1] - v_n[i][j - 1]) / (2.0*par.d_y);
-			u_help = 0.25 * (u_prev[i][j] + u_prev[i - 1][j] + u_prev[i][j + 1] + u_prev[i - 1][j + 1]);
-			advective_term_prev = u_help * (v_prev[i + 1][j] - v_prev[i - 1][j]) / (2.0*par.d_x) + v_prev[i][j] * (v_prev[i][j + 1] - v_prev[i][j - 1]) / (2.0*par.d_y);
-			diffusion_term = d_xx * (v_n[i + 1][j] - 2.0 * v_n[i][j] + v_n[i - 1][j]) + d_yy * (v_n[i][j + 1] - 2.0 * v_n[i][j] + v_n[i][j - 1]);
-			pressure = (p[i][j + 1] - p[i][j]) / (par.d_y);
-			result[i][j] = -(3.0 / 2.0 * advective_term_n - 1.0 / 2.0 * advective_term_prev) - pressure + 1.0 / (2.0*par.Re) * (diffusion_term)+v_n[i][j] / par.d_t;
-
-			if (i == 1 || i == n1 - 2) {
-
-
-				u_help = 0.25 * (u_n[i][j] + u_n[i - 1][j] + u_n[i][j + 1] + u_n[i - 1][j + 1]);
-				advective_term_n = u_help * (v_n[i + 1][j] - v_n[i - 1][j]) / (1.5*par.d_x) + v_n[i][j] * (v_n[i][j + 1] - v_n[i][j - 1]) / (2.0*par.d_y);
-				u_help = 0.25 * (u_prev[i][j] + u_prev[i - 1][j] + u_prev[i][j + 1] + u_prev[i - 1][j + 1]);
-				advective_term_prev = u_help * (v_prev[i + 1][j] - v_prev[i - 1][j]) / (1.5*par.d_x) + v_prev[i][j] * (v_prev[i][j + 1] - v_prev[i][j - 1]) / (2.0*par.d_y);
-				if (i == 1) {
-
-					diffusion_term = d_xx * (4.0*v_n[i + 1][j] - 12.0 * v_n[i][j] + 8.0*v_n[i - 1][j]) / 3.0 + d_yy * (v_n[i][j + 1] - 2.0 * v_n[i][j] + v_n[i][j - 1]);
-				}
-				if (i == n1 - 2) {
-
-					diffusion_term = d_xx * (8.0*v_n[i + 1][j] - 12.0 * v_n[i][j] + 4.0*v_n[i - 1][j]) / 3.0 + d_yy * (v_n[i][j + 1] - 2.0 * v_n[i][j] + v_n[i][j - 1]);
-				}
-
-				result[i][j] = -(3.0 / 2.0 * advective_term_n - 1.0 / 2.0 * advective_term_prev) - pressure + 1.0 / (2.0*par.Re) * (diffusion_term)+v_n[i][j] / par.d_t;
-			}
+			B_coefficients(i, n1, k, kp, k0, km);
+			advective_term_n    = advective_term_v(v_n   , u_n   , j, i, par.d_y, par.d_x, k);
+			advective_term_prev = advective_term_v(v_prev, u_prev, j, i, par.d_y, par.d_x, k);
+			diffusion_term      = diffusion_term_v(v_n, j, i, d_yy, d_xx, kp, k0, km);
+			pressure_term = (p[i][j + 1] - p[i][j]) / par.d_y;
+			result[i][j] = -(3.0 / 2.0 * advective_term_n
+			               - 1.0 / 2.0 * advective_term_prev)
+			                           - pressure_term
+			                           + diffusion_term / (2.0*par.Re)
+			                           + v_n[i][j] / par.d_t
+			                           + force[i][j];
 		}
 
 	}
-
 
 	for (int j = 0; j < n2; ++j) {
 		result[n1 - 1][j] = 0.0;
 		result[0][j] = v_n[0][j];
 	}
 
-	for (int i = 1; i < n1 - 1; ++i) {
-		for (int j = 1; j < n2 - 1; ++j) {
-			result[i][j] += force[i][j];
-		}
-	}
-
 	return result;
 
+}
+
+void B_coefficients(int ij, int N, double &k, double &kp, double &k0, double &km) {
+	if (ij > 1 && ij < N - 2) { k = 2. ;	kp = 1.      ;	k0 = -2.;	km = 1.; }
+	else {
+		                        k = 1.5;
+		if      (ij == 1)                 { kp = 4. / 3.;	k0 = -4.;	km = 8. / 3.; }
+		else if (ij == N - 2)             { kp = 8. / 3.;	k0 = -4.;	km = 4. / 3.; }
+	}
+}
+
+double advective_term_u(Matrix &u, Matrix &v, int i, int j, double d_x, double d_y, double k) {
+	double v_help = 0.25 * (v[i][j] + v[i + 1][j] + v[i][j - 1] + v[i + 1][j - 1]);
+	double result = u[i][j] * (u[i + 1][j] - u[i - 1][j]) / (2.0*d_x)
+		           + v_help * (u[i][j + 1] - u[i][j - 1]) / (k  *d_y);
+	return result;
+}
+
+double advective_term_v(Matrix &v, Matrix &u, int j, int i, double d_y, double d_x, double k) {
+	double u_help = 0.25 * (u[i][j] + u[i - 1][j] + u[i][j + 1] + u[i - 1][j + 1]);
+	double result = v[i][j] * (v[i][j + 1] - v[i][j - 1]) / (2.0*d_y)
+	               + u_help * (v[i + 1][j] - v[i - 1][j]) / (k  *d_x);
+	return result;
+}
+
+double diffusion_term_u(Matrix &u, int i, int j, double d_xx, double d_yy, double kp, double k0, double km) {
+	double result = d_xx * (     u[i + 1][j] - 2.0 * u[i][j] +      u[i - 1][j])
+	              + d_yy * (kp * u[i][j + 1] + k0  * u[i][j] + km * u[i][j - 1]);
+	return result;
+}
+
+double diffusion_term_v(Matrix &v, int j, int i, double d_yy, double d_xx, double kp, double k0, double km) {
+	double result = d_yy * (     v[i][j + 1] - 2.0 * v[i][j] +      v[i][j - 1])
+	              + d_xx * (kp * v[i + 1][j] + k0  * v[i][j] + km * v[i - 1][j]);
+	return result;
 }

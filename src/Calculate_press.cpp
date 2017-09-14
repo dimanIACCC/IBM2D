@@ -15,6 +15,8 @@ double Calculate_Press_correction(Matrix& delta_p, Matrix &b_p, Param par, bool 
 	double dy2 = 1.0 / (par.d_y*par.d_y);
 	double A   = 1.0 / (2.0 * (dx2 + dy2));
 
+	double kxp, kxm, kyp, kym;
+
 	double help;
 
 	int const n1 = par.N1 + 1;
@@ -43,10 +45,6 @@ double Calculate_Press_correction(Matrix& delta_p, Matrix &b_p, Param par, bool 
 						help = A * (dx2 * (delta_p[i + 1][j] + delta_p[i - 1][j])
 						          + dy2 * (delta_p[i][j + 1] + delta_p[i][j - 1]) - b_p[i][j]);
 					else {
-						double kxp, kxm, kyp, kym;
-
-						kxp = kxm = kyp = kym = 1.;
-
 						if (i == 1     )                 { kxp = 4.;	kxm = 8.;	kyp = 1.;	kym = 1.; }   // L
 						if (i == n1 - 2)                 { kxp = 8.;	kxm = 4.;	kyp = 1.;	kym = 1.; }   // R
 						if (j == 1     )                 { kxp = 1.;	kxm = 1.;	kyp = 4.;	kym = 8.; }   // D
