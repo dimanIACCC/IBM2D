@@ -101,10 +101,6 @@ int main(int argc, char *argv[]) {
 
 		P_Right = Calculate_Press_Right(U_n, V_n, par);
 
-		for (int i = 0; i < (int)Delta_P.size(); ++i) {
-			std::fill(Delta_P[i].begin(), Delta_P[i].end(), 0);
-		}
-
 		double eps_p = Calculate_Press_correction(Delta_P, P_Right, par,false);
 
 		for (int i = 0; i < par.N1 + 1; ++i) {
