@@ -1,3 +1,4 @@
+#include "stdafx.h"
 #include "BiCGStab.h"
 
 void BiCGStab(Matrix &x, int const n1, int const n2, Matrix operator_A[5], Matrix &b, Param par,bool OverFlow){

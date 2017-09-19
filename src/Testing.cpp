@@ -1,7 +1,7 @@
 #include "stdafx.h"
 #include "Testing.h"
 #include "CalculateForce.h"
-
+using namespace std;
 void DoSomeTest() {
 	DoTestForce();
 	//

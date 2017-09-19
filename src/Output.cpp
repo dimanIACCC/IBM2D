@@ -1,3 +1,4 @@
+#include "stdafx.h"
 #include "Output.h"
 
 void OutputPressure(Matrix p, int n, std::list<Circle> iList, Param par){

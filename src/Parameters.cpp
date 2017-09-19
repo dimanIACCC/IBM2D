@@ -1,3 +1,4 @@
+#include "stdafx.h"
 #include "Parameters.h"
 
 Param::Param() {

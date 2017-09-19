@@ -7,3 +7,5 @@ FlowOverCylinder/Release/
 FlowOverCylinder/Debug/
 FlowOverCylinder/.vs/
 *.user
+x64/
+Debug/

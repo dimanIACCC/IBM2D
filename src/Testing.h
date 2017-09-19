@@ -1,6 +1,6 @@
 #pragma once
 #include "stdafx.h"
-#include "Grid.h"
+#include "GeomVec.h"
 #include <cmath>
 void DoTestForce();
 void DoSomeTest();

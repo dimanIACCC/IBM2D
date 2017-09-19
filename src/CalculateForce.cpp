@@ -1,3 +1,4 @@
+#include "stdafx.h"
 #include "CalculateForce.h"
 
 double DeltaFunction(double x, double y, Param par) {

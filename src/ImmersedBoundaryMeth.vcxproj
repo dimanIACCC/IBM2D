@@ -14,19 +14,19 @@
     <ProjectGuid>{A677C252-A117-4B4A-BF5B-630ADF31D9DB}</ProjectGuid>
     <Keyword>Win32Proj</Keyword>
     <RootNamespace>ImmersedBoundaryMeth</RootNamespace>
-    <WindowsTargetPlatformVersion>8.1</WindowsTargetPlatformVersion>
+    <WindowsTargetPlatformVersion>10.0.15063.0</WindowsTargetPlatformVersion>
   </PropertyGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.Default.props" />
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'" Label="Configuration">
     <ConfigurationType>Application</ConfigurationType>
     <UseDebugLibraries>true</UseDebugLibraries>
-    <PlatformToolset>v141</PlatformToolset>
+    <PlatformToolset>v140</PlatformToolset>
     <CharacterSet>Unicode</CharacterSet>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'" Label="Configuration">
     <ConfigurationType>Application</ConfigurationType>
     <UseDebugLibraries>false</UseDebugLibraries>
-    <PlatformToolset>v141</PlatformToolset>
+    <PlatformToolset>v140</PlatformToolset>
     <WholeProgramOptimization>true</WholeProgramOptimization>
     <CharacterSet>Unicode</CharacterSet>
   </PropertyGroup>
@@ -42,9 +42,11 @@
   <PropertyGroup Label="UserMacros" />
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
     <LinkIncremental>true</LinkIncremental>
+    <IncludePath>$(VC_IncludePath);$(WindowsSDK_IncludePath);C:\boost\</IncludePath>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
     <LinkIncremental>false</LinkIncremental>
+    <IncludePath>$(VC_IncludePath);$(WindowsSDK_IncludePath);C:\boost\</IncludePath>
   </PropertyGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
     <ClCompile>
@@ -85,25 +87,30 @@
     <ClInclude Include="BiCGStab.h" />
     <ClInclude Include="CalculateForce.h" />
     <ClInclude Include="Calculate_press.h" />
-    <ClInclude Include="Grid.h" />
+    <ClInclude Include="GeomVec.h" />
+    <ClInclude Include="Parameters.h" />
     <ClInclude Include="PredictVel.h" />
     <ClInclude Include="Output.h" />
     <ClInclude Include="SolidBody.h" />
     <ClInclude Include="stdafx.h" />
+    <ClInclude Include="String.h" />
     <ClInclude Include="targetver.h" />
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="BiCGStab.cpp" />
     <ClCompile Include="CalculateForce.cpp" />
     <ClCompile Include="Calculate_press.cpp" />
+    <ClCompile Include="GeomVec.cpp" />
     <ClCompile Include="ImmersedBoundaryMeth.cpp" />
     <ClCompile Include="Output.cpp" />
+    <ClCompile Include="Parameters.cpp" />
     <ClCompile Include="PredictVel.cpp" />
     <ClCompile Include="SolidBody.cpp" />
     <ClCompile Include="stdafx.cpp">
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">Create</PrecompiledHeader>
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">Create</PrecompiledHeader>
     </ClCompile>
+    <ClCompile Include="String.cpp" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">
