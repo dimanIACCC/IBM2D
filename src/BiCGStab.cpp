@@ -1,7 +1,6 @@
-#include "stdafx.h"
 #include "BiCGStab.h"
 
-void BiCGStab(Matrix &x, int const n1, int const n2, Matrix operator_A[5], Matrix &b, Grid grid,bool OverFlow){
+void BiCGStab(Matrix &x, int const n1, int const n2, Matrix operator_A[5], Matrix &b, Param par,bool OverFlow){
 	double eps = 0.0;
 	double help_value = 0.0;
 
@@ -40,7 +39,7 @@ void BiCGStab(Matrix &x, int const n1, int const n2, Matrix operator_A[5], Matri
 	// }
 
 
-	r = Operator_Ax(operator_A, x, n1, n2, grid, OverFlow);
+	r = Operator_Ax(operator_A, x, n1, n2, par, OverFlow);
 
 
 	for (int j = 0; j < n2; ++j){
@@ -82,7 +81,7 @@ void BiCGStab(Matrix &x, int const n1, int const n2, Matrix operator_A[5], Matri
 
 		// 4.
 
-		v = Operator_Ax(operator_A, p, n1, n2,grid, OverFlow);
+		v = Operator_Ax(operator_A, p, n1, n2,par, OverFlow);
 
 
 		// 5.
@@ -103,7 +102,7 @@ void BiCGStab(Matrix &x, int const n1, int const n2, Matrix operator_A[5], Matri
 
 		// 7. 
 
-		t = Operator_Ax(operator_A, s, n1, n2,grid, OverFlow);
+		t = Operator_Ax(operator_A, s, n1, n2,par, OverFlow);
 
 		// 8.
 
@@ -151,7 +150,7 @@ void BiCGStab(Matrix &x, int const n1, int const n2, Matrix operator_A[5], Matri
 
 	if (10000 == n){
 
-		cout << "---------------- Ops. iteration exit in BiCGStab method (eps = " << eps << ") ----------------" << endl;
+		std::cout << "---------------- Ops. iteration exit in BiCGStab method (eps = " << eps << ") ----------------" << std::endl;
 	}
 
 }
