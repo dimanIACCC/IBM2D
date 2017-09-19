@@ -2,6 +2,7 @@
 
 #include "Parameters.h"
 #include "SolidBody.h"
+#include "Matrix.h"
 
 double DeltaFunction(double x, double y, Param par);
 double FunctionD(double r);

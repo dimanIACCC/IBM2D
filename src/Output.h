@@ -2,6 +2,7 @@
 
 #include "Parameters.h"
 #include "SolidBody.h"
+#include "Matrix.h"
 
 
 void OutputPressure  (Matrix data, int n, std::list<Circle> iList, Param par, std::string WorkDir);

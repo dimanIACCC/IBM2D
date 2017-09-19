@@ -79,8 +79,8 @@ int main(int argc, char *argv[]) {
 		force << n << " " << Summ(Force_x) << " " << Summ(Force_y) << std::endl;
 
 		#pragma region Prediction of velocity
-		B_u = CalculateB_u(U_n, V_n, U_prev, V_prev, P, Force_x, par);
-		B_v = CalculateB_v(U_n, V_n, U_prev, V_prev, P, Force_y, par);
+		B_u = CalculateB(U_n, V_n, U_prev, V_prev, P, Force_x, par, Du);
+		B_v = CalculateB(V_n, U_n, V_prev, U_prev, P, Force_y, par, Dv);
 
 		#pragma omp parallel sections num_threads(2)
 		{
