@@ -41,185 +41,101 @@ void ExplicPredVel(Matrix& U_predict, Matrix& V_predict, Matrix& U_n, Matrix& V_
 }
 
 
-void Calculate_A_u(Matrix A[5], Param par, double Re) {
+void Calculate_A(ublas::matrix<Template> &A, Param par, double Re, Direction Dir) {
 
-	double d_xx = 1.0 / (par.d_x*par.d_x);
-	double d_yy = 1.0 / (par.d_y*par.d_y);
-	int const n1 = par.N1;
-	int const n2 = par.N2 + 1;
+	size_t n1 = A.size1();
+	size_t n2 = A.size2();
+	size_t N;
 
-	for (int i = 0; i < 5; i++) {
-		A[i].resize(n1);
-		for (int j = 0; j < n1; j++) {
-			A[i][j].resize(n2);
-			fill(A[i][j].begin(), A[i][j].end(), 0);
-		}
-	}
+	double d_u, d_v;
+	int ij;
+
+	if      (Dir == Du) { d_u = par.d_x;	d_v = par.d_y;	N = n2; }
+	else if (Dir == Dv) { d_u = par.d_y;	d_v = par.d_x;	N = n1; }
+
+	double d_uu = 1.0 / (d_u*d_u);
+	double d_vv = 1.0 / (d_v*d_v);
 
 	for (int j = 1; j < (n2 - 1); ++j) {
 		for (int i = 1; i < (n1 - 1); ++i) {
 
-			A[0][i][j] = 1.0 / par.d_t + (1.0 / Re) * (d_xx + d_yy);
-			A[1][i][j] = -1.0 / (2.0*Re*par.d_y*par.d_y);
-			A[2][i][j] = -1.0 / (2.0*Re*par.d_x*par.d_x);
-			A[3][i][j] = -1.0 / (2.0*Re*par.d_y*par.d_y);
-			A[4][i][j] = -1.0 / (2.0*Re*par.d_x*par.d_x);
+			A(i, j).C =  1.0 /      Re *(d_uu + d_vv) + 1.0 / par.d_t;
+			A(i, j).U = -1.0 / (2.0*Re)* d_vv;
+			A(i, j).R = -1.0 / (2.0*Re)* d_uu;
+			A(i, j).D = -1.0 / (2.0*Re)* d_vv;
+			A(i, j).L = -1.0 / (2.0*Re)* d_uu;
 
+			if      (Dir == Du)  ij = j;
+			else if (Dir == Dv)  ij = i;
 
-			if (j == 1) {
-				A[0][i][j] = 1.0 / par.d_t + (1.0 / Re) * (d_xx + 2.0*d_yy);
-				A[1][i][j] = -2.0 / (3.0*Re*par.d_y*par.d_y);
-				A[2][i][j] = -1.0 / (2.0*Re*par.d_x*par.d_x);
-				A[3][i][j] = -4.0 / (3.0*Re*par.d_y*par.d_y);
-				A[4][i][j] = -1.0 / (2.0*Re*par.d_x*par.d_x);
+			if (ij == 1) {
+				A(i, j).C = 1.0 / Re* (d_uu + 2.0 * d_vv) + 1.0 / par.d_t;
+				A(i, j).U = -2.0 / (3.0*Re)* d_vv;
+				A(i, j).R = -1.0 / (2.0*Re)* d_uu;
+				A(i, j).D = -4.0 / (3.0*Re)* d_vv;
+				A(i, j).L = -1.0 / (2.0*Re)* d_uu;
 			}
 
-			if (j == n2 - 2) {
-				A[0][i][j] = 1.0 / par.d_t + (1.0 / Re) * (d_xx + 2.0*d_yy);
-				A[1][i][j] = -4.0 / (3.0*Re*par.d_y*par.d_y);
-				A[2][i][j] = -1.0 / (2.0*Re*par.d_x*par.d_x);
-				A[3][i][j] = -2.0 / (3.0*Re*par.d_y*par.d_y);
-				A[4][i][j] = -1.0 / (2.0*Re*par.d_x*par.d_x);
+			if (ij == N - 2) {
+				A(i, j).C = 1.0 / Re* (d_uu + 2.0 * d_vv) + 1.0 / par.d_t;
+				A(i, j).U = -4.0 / (3.0*Re)* d_vv;
+				A(i, j).R = -1.0 / (2.0*Re)* d_uu;
+				A(i, j).D = -2.0 / (3.0*Re)* d_vv;
+				A(i, j).L = -1.0 / (2.0*Re)* d_uu;
 			}
+
 		}
 	}
-
-	for (int i = 1; i < n1 - 1; ++i) {
-		int j = 0;
-		A[0][i][j] = 1.0;
-		A[1][i][j] = 1.0;
-		j = n2 - 1;
-		A[0][i][j] = 1.0;
-		A[1][i][j] = 1.0;
-
-
-	}
-
-	// outflow du/dx = 0
-	for (int j = 0; j < n2; ++j) {
-		A[0][n1 - 1][j] = 3.0 / (2.0*par.d_x);
-		A[1][n1 - 1][j] = -4.0 / (2.0*par.d_x);
-		A[2][n1 - 1][j] = 1.0 / (2.0*par.d_x);
-		A[0][0][j] = 1.0;
-	}
-
-
-
 }
 
-void Calculate_A_v(Matrix A[5], Param par, double Re) {
+Matrix Operator_Ax(ublas::matrix<Template> &A, Matrix &v, Param par, bool OverFlow, Direction Dir) {
 
-	double d_xx = 1.0 / (par.d_x*par.d_x);
-	double d_yy = 1.0 / (par.d_y*par.d_y);
-	int const n1 = par.N1 + 1;
-	int const n2 = par.N2;
+	size_t Nx = v.size();
+	size_t Ny = v[0].size();
 
-	for (int i = 0; i < 5; i++) {
-		A[i].resize(n1);
-		for (int j = 0; j < n1; j++) {
-			A[i][j].resize(n2);
-			fill(A[i][j].begin(), A[i][j].end(), 0);
+	CreateMatrix(result, Nx, Ny);
+
+	for (int j = 1; j < (Ny - 1); ++j) {
+		for (int i = 1; i < (Nx - 1); ++i) {
+			result[i][j] = A(i, j).C * v[i][j]
+			             + A(i, j).U * U(v, i, j, Dir)
+			             + A(i, j).R * R(v, i, j, Dir)
+			             + A(i, j).D * D(v, i, j, Dir)
+			             + A(i, j).L * L(v, i, j, Dir);
 		}
 	}
 
-
-	for (int j = 1; j < (n2 - 1); ++j) {
-		for (int i = 1; i < (n1 - 1); ++i) {
-			A[0][i][j] = 1.0 / par.d_t + (1.0 / Re) * (d_xx + d_yy);
-			A[1][i][j] = -1.0 / (2.0*Re*par.d_y*par.d_y);
-			A[2][i][j] = -1.0 / (2.0*Re*par.d_x*par.d_x);
-			A[3][i][j] = -1.0 / (2.0*Re*par.d_y*par.d_y);
-			A[4][i][j] = -1.0 / (2.0*Re*par.d_x*par.d_x);
-
-			if (i == 1) {
-				A[0][i][j] = 1.0 / par.d_t + (1.0 / Re) * (2.0*d_xx + d_yy);
-				A[1][i][j] = -1.0 / (2.0*Re*par.d_y*par.d_y);
-				A[2][i][j] = -2.0 / (3.0*Re*par.d_x*par.d_x);
-				A[3][i][j] = -1.0 / (2.0*Re*par.d_y*par.d_y);
-				A[4][i][j] = -4.0 / (3.0*Re*par.d_x*par.d_x);
-			}
-
-			if (i == n1 - 2) {
-				A[0][i][j] = 1.0 / par.d_t + (1.0 / Re) * (2.0*d_xx + d_yy);
-				A[1][i][j] = -1.0 / (2.0*Re*par.d_y*par.d_y);
-				A[2][i][j] = -4.0 / (3.0*Re*par.d_x*par.d_x);
-				A[3][i][j] = -1.0 / (2.0*Re*par.d_y*par.d_y);
-				A[4][i][j] = -2.0 / (3.0*Re*par.d_x*par.d_x);
-			}
-
-		}
-	}
-
-	for (int i = 1; i < n1 - 1; ++i) {
-
+	// Up-Down BC
+	for (int i = 1; i < Nx - 1; ++i) {
 
 		int j = 0;
-		A[0][i][j] = -par.d_y * 0.5;
-		A[1][i][j] = 0.0;
-		j = n2 - 1;
-		A[0][i][j] = par.d_y * 0.5;
-		A[1][i][j] = 0.0;
+		result[i][j] = v[i][j];
+		if (OverFlow && (Dir == Du)) result[i][j] = (v[i][j + 1] - v[i][j]) / (par.d_y*0.5);
 
-
-	}
-
-	// outflow du/dx = 0
-	for (int j = 0; j < n2; ++j) {
-		A[0][n1 - 1][j] = 3.0 / (2.0*par.d_x);
-		A[1][n1 - 1][j] = -4.0 / (2.0*par.d_x);
-		A[2][n1 - 1][j] = 1.0 / (2.0*par.d_x);
-		A[0][0][j] = 1.0;
-	}
-
-}
-
-Matrix Operator_Ax(Matrix A[5], Matrix &v, int const n1, int const n2, Param par,bool OverFlow) {
-
-	CreateMatrix(result, n1, n2);
-
-
-	for (int j = 1; j < (n2 - 1); ++j) {
-		for (int i = 1; i < (n1 - 1); ++i) {
-
-			result[i][j] = A[0][i][j] * v[i][j] + A[1][i][j] * v[i][j + 1] + A[2][i][j] * v[i + 1][j] + A[3][i][j] * v[i][j - 1] + A[4][i][j] * v[i - 1][j];
-		}
-	}
-	if (OverFlow) {
-		for (int i = 1; i < n1 - 1; ++i) {
-			int j = 0;
-			result[i][j] = (A[1][i][j] * v[i][j + 1] - A[0][i][j] * v[i][j]) / (par.d_y*0.5);
-			j = n2 - 1;
-			result[i][j] = (A[0][i][j] * v[i][j] - A[1][i][j] * v[i][j - 1]) / (par.d_y*0.5);
-		}
+		j = Ny - 1;
+		result[i][j] = v[i][j];
+		if (OverFlow && (Dir == Du)) result[i][j] = (v[i][j] - v[i][j - 1]) / (par.d_y*0.5);
 
 	}
-	else {
-		for (int i = 1; i < n1 - 1; ++i) {
-			int j = 0;
-			result[i][j] = v[i][j];
-			j = n2 - 1;
-			result[i][j] = v[i][j];
-		}
+
+	for (int j = 0; j < Ny; ++j) {
+		result[0][j] = v[0][j];                                                                                 // inflow u = u0
+		result[Nx - 1][j] = (3.0 * v[Nx - 1][j] - 4.0 * v[Nx - 2][j] + 1.0 * v[Nx - 3][j]) / (2.0*par.d_x); 	// outflow du/dx = 0
 	}
-
-	// outflow du/dx = 0
-	for (int j = 0; j < n2; ++j) {
-
-		result[n1 - 1][j] = (3.0 * v[n1 - 1][j] - 4.0 * v[n1 - 2][j] + 1.0 * v[n1 - 3][j]) / (2.0*par.d_x);
-		result[0][j] = v[0][j];
-	}
-
+	
 	return result;
 
 }
-
 
 Matrix CalculateB(Matrix &u_n, Matrix &v_n, Matrix &u_prev, Matrix &v_prev, Matrix &p, Matrix &force, Param par, Direction Dir) {
 
 	size_t Nx = u_n.size();
 	size_t Ny = u_n[0].size();
+	size_t N;
 
-	double d_u, d_v, ij, N;
+	double d_u, d_v;
+	int ij;
+
 	if      (Dir == Du) { d_u = par.d_x;	d_v = par.d_y;	N = Ny;}
 	else if (Dir == Dv) { d_u = par.d_y;	d_v = par.d_x;	N = Nx;}
 

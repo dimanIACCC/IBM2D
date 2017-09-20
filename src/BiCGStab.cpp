@@ -1,6 +1,6 @@
 #include "BiCGStab.h"
 
-void BiCGStab(Matrix &x, int const n1, int const n2, Matrix operator_A[5], Matrix &b, Param par,bool OverFlow){
+void BiCGStab(Matrix &x, int const n1, int const n2, ublas::matrix<Template> &A, Matrix &b, Param par,bool OverFlow, Direction Dir){
 	double eps = 0.0;
 	double help_value = 0.0;
 
@@ -39,7 +39,7 @@ void BiCGStab(Matrix &x, int const n1, int const n2, Matrix operator_A[5], Matri
 	// }
 
 
-	r = Operator_Ax(operator_A, x, n1, n2, par, OverFlow);
+	r = Operator_Ax(A, x, par, OverFlow, Dir);
 
 
 	for (int j = 0; j < n2; ++j){
@@ -81,7 +81,7 @@ void BiCGStab(Matrix &x, int const n1, int const n2, Matrix operator_A[5], Matri
 
 		// 4.
 
-		v = Operator_Ax(operator_A, p, n1, n2,par, OverFlow);
+		v = Operator_Ax(A, p, par, OverFlow, Dir);
 
 
 		// 5.
@@ -102,7 +102,7 @@ void BiCGStab(Matrix &x, int const n1, int const n2, Matrix operator_A[5], Matri
 
 		// 7. 
 
-		t = Operator_Ax(operator_A, s, n1, n2,par, OverFlow);
+		t = Operator_Ax(A, s, par, OverFlow, Dir);
 
 		// 8.
 

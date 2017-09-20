@@ -1,6 +1,10 @@
 ﻿#include "Matrix.h"
 
 
+Template::Template() {
+	C = L = R = D = U = 0.0;
+}
+
 double L(Matrix &A, int i, int j, Direction dir) {
 	double result;
 	if      (dir == Du)

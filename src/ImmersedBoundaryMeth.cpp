@@ -47,10 +47,10 @@ int main(int argc, char *argv[]) {
 	CreateMatrix(P, par.N1 + 1, par.N2 + 1);
 	CreateMatrix(Delta_P, par.N1 + 1, par.N2 + 1);
 	CreateMatrix(P_Right, par.N1 + 1, par.N2 + 1);
-	Matrix OperatorA_u[5];
-	Matrix OperatorA_v[5];
-	Calculate_A_u(OperatorA_u, par, par.Re);
-	Calculate_A_v(OperatorA_v, par, par.Re);
+	ublas::matrix<Template> A_u(par.N1, par.N2 + 1);
+	ublas::matrix<Template> A_v(par.N1 + 1, par.N2);
+	Calculate_A(A_u, par, par.Re, Du);
+	Calculate_A(A_v, par, par.Re, Dv);
 	#pragma endregion SetMatrices
 
 	std::ofstream log;
@@ -87,11 +87,11 @@ int main(int argc, char *argv[]) {
 
 			#pragma omp section
 			{
-				BiCGStab(U_new, par.N1, par.N2 + 1, OperatorA_u, B_u, par, false);
+				BiCGStab(U_new, par.N1, par.N2 + 1, A_u, B_u, par, false, Du);
 			}
 			#pragma omp section
 			{
-				BiCGStab(V_new, par.N1 + 1, par.N2, OperatorA_v, B_v, par, false);
+				BiCGStab(V_new, par.N1 + 1, par.N2, A_v, B_v, par, false, Dv);
 			}
 
 		}

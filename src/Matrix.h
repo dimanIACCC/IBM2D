@@ -13,6 +13,12 @@ enum Direction {
 	Du, Dv
 };
 
+class Template {
+public:
+	double C, L, R, U, D;
+	Template();
+};
+
 double L(Matrix &A, int i, int j, Direction dir);
 double R(Matrix &A, int i, int j, Direction dir);
 double D(Matrix &A, int i, int j, Direction dir);

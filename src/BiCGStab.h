@@ -9,5 +9,5 @@ Suppose in u first approximation ( in fact in u - velocity fromprevious step)
 r(0) = b - Au
 z(0) = r(0)
 in b_norm calculate Euclid norm of vector b*/
-void BiCGStab(Matrix& res, int const n1, int const n2, Matrix operator_A[5], Matrix &b,Param par,bool OverFlow);
+void BiCGStab(Matrix& res, int const n1, int const n2, ublas::matrix<Template> &A, Matrix &b, Param par, bool OverFlow, Direction Dir);
 double ScalarOperator(Matrix &a, Matrix &b, int const n1, int const n2);
