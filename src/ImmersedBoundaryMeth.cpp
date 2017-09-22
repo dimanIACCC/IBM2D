@@ -4,7 +4,7 @@
 #include "BiCGStab.h"
 #include "Calculate_press.h"
 #include "PredictVel.h"
-//#include "Testing.h"
+#include "Testing.h"
 
 
 
@@ -21,11 +21,13 @@ int sgn(double x);
 
 
 int main(int argc, char *argv[]) {
-/*
+
 	for (int i = 1; i < argc; i++) {
 		if((std::string)argv[i] == (std::string)"-d") DoSomeTest();
-}*/
-
+}
+	std::cout << "End of testing block" << std::endl;
+	getchar();
+	///////
 	const double epsilon = 1e-3;
 
 	Param par("input.txt"); // Construct Parameters using file input.txt
