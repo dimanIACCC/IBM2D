@@ -23,7 +23,7 @@ int sgn(double x);
 int main(int argc, char *argv[]) {
 
 	for (int i = 1; i < argc; i++) {
-		if((std::string)argv[i] == (std::string)"-d") DoSomeTest();
+		if((std::string)argv[i] == (std::string)"-d") DoTesting();
 }
 	std::cout << "End of testing block" << std::endl;
 	getchar();

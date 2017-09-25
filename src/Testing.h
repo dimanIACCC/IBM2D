@@ -7,7 +7,7 @@
 #include "BiCGStab.h"
 #include "Calculate_press.h"
 #include "PredictVel.h"
-void DoTestForce();
-void DoSomeTest();
+void DoTestForce(int Re);
+void DoTesting();
 double diff(Matrix A, Matrix B);
 void ApplyInitialVelocity(Matrix &u, Param par);

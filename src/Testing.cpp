@@ -2,21 +2,23 @@
 #include "Testing.h"
 
 using namespace std;
-void DoSomeTest() {
-	DoTestForce();
+void DoTesting() {
+	int Re = 20;
+	DoTestForce(Re);
 	//
 	//TO DO: realize some tests here!
 }
-void DoTestForce() {
+void DoTestForce(int Re) {
 	//
-	//Realized test for overrunning flow on the fixed object with default input parametres
+	//Realized test for overrunning flow on the fixed object with default(!) input parametres
 	//
 
-	Param par;
-	par.N1 *= 2.5;
-	par.N2 *= 2.5;
+	Param par("input.txt");
+	/*par.N1 *= 2.5;
+	par.N2 *= 2.5;*/
 	const double epsilon = 1e-3;
 
+#pragma region BodyOfTest
 	CreateMatrix(U_n, par.N1, par.N2 + 1);
 	CreateMatrix(U_new, par.N1, par.N2 + 1);
 	CreateMatrix(U_prev, par.N1, par.N2 + 1);
@@ -127,19 +129,29 @@ void DoTestForce() {
 		}
 		//--------------------------------------------------------
 
-
+#pragma endregion
 		if (eps_u < epsilon && eps_v < epsilon) {
-			double x1 = -3.15387;
-			double x2 = -2.52765;
-			//double x1 = -3.15;
-			//double x2 = -2.53;
-			int y1 = 101;
-			int y2 = 202;
+			if (Re < 43) {
+				//the line is drawn with two points (Cd1,Nx1) & (Cd2,Nx2)
+				double Cd1 = -3.15387;
+				double Cd2 = -2.52765;
 
+				int Nx1 = 101;
+				int Nx2 = 202;
+				if (par.N1 / (double)Nx1 > 1.5) {
+					if (abs((solidList.front().f[1] - Cd1) / (Cd2 - Cd1) - (par.N1 - Nx1) / (Nx2 - Nx1)) < 0.5)cout << "OK!" << endl;
+					else cout << "Not OK" << endl;
+					//cout << std::endl << "Cx = " << solidList.front().f[1] << " Cy = " << solidList.front().f[2] << std::endl;
+				}
+				else {
+					double Cd_expected = Cd1 * Nx1 / (double)par.N1;
+					if (abs(Cd_expected - solidList.front().f[1]) < 0.8)cout << "OK!" << endl;
+					else cout << "Not OK" << endl;
+				}
+			}
+			else {
 
-			if (abs((solidList.front().f[1]-x1)/(x2-x1)-(par.N1-y1)/(y2-y1))<0.5)cout << "Nice!" << abs((solidList.front().f[1] - x1) / (x2 - x1) - (par.N1 - y1) / (y2 - y1)) << endl;
-			else cout << "Not good " << abs((solidList.front().f[1] - x1) / (x2 - x1) - (par.N1 - y1) / (y2 - y1)) << endl;
-			cout << std::endl << "Cx = " << solidList.front().f[1] << " Cy = " << solidList.front().f[2] << std::endl;
+			}
 			break;
 		}
 
