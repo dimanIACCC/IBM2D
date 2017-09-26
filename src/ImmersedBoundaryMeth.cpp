@@ -63,12 +63,17 @@ int main(int argc, char *argv[]) {
 	fs::path dir_Result = MakePath();
 	try
 	{
-		if (!exists(dir_Result)) {
+		if (exists(dir_Result)) {
+			fs::remove_all(dir_Result);
+			std::cout << exists(dir_Result);
+			fs::create_directory(dir_Result);
+		}
+		else{
 			fs::create_directory(dir_Result);
 		}
 	}
 	catch (const fs::filesystem_error& ex)
-	{
+		{
 		std::cout << ex.what() << '\n';
 	}
 #pragma endregion
