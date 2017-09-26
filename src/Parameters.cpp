@@ -22,6 +22,7 @@ Param::Param() {
 	AddSolids_N = 0;
 	AddSolids_start = 0;
 	AddSolids_interval = 200;
+	BC = u_inflow;
 
 	d_x = L / (N1 - 1);
 	d_y = H / (N2 - 1);
@@ -58,6 +59,7 @@ Param::Param(std::string filename): Param(){
 				else if (PAR == "AddSolids_N")          AddSolids_N = stoi(VALUE);
 				else if (PAR == "AddSolids_start")      AddSolids_start = stoi(VALUE);
 				else if (PAR == "AddSolids_interval")   AddSolids_interval = stoi(VALUE);
+				else if (PAR == "BC")                   BC = string_to_BC(VALUE);
 				else    std::cout << "unknown parameter " << PAR << std::endl;
 			}
 			else {
@@ -75,12 +77,21 @@ Param::Param(std::string filename): Param(){
 
 }
 
+Boundary_Conditions string_to_BC(std::string s) {
+	Boundary_Conditions BC;
+	if      (s == "u_infinity") BC = u_infinity;
+	else if (s == "u_inflow")   BC = u_inflow;
+	else if (s == "periodical") BC = periodical;
+	else std::cout << "string_to_BC: unknown BC" << std::endl;
+	return BC;
+}
+
 double ux_Poiseuille(double y, double H) {
 	double ux = (pow(H / 2.0, 2) - pow(y - H / 2.0, 2));
 	return ux;
 }
 
-GeomVec x_p(int i, int j, Param par) {
+GeomVec x_p(size_t i, size_t j, Param par) {
 	GeomVec result;
 	result[0] = 0.0;
 	result[1] = (i - 0.5) * par.d_x;
@@ -93,7 +104,7 @@ GeomVec x_p(int i, int j, Param par) {
 	return result;
 }
 
-GeomVec x_u(int i, int j, Param par) {
+GeomVec x_u(size_t i, size_t j, Param par) {
 	GeomVec result;
 	result[0] = 0.0;
 	result[1] =  i        * par.d_x;
@@ -104,7 +115,7 @@ GeomVec x_u(int i, int j, Param par) {
 	return result;
 }
 
-GeomVec x_v(int i, int j, Param par) {
+GeomVec x_v(size_t i, size_t j, Param par) {
 	GeomVec result;
 	result[0] = 0.0;
 	result[1] = (i - 0.5) * par.d_x;

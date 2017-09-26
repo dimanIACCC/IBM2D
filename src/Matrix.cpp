@@ -5,7 +5,7 @@ Template::Template() {
 	C = L = R = D = U = 0.0;
 }
 
-double L(Matrix &A, int i, int j, Direction dir) {
+double L(Matrix &A, size_t i, size_t j, Direction dir) {
 	double result;
 	if      (dir == Du)
 		result = A[i - 1][j];
@@ -15,7 +15,7 @@ double L(Matrix &A, int i, int j, Direction dir) {
 		std::cout << "L: wrong direction" << std::endl;
 	return result;
 }
-double R(Matrix &A, int i, int j, Direction dir) {
+double R(Matrix &A, size_t i, size_t j, Direction dir) {
 	double result;
 	if (dir == Du)
 		result = A[i + 1][j];
@@ -25,7 +25,7 @@ double R(Matrix &A, int i, int j, Direction dir) {
 		std::cout << "R: wrong direction" << std::endl;
 	return result;
 }
-double D(Matrix &A, int i, int j, Direction dir) {
+double D(Matrix &A, size_t i, size_t j, Direction dir) {
 	double result;
 	if (dir == Du)
 		result = A[i][j - 1];
@@ -35,7 +35,7 @@ double D(Matrix &A, int i, int j, Direction dir) {
 		std::cout << "D: wrong direction" << std::endl;
 	return result;
 }
-double U(Matrix &A, int i, int j, Direction dir) {
+double U(Matrix &A, size_t i, size_t j, Direction dir) {
 	double result;
 	if (dir == Du)
 		result = A[i][j + 1]; 
@@ -46,7 +46,7 @@ double U(Matrix &A, int i, int j, Direction dir) {
 	return result;
 }
 
-double RD(Matrix &A, int i, int j, Direction dir) {
+double RD(Matrix &A, size_t i, size_t j, Direction dir) {
 	double result;
 	if (dir == Du)
 		result = A[i + 1][j - 1];

@@ -2,7 +2,7 @@
 
 
 
-double Calculate_Press_correction(Matrix& delta_p, Matrix &b_p, Param par, bool OverFlow){
+double Calculate_Press_correction(Matrix& delta_p, Matrix &b_p, Param par){
 
 	for (int i = 0; i < (int)delta_p.size(); ++i) {
 		std::fill(delta_p[i].begin(), delta_p[i].end(), 0);
@@ -37,7 +37,7 @@ double Calculate_Press_correction(Matrix& delta_p, Matrix &b_p, Param par, bool 
 				if (i == n1 - 1 && j == 0     )  help = delta_p[i - 1][j + 1];   // RD
 				if (i == n1 - 1 && j == n2 - 1)  help = delta_p[i - 1][j - 1];   // RU
 
-				if (i == n1 - 1 && (!OverFlow))  help = 0.0; // Right boundary condition
+				if (i == n1 - 1)  help = 0.0; // Right boundary condition
 
 
 				if     (i > 0 && i < n1 - 1 && j > 0 && j < n2 - 1){

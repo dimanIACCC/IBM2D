@@ -19,9 +19,9 @@ public:
 	Template();
 };
 
-double L(Matrix &A, int i, int j, Direction dir);
-double R(Matrix &A, int i, int j, Direction dir);
-double D(Matrix &A, int i, int j, Direction dir);
-double U(Matrix &A, int i, int j, Direction dir);
+double L(Matrix &A, size_t i, size_t j, Direction dir);
+double R(Matrix &A, size_t i, size_t j, Direction dir);
+double D(Matrix &A, size_t i, size_t j, Direction dir);
+double U(Matrix &A, size_t i, size_t j, Direction dir);
 
-double RD(Matrix &A, int i, int j, Direction dir);
+double RD(Matrix &A, size_t i, size_t j, Direction dir);

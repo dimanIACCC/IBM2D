@@ -3,6 +3,10 @@
 #include "GeomVec.h"
 #include "String.h"
 
+enum Boundary_Conditions {
+	u_infinity, u_inflow, periodical
+};
+
 class Param{
 public:
 	double Re;                // Reynolds number
@@ -27,11 +31,13 @@ public:
 	int AddSolids_N;          // number of added Solids
 	int AddSolids_start;      // step when Solids start to add
 	int AddSolids_interval;   // interval for Solids adding
+	Boundary_Conditions BC;   // Boundary Conditions
 	Param();
 	Param(std::string filename);
 };
 
+Boundary_Conditions string_to_BC(std::string s);
 double ux_Poiseuille(double y, double H);
-GeomVec x_p(int i, int j, Param par); // coordinates of (i,j)-th node for pressure p mesh
-GeomVec x_u(int i, int j, Param par); // coordinates of (i,j)-th node for velocity u mesh
-GeomVec x_v(int i, int j, Param par); // coordinates of (i,j)-th node for velocity v mesh
+GeomVec x_p(size_t i, size_t j, Param par); // coordinates of (i,j)-th node for pressure p mesh
+GeomVec x_u(size_t i, size_t j, Param par); // coordinates of (i,j)-th node for velocity u mesh
+GeomVec x_v(size_t i, size_t j, Param par); // coordinates of (i,j)-th node for velocity v mesh

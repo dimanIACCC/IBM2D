@@ -87,21 +87,20 @@ int main(int argc, char *argv[]) {
 
 			#pragma omp section
 			{
-				BiCGStab(U_new, par.N1, par.N2 + 1, A_u, B_u, par, false, Du);
+				BiCGStab(U_new, par.N1, par.N2 + 1, A_u, B_u, par, Du);
 			}
 			#pragma omp section
 			{
-				BiCGStab(V_new, par.N1 + 1, par.N2, A_v, B_v, par, false, Dv);
+				BiCGStab(V_new, par.N1 + 1, par.N2, A_v, B_v, par, Dv);
 			}
 
 		}
-		//ExplicPredVel(U_new,V_new,U_n,V_n,P,Force_x,Force_y,par);
 
 		#pragma endregion Prediction of velocity
 
 		P_Right = Calculate_Press_Right(U_n, V_n, par);
 
-		double eps_p = Calculate_Press_correction(Delta_P, P_Right, par,false);
+		double eps_p = Calculate_Press_correction(Delta_P, P_Right, par);
 
 		for (int i = 0; i < par.N1 + 1; ++i) {
 			for (int j = 0; j < par.N2 + 1; ++j) {
@@ -247,10 +246,15 @@ void PushLog(std::ostream& log, int n, double eps_u, double eps_v) {
 void ApplyInitialData(Matrix &u, Param par) {
 
 	// Poiseuille flow 
-	for (int i = 0; i < par.N1; ++i) {
-		for (int j = 1; j < par.N2; ++j) {
+	for (size_t i = 0; i < par.N1; ++i) {
+		for (size_t j = 1; j < par.N2; ++j) {
 			GeomVec xu = x_u(i, j, par);
-			u[i][j] = ux_Poiseuille(xu[2], par.H);
+			switch (par.BC) {
+			case u_infinity: u[i][j] = 1.0; break;
+			case u_inflow:   u[i][j] = ux_Poiseuille(xu[2], par.H); break;
+			case periodical: u[i][j] = ux_Poiseuille(xu[2], par.H); break;
+			default: std::cout << "ApplyInitialData: unknown BC" << std::endl;
+			}
 		}
 	}
 }
