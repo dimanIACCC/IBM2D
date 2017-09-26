@@ -23,7 +23,7 @@ void ExplicPredVel(Matrix& U_predict, Matrix& V_predict, Matrix& U_n, Matrix& V_
 			double CentrDiffx_U = (U_n[i + 1][j] - U_n[i - 1][j]) / (2 * par.d_x);
 			double CentrDiffy_U = (U_n[i][j + 1] - U_n[i][j - 1]) / (2 * par.d_y);
 			double GradPressX   = (P[i + 1][j] - P[i - 1][j]) / (2 * par.d_x);
-			U_predict[i][j] = par.d_t*(LaplasU - U_n[i][j] * CentrDiffx_U - V_n[i][j] * CentrDiffy_U) + U_n[i][j] - GradPressX +Force_x[i][j];
+			U_predict[i][j] = par.d_t*(LaplasU - U_n[i][j] * CentrDiffx_U - V_n[i][j] * CentrDiffy_U) + U_n[i][j] - GradPressX +par.d_t*Force_x[i][j];
 		}
 	}
 	for (int i = 1; i < (int)V_predict.size()-1; i++) {
@@ -33,7 +33,7 @@ void ExplicPredVel(Matrix& U_predict, Matrix& V_predict, Matrix& U_n, Matrix& V_
 			double CentrDiffx_V = (V_n[i + 1][j] - V_n[i - 1][j]) / (2 * par.d_x);
 			double CentrDiffy_V = (V_n[i][j + 1] - V_n[i][j - 1]) / (2 * par.d_y);
 			double GradPressY   = (P[i][j + 1] - P[i][j - 1]) / (2 * par.d_y);
-			V_predict[i][j] = par.d_t*(LaplasV - U_n[i][j] * CentrDiffx_V - V_n[i][j] * CentrDiffy_V) + V_n[i][j] - GradPressY +Force_y[i][j];
+			V_predict[i][j] = par.d_t*(LaplasV - U_n[i][j] * CentrDiffx_V - V_n[i][j] * CentrDiffy_V) + V_n[i][j] - GradPressY + par.d_t*Force_y[i][j];
 		}
 	}
 

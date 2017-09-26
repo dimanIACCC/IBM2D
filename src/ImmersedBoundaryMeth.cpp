@@ -6,6 +6,11 @@
 #include "PredictVel.h"
 #include "Testing.h"
 
+#include <boost/filesystem.hpp>
+
+
+
+namespace fs = boost::filesystem;
 
 
 #pragma warning(disable : 4996)//for using <chrono>
@@ -13,20 +18,21 @@
 
 // fuctions
 
+
+
 void SetLog(std::ostream &log, Param par);
 void PushLog(std::ostream &log, int n, double eps_u, double eps_v);
 void ApplyInitialData(Matrix& u, Param par);
-
+fs::path MakePath();
 int sgn(double x);
 
 
 int main(int argc, char *argv[]) {
-
 	for (int i = 1; i < argc; i++) {
-		if((std::string)argv[i] == (std::string)"-d") DoTesting();
-}
-	std::cout << "End of testing block" << std::endl;
-	getchar();
+		if ((std::string)argv[i] == (std::string)"-d")DoTesting();
+	}
+
+	//getchar();
 	///////
 	const double epsilon = 1e-3;
 
@@ -52,12 +58,23 @@ int main(int argc, char *argv[]) {
 
 
 	std::ofstream log;
-	//-----------creating Result folder --------------
-	//char current_work_dir[FILENAME_MAX];
-	//_getcwd(current_work_dir, sizeof(current_work_dir));
-	//strcat_s(current_work_dir, "\\Result");
-	//_mkdir(current_work_dir);
-	//-------------------------------------------------
+
+#pragma region Creation of Result folder
+	fs::path dir_Result = MakePath();
+	try
+	{
+		if (!exists(dir_Result)) {
+			fs::create_directory(dir_Result);
+		}
+	}
+	catch (const fs::filesystem_error& ex)
+	{
+		std::cout << ex.what() << '\n';
+	}
+#pragma endregion
+
+
+
 	std::string filelog = "Result/log.txt";
 	log.open(filelog, std::ios::out);
 	SetLog(log, par);
@@ -81,20 +98,20 @@ int main(int argc, char *argv[]) {
 		//<---------- prediction of velocity --------------------------
 		B_u = CalculateB_u(U_n, V_n, U_prev, V_prev, P, Force_x, par);
 		B_v = CalculateB_v(U_n, V_n, U_prev, V_prev, P, Force_y, par);
-#pragma omp parallel sections num_threads(2)
-		{
-
-#pragma omp section
-			{
-				BiCGStab(U_new, par.N1, par.N2 + 1, OperatorA_u, B_u, par, false);
-			}
-#pragma omp section
-			{
-				BiCGStab(V_new, par.N1 + 1, par.N2, OperatorA_v, B_v, par, false);
-			}
-
-		}
-		//ExplicPredVel(U_new,V_new,U_n,V_n,P,Force_x,Force_y,par);
+		#pragma omp parallel sections num_threads(2)
+				{
+		
+		#pragma omp section
+					{
+						BiCGStab(U_new, par.N1, par.N2 + 1, OperatorA_u, B_u, par, false);
+					}
+		#pragma omp section
+					{
+						BiCGStab(V_new, par.N1 + 1, par.N2, OperatorA_v, B_v, par, false);
+					}
+		
+				}
+		//ExplicPredVel(U_new, V_new, U_n, V_n, P, Force_x, Force_y, par);
 
 		//<----------end of prediction of velocity --------------------
 
@@ -272,4 +289,14 @@ int sgn(double x)
 {
 	(x >= 0) ? x = 1 : x = -1;
 	return x;
+}
+
+fs::path MakePath() {
+	fs::path t = __argv[0];
+	t = t.parent_path();
+	std::string str = t.generic_string();
+	str.erase(str.find("src")+3);
+	str.append("/Result");
+	t = str;
+ 	return t;
 }

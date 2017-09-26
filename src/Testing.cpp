@@ -5,8 +5,9 @@ using namespace std;
 void DoTesting() {
 	int Re = 20;
 	DoTestForce(Re);
-	//
-	//TO DO: realize some tests here!
+
+
+	std::cout << "End of testing block" << std::endl;
 }
 void DoTestForce(int Re) {
 	//
@@ -150,7 +151,7 @@ void DoTestForce(int Re) {
 				}
 			}
 			else {
-
+				cout << "There are no test yet for Re too much" << endl;
 			}
 			break;
 		}

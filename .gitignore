@@ -9,3 +9,5 @@ FlowOverCylinder/.vs/
 *.user
 x64/
 Debug/
+src/input.txt
+src/Solids.txt
