@@ -18,6 +18,34 @@
       <Platform>x64</Platform>
     </ProjectConfiguration>
   </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="src\BiCGStab.h" />
+    <ClInclude Include="src\CalculateForce.h" />
+    <ClInclude Include="src\Calculate_press.h" />
+    <ClInclude Include="src\GeomVec.h" />
+    <ClInclude Include="src\Output.h" />
+    <ClInclude Include="src\Parameters.h" />
+    <ClInclude Include="src\PredictVel.h" />
+    <ClInclude Include="src\SolidBody.h" />
+    <ClInclude Include="src\stdafx.h" />
+    <ClInclude Include="src\String.h" />
+    <ClInclude Include="src\targetver.h" />
+    <ClInclude Include="src\Testing.h" />
+  </ItemGroup>
+  <ItemGroup>
+    <ClCompile Include="src\BiCGStab.cpp" />
+    <ClCompile Include="src\CalculateForce.cpp" />
+    <ClCompile Include="src\Calculate_press.cpp" />
+    <ClCompile Include="src\GeomVec.cpp" />
+    <ClCompile Include="src\ImmersedBoundaryMeth.cpp" />
+    <ClCompile Include="src\Output.cpp" />
+    <ClCompile Include="src\Parameters.cpp" />
+    <ClCompile Include="src\PredictVel.cpp" />
+    <ClCompile Include="src\SolidBody.cpp" />
+    <ClCompile Include="src\stdafx.cpp" />
+    <ClCompile Include="src\String.cpp" />
+    <ClCompile Include="src\Testing.cpp" />
+  </ItemGroup>
   <PropertyGroup Label="Globals">
     <ProjectGuid>{A677C252-A117-4B4A-BF5B-630ADF31D9DB}</ProjectGuid>
     <Keyword>Win32Proj</Keyword>
@@ -65,7 +93,10 @@
     <LibraryPath>$(VC_LibraryPath_x86);$(WindowsSDK_LibraryPath_x86);$(NETFXKitsDir)Lib\um\x86;C:\boost\stage\lib</LibraryPath>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
-    <IncludePath>$(VC_IncludePath);$(WindowsSDK_IncludePath);C:\boost\</IncludePath>
+    <IncludePath>$(VC_IncludePath);$(WindowsSDK_IncludePath);C:\boost\;$(SolutionDir)\src</IncludePath>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
+    <IncludePath>$(VC_IncludePath);$(WindowsSDK_IncludePath);;$(SolutionDir)\src</IncludePath>
   </PropertyGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
     <ClCompile>
@@ -113,40 +144,6 @@
       <AdditionalLibraryDirectories>C:\boost\stage\lib</AdditionalLibraryDirectories>
     </Link>
   </ItemDefinitionGroup>
-  <ItemGroup>
-    <Text Include="ReadMe.txt" />
-  </ItemGroup>
-  <ItemGroup>
-    <ClInclude Include="BiCGStab.h" />
-    <ClInclude Include="CalculateForce.h" />
-    <ClInclude Include="Calculate_press.h" />
-    <ClInclude Include="GeomVec.h" />
-    <ClInclude Include="Parameters.h" />
-    <ClInclude Include="PredictVel.h" />
-    <ClInclude Include="Output.h" />
-    <ClInclude Include="SolidBody.h" />
-    <ClInclude Include="stdafx.h" />
-    <ClInclude Include="String.h" />
-    <ClInclude Include="targetver.h" />
-    <ClInclude Include="Testing.h" />
-  </ItemGroup>
-  <ItemGroup>
-    <ClCompile Include="BiCGStab.cpp" />
-    <ClCompile Include="CalculateForce.cpp" />
-    <ClCompile Include="Calculate_press.cpp" />
-    <ClCompile Include="GeomVec.cpp" />
-    <ClCompile Include="ImmersedBoundaryMeth.cpp" />
-    <ClCompile Include="Output.cpp" />
-    <ClCompile Include="Parameters.cpp" />
-    <ClCompile Include="PredictVel.cpp" />
-    <ClCompile Include="SolidBody.cpp" />
-    <ClCompile Include="stdafx.cpp">
-      <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">Create</PrecompiledHeader>
-      <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">Create</PrecompiledHeader>
-    </ClCompile>
-    <ClCompile Include="String.cpp" />
-    <ClCompile Include="Testing.cpp" />
-  </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">
   </ImportGroup>

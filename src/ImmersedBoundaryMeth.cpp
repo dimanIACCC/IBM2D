@@ -23,6 +23,7 @@ namespace fs = boost::filesystem;
 void SetLog(std::ostream &log, Param par);
 void PushLog(std::ostream &log, int n, double eps_u, double eps_v);
 void ApplyInitialData(Matrix& u, Param par);
+void MakeResultDir();
 fs::path MakePath();
 int sgn(double x);
 
@@ -32,8 +33,7 @@ int main(int argc, char *argv[]) {
 		if ((std::string)argv[i] == (std::string)"-d")DoTesting();
 	}
 
-	//getchar();
-	///////
+
 	const double epsilon = 1e-3;
 
 	Param par("input.txt"); // Construct Parameters using file input.txt
@@ -59,26 +59,7 @@ int main(int argc, char *argv[]) {
 
 	std::ofstream log;
 
-#pragma region Creation of Result folder
-	fs::path dir_Result = MakePath();
-	try
-	{
-		if (exists(dir_Result)) {
-			fs::remove_all(dir_Result);
-			std::cout << exists(dir_Result);
-			fs::create_directory(dir_Result);
-		}
-		else{
-			fs::create_directory(dir_Result);
-		}
-	}
-	catch (const fs::filesystem_error& ex)
-		{
-		std::cout << ex.what() << '\n';
-	}
-#pragma endregion
-
-
+	MakeResultDir();
 
 	std::string filelog = "Result/log.txt";
 	log.open(filelog, std::ios::out);
@@ -296,12 +277,22 @@ int sgn(double x)
 	return x;
 }
 
-fs::path MakePath() {
-	fs::path t = __argv[0];
-	t = t.parent_path();
-	std::string str = t.generic_string();
-	str.erase(str.find("src")+3);
-	str.append("/Result");
-	t = str;
- 	return t;
+void MakeResultDir() {
+	fs::path dir_Result(L"\Result");
+
+	try
+	{
+		if (exists(dir_Result)) {
+			fs::remove_all(dir_Result);
+			fs::create_directory(dir_Result);
+		}
+		else {
+			fs::create_directory(dir_Result);
+		}
+	}
+	catch (const fs::filesystem_error& ex)
+	{
+		std::cout << ex.what() << '\n' << "Enter any key";
+		std::cin.get();
+	}
 }
