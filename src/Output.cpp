@@ -143,3 +143,25 @@ void Output(Matrix p, Matrix u, Matrix v, int n, std::list<Circle> iList, Param 
 
 	output.close();
 }
+
+void Output_dp(Matrix dp, int n, Param par, std::string WorkDir) {
+
+	std::ofstream output;
+	std::string filename = WorkDir + "dp" + std::to_string(n) + ".plt";
+
+	output.open(filename.c_str());
+
+	output << "title = " << '"' << "sample mesh" << '"' << std::endl;
+	output << "Variables = x y dp" << std::endl;
+	output << "zone T=" << '"' << n << '"' << ",  i=" << dp.size() << ", j=" << dp[0].size() << ", f=point" << std::endl;
+	output << "SolutionTime = " << n << std::endl;
+
+	for (int j = 0; j <= par.N2; ++j) {
+		for (int i = 0; i <= par.N1; ++i) {
+			GeomVec xp = x_p(i, j, par);
+			output << xp[1] << " " << xp[2] << " " << dp[i][j] << std::endl;
+		}
+	}
+
+	output.close();
+}

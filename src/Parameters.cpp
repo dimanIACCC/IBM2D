@@ -87,8 +87,12 @@ Boundary_Conditions string_to_BC(std::string s) {
 }
 
 double ux_Poiseuille(double y, double H) {
-	double ux = (pow(H / 2.0, 2) - pow(y - H / 2.0, 2));
+	double ux = (pow(H / 2.0, 2) - pow(y - H / 2.0, 2)) / pow(H / 2.0, 2);
 	return ux;
+}
+
+double dpdx_Poiseuille(double H, double Re) {
+	return 8.0 / H / H / Re;
 }
 
 GeomVec x_p(size_t i, size_t j, Param par) {

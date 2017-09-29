@@ -49,20 +49,20 @@ void Calculate_A(ublas::matrix<Template> &A, Param par, double Re, Direction Dir
 	}
 }
 
-Matrix Operator_Ax(ublas::matrix<Template> &A, Matrix &v, Param par, Direction Dir) {
+Matrix Operator_Ax(ublas::matrix<Template> &A, Matrix &u, Param par, Direction Dir) {
 
-	size_t Nx = v.size();
-	size_t Ny = v[0].size();
+	size_t Nx = u.size();
+	size_t Ny = u[0].size();
 
 	CreateMatrix(result, Nx, Ny);
 
 	for (size_t j = 1; j < (Ny - 1); ++j) {
 		for (size_t i = 1; i < (Nx - 1); ++i) {
-			result[i][j] = A(i, j).C * v[i][j]
-			             + A(i, j).U * U(v, i, j, Dir)
-			             + A(i, j).R * R(v, i, j, Dir)
-			             + A(i, j).D * D(v, i, j, Dir)
-			             + A(i, j).L * L(v, i, j, Dir);
+			result[i][j] = A(i, j).C * u[i][j]
+			             + A(i, j).U * U(u, i, j, Dir)
+			             + A(i, j).R * R(u, i, j, Dir)
+			             + A(i, j).D * D(u, i, j, Dir)
+			             + A(i, j).L * L(u, i, j, Dir);
 		}
 	}
 
@@ -70,18 +70,18 @@ Matrix Operator_Ax(ublas::matrix<Template> &A, Matrix &v, Param par, Direction D
 	for (size_t i = 1; i < Nx - 1; ++i) {
 
 		size_t j = 0;
-		result[i][j] = v[i][j];
-		if ((par.BC == u_infinity) && (Dir == Du)) result[i][j] = (v[i][j + 1] - v[i][j]) / (par.d_y*0.5);
+		result[i][j] = u[i][j];
+		if ((par.BC == u_infinity) && (Dir == Du)) result[i][j] = (u[i][j + 1] - u[i][j]) / (par.d_y*0.5);
 
 		j = Ny - 1;
-		result[i][j] = v[i][j];
-		if ((par.BC == u_infinity) && (Dir == Du)) result[i][j] = (v[i][j] - v[i][j - 1]) / (par.d_y*0.5);
+		result[i][j] = u[i][j];
+		if ((par.BC == u_infinity) && (Dir == Du)) result[i][j] = (u[i][j] - u[i][j - 1]) / (par.d_y*0.5);
 
 	}
 
 	for (size_t j = 0; j < Ny; ++j) {
-		result[0][j] = v[0][j];                                                                                 // inflow u = u0
-		result[Nx - 1][j] = (3.0 * v[Nx - 1][j] - 4.0 * v[Nx - 2][j] + 1.0 * v[Nx - 3][j]) / (2.0*par.d_x); 	// outflow du/dx = 0
+		result[0][j] = u[0][j];                                                                                 // inflow u = u0
+		result[Nx - 1][j] = (3.0 * u[Nx - 1][j] - 4.0 * u[Nx - 2][j] + 1.0 * u[Nx - 3][j]) / (2.0*par.d_x); 	// outflow du/dx = 0
 	}
 	
 	return result;
@@ -130,6 +130,7 @@ Matrix CalculateB(Matrix &u_n, Matrix &v_n, Matrix &u_prev, Matrix &v_prev, Matr
 	for (size_t j = 0; j < Ny; ++j) {
 		result[Nx - 1][j] = 0.0;
 		result[0][j] = u_n[0][j];
+		if (par.BC == periodical) result[0][j] = u_n[Nx-1][j];
 	}
 
 	return result;

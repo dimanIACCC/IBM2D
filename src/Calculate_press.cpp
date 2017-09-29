@@ -2,7 +2,7 @@
 
 
 
-double Calculate_Press_correction(Matrix& delta_p, Matrix &b_p, Param par){
+double Calculate_Press_correction(Matrix &delta_p, Matrix &b_p, Param par){
 
 	for (int i = 0; i < (int)delta_p.size(); ++i) {
 		std::fill(delta_p[i].begin(), delta_p[i].end(), 0);
@@ -38,6 +38,7 @@ double Calculate_Press_correction(Matrix& delta_p, Matrix &b_p, Param par){
 				if (i == n1 - 1 && j == n2 - 1)  help = delta_p[i - 1][j - 1];   // RU
 
 				if (i == n1 - 1)  help = 0.0; // Right boundary condition
+				if (i == 0 && par.BC == periodical) help = 0.;  // Left boundary condition for periodical problem
 
 
 				if     (i > 0 && i < n1 - 1 && j > 0 && j < n2 - 1){

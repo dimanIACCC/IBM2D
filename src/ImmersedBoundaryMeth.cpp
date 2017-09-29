@@ -14,7 +14,7 @@
 
 void SetLog(std::ostream &log, Param par);
 void PushLog(std::ostream &log, int n, double eps_u, double eps_v);
-void ApplyInitialData(Matrix& u, Param par);
+void ApplyInitialData(Matrix &u, Matrix &p, Param par);
 
 int sgn(double x);
 
@@ -61,7 +61,7 @@ int main(int argc, char *argv[]) {
 	force.open(WorkDir + "force.plt", std::ios::out);
 	force << "Variables = n, Fx, Fy" << std::endl;
 
-	ApplyInitialData(U_new, par); // Applying initial data to velocity
+	ApplyInitialData(U_new, P, par); // Applying initial data to velocity
 	U_n = U_new;
 	U_prev = U_new;
 
@@ -101,10 +101,21 @@ int main(int argc, char *argv[]) {
 		P_Right = Calculate_Press_Right(U_n, V_n, par);
 
 		double eps_p = Calculate_Press_correction(Delta_P, P_Right, par);
+		// if (n % par.output_step == 0) Output_dp(Delta_P, n, par, WorkDir);
 
+
+		double relax = 0.1;
 		for (int i = 0; i < par.N1 + 1; ++i) {
 			for (int j = 0; j < par.N2 + 1; ++j) {
-				P[i][j] = P[i][j] + 0.8 * Delta_P[i][j];
+				P[i][j] = P[i][j] + relax * Delta_P[i][j];
+			}
+		}
+		if (par.BC == periodical) {
+			size_t n1 = P.size();
+			size_t n2 = P[0].size();
+			for (size_t j = 0; j < n2; ++j) {
+				P[0][j] = par.L * dpdx_Poiseuille(par.H, par.Re);
+				P[1][j] = par.L * dpdx_Poiseuille(par.H, par.Re);
 			}
 		}
 
@@ -190,7 +201,7 @@ int main(int argc, char *argv[]) {
 		}
 
 
-		const double epsilon = 1e-3;
+		const double epsilon = 1e-5;
 		if (eps_u < epsilon && eps_v < epsilon) {
 			Output(P, U_new, V_new, n, solidList, par, WorkDir);
 			break;
@@ -243,18 +254,24 @@ void PushLog(std::ostream& log, int n, double eps_u, double eps_v) {
 }
 
 // Apply initial data for velocity
-void ApplyInitialData(Matrix &u, Param par) {
+void ApplyInitialData(Matrix &u, Matrix &p, Param par) {
 
-	// Poiseuille flow 
-	for (size_t i = 0; i < par.N1; ++i) {
-		for (size_t j = 1; j < par.N2; ++j) {
+	for (size_t i = 0; i < u.size(); ++i) {
+		for (size_t j = 0; j < u[0].size(); ++j) {
 			GeomVec xu = x_u(i, j, par);
 			switch (par.BC) {
-			case u_infinity: u[i][j] = 1.0; break;
-			case u_inflow:   u[i][j] = ux_Poiseuille(xu[2], par.H); break;
-			case periodical: u[i][j] = ux_Poiseuille(xu[2], par.H); break;
-			default: std::cout << "ApplyInitialData: unknown BC" << std::endl;
+				case u_infinity: u[i][j] = 1.0; break;
+				case u_inflow:   u[i][j] = 1.0 * ux_Poiseuille(xu[2], par.H); break;
+				case periodical: u[i][j] = 1.0 * ux_Poiseuille(xu[2], par.H); break;
+				default: std::cout << "ApplyInitialData: unknown BC" << std::endl;
 			}
+		}
+	}
+
+	for (size_t i = 0; i < p.size(); ++i) {
+		for (size_t j = 0; j < p[1].size(); ++j) {
+			GeomVec xp = x_p(i, j, par);
+			p[i][j] = 1. * (par.L - xp[1]) * dpdx_Poiseuille(par.H, par.Re);
 		}
 	}
 }
