@@ -3,21 +3,30 @@
 
 using namespace std;
 void DoTesting() {
+	std::cout << "Start testing" << std::endl;
 	int Re = 20;
+	//DoTestForce(Re);
+	Re = 100;
 	DoTestForce(Re);
 
 
 	std::cout << "End of testing block" << std::endl;
+	cout << "Enter any key" << endl;
+	cin.get();
 }
+
 void DoTestForce(int Re) {
 	//
-	//Realized test for overrunning flow on the fixed object with default(!) input parametres
+	//Realized test for overrunning flow on the fixed object with default(?) input parametres and Re=20 or Re=100
 	//
 
-	Param par("input.txt");
+	Param par;
+	par.Re = Re;
+	par.alpha_f = -8e-5;
+	par.beta_f = -2e3;
 	/*par.N1 *= 2.5;
 	par.N2 *= 2.5;*/
-	const double epsilon = 1e-3;
+	const double epsilon = 1e-5;
 
 #pragma region BodyOfTest
 	CreateMatrix(U_n, par.N1, par.N2 + 1);
@@ -39,7 +48,10 @@ void DoTestForce(int Re) {
 	Calculate_A_u(OperatorA_u, par, par.Re);
 	Calculate_A_v(OperatorA_v, par, par.Re);
 
-
+	std::ofstream forceDrug;
+	std::ofstream forceLift;
+	forceDrug.open("Result/forceDrug.plt", std::ios::out);
+	forceLift.open("Result/forceLift.plt", std::ios::out);
 	ApplyInitialVelocity(U_new, par); // Applying initial data to velocity 
 	U_n = U_new;
 	U_prev = U_new;
@@ -47,11 +59,29 @@ void DoTestForce(int Re) {
 	std::list<Circle> solidList; // list of immersed solids
 	Circle c(par.L/2, par.H/2, 0, 0, 0, par.rho, par.Nn, false, par.r);
 	solidList.push_back(c);
-
+	double minF=0, maxF=0,prevValue, now;
+	bool increase;
 	int n = 0; // iteration counter
 	while (n <= par.N_max) {
 
 		CalculateForce(Force_x, Force_y, solidList, U_new, V_new, par);
+		if (Re > 43) {
+			CalcForceDrugLift(Force_x, n - 1, forceDrug);
+			CalcForceDrugLift(Force_y, n - 1, forceLift);
+		}
+		
+		//if ((n > 3000 )&&( Re = 100)) {
+		//	now = Sum(Force_x);
+		//	if (n == 3002) {
+		//		(prevValue > Sum(Force_x)) ? increase = false : increase = true;
+		//	}
+		//	else if(n!=3001) {
+		//		if ((increase == true) && (prevValue > now))maxF = prevValue;
+		//		if ((increase == false) && (prevValue < now))minF = prevValue;
+		//	}
+		//	prevValue = now;
+		//}
+
 
 		//<---------- prediction of velocity --------------------------
 		B_u = CalculateB_u(U_n, V_n, U_prev, V_prev, P, Force_x, par);
@@ -131,6 +161,11 @@ void DoTestForce(int Re) {
 		//--------------------------------------------------------
 
 #pragma endregion
+		//if ((Re = 100) && (maxF != 0) && (minF != 0)) {
+		//	cout << "Amplitude is " << abs(maxF - minF) << endl;
+		//	cout << "Average is " << abs(maxF - minF)/2 << endl;
+		//	break;
+		//}
 		if (eps_u < epsilon && eps_v < epsilon) {
 			if (Re < 43) {
 				//the line is drawn with two points (Cd1,Nx1) & (Cd2,Nx2)
@@ -150,28 +185,23 @@ void DoTestForce(int Re) {
 					else cout << "Not OK" << endl;
 				}
 			}
-			else {
-				cout << "There are no test yet for Re too much" << endl;
-			}
+			else cout << "That`s strange =(" << "Re =" << par.Re << endl;
+
 			break;
 		}
 
-
+		if (n % par.output_step == 0) {
+			//cout << "n = " << n << endl;
+		}
+		if (n % par.output_step == 0) {
+			Output(P, U_new, V_new, n, solidList, par);
+		}
 		++n;
 	}
 
 	
 }
-double diff(Matrix A, Matrix B) {
-	double dif = 0;
-	for (int i = 0; i < (int)A.size(); i++) {
-		for (int j = 0; j < (int)A[0].size(); j++)
-		{
-			if(abs(A[i][j] - B[i][j]) > dif) dif = abs(A[i][j] - B[i][j]);
-		}
-	}
-	return dif;
-}
+
 
 void ApplyInitialVelocity(Matrix &u, Param par) {
 
@@ -181,4 +211,25 @@ void ApplyInitialVelocity(Matrix &u, Param par) {
 			u[i][j] = 1;
 		}
 	}
+}
+
+double Sum(Matrix& f) {
+	double sum = 0;
+	for (int i = 0; i < (int)f.size(); i++) {
+		for (int j = 0; j < (int)f[0].size(); j++)
+		{
+			sum += f[i][j];
+		}
+	}
+	return sum;
+}
+void CalcForceDrugLift(Matrix& f, int n, std::ostream &stream) {
+	double sum = 0;
+	for (int i = 0; i < (int)f.size(); i++) {
+		for (int j = 0; j < (int)f[0].size(); j++)
+		{
+			sum += f[i][j];
+		}
+	}
+	stream << n << ' ' << sum << std::endl;
 }

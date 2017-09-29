@@ -24,11 +24,14 @@ void SetLog(std::ostream &log, Param par);
 void PushLog(std::ostream &log, int n, double eps_u, double eps_v);
 void ApplyInitialData(Matrix& u, Param par);
 void MakeResultDir();
-fs::path MakePath();
+void CalcForceDrugLift(Matrix& f, int n, std::ostream &stream);
 int sgn(double x);
 
 
 int main(int argc, char *argv[]) {
+
+	MakeResultDir();
+
 	for (int i = 1; i < argc; i++) {
 		if ((std::string)argv[i] == (std::string)"-d")DoTesting();
 	}
@@ -58,8 +61,7 @@ int main(int argc, char *argv[]) {
 
 
 	std::ofstream log;
-
-	MakeResultDir();
+	
 
 	std::string filelog = "Result/log.txt";
 	log.open(filelog, std::ios::out);
@@ -76,10 +78,12 @@ int main(int argc, char *argv[]) {
 
 	int n = 0; // iteration counter
 	while (n <= par.N_max) {
-
-		Add_Solids(solidList, 20, n, 0, 200, par);
+		//commented because in that configaration is overflow testing
+	//	Add_Solids(solidList, 20, n, 0, 200, par);
 
 		CalculateForce(Force_x, Force_y, solidList, U_new, V_new, par);
+
+
 
 		//<---------- prediction of velocity --------------------------
 		B_u = CalculateB_u(U_n, V_n, U_prev, V_prev, P, Force_x, par);

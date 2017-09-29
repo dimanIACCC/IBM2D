@@ -9,5 +9,6 @@
 #include "PredictVel.h"
 void DoTestForce(int Re);
 void DoTesting();
-double diff(Matrix A, Matrix B);
+double Sum(Matrix& f);
 void ApplyInitialVelocity(Matrix &u, Param par);
+void CalcForceDrugLift(Matrix& f, int n, std::ostream &stream);
