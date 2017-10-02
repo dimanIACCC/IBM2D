@@ -88,7 +88,7 @@ Matrix Operator_Ax(ublas::matrix<Template> &A, Matrix &u, Param par, Direction D
 
 }
 
-Matrix CalculateB(Matrix &u_n, Matrix &v_n, Matrix &u_prev, Matrix &v_prev, Matrix &p, Matrix &force, Param par, Direction Dir) {
+Matrix CalculateB(Matrix &u_n, Matrix &v_n, Matrix &u_s, Matrix &v_s, Matrix &p, Matrix &force, Param par, Direction Dir) {
 
 	size_t Nx = u_n.size();
 	size_t Ny = u_n[0].size();
@@ -105,6 +105,7 @@ Matrix CalculateB(Matrix &u_n, Matrix &v_n, Matrix &u_prev, Matrix &v_prev, Matr
 
 
 	double k, kp, k0, km;
+	double alpha = 0.5;
 
 	CreateMatrix(result, Nx, Ny);
 
@@ -113,12 +114,12 @@ Matrix CalculateB(Matrix &u_n, Matrix &v_n, Matrix &u_prev, Matrix &v_prev, Matr
 			if      (Dir == Du)  ij = j;
 			else if (Dir == Dv)  ij = i;
 			B_coefficients(ij, N, k, kp, k0, km);
-			double advective_term_n    = advective_term(u_n   , v_n   , i, j, d_u, d_v, k, Dir);
-			double advective_term_prev = advective_term(u_prev, v_prev, i, j, d_u, d_v, k, Dir);
-			double diffusion_term_n    = diffusion_term(u_n           , i, j, d_uu, d_vv, kp, k0, km, Dir);
+			double advective_term_n    = advective_term(u_n, v_n, i, j, d_u, d_v, k, Dir);
+			double advective_term_s    = advective_term(u_s, v_s, i, j, d_u, d_v, k, Dir);
+			double diffusion_term_n    = diffusion_term(u_n     , i, j, d_uu, d_vv, kp, k0, km, Dir);
 			double pressure_term       = (R(p, i, j, Dir) - p[i][j]) / d_u;
-			result[i][j] = -(3.0 / 2.0 * advective_term_n
-			               - 1.0 / 2.0 * advective_term_prev)
+			result[i][j] = -(       alpha  * advective_term_n
+			               + (1.0 - alpha) * advective_term_s)
 			                           - pressure_term
 			                           + diffusion_term_n / (2.0*par.Re)
 			                           + u_n[i][j] / par.d_t
@@ -128,9 +129,9 @@ Matrix CalculateB(Matrix &u_n, Matrix &v_n, Matrix &u_prev, Matrix &v_prev, Matr
 
 	// outflow du/dx = 0
 	for (size_t j = 0; j < Ny; ++j) {
-		result[Nx - 1][j] = 0.0;
 		result[0][j] = u_n[0][j];
-		if (par.BC == periodical) result[0][j] = u_n[Nx-1][j];
+		result[Nx - 1][j] = 0.0;
+		if (par.BC == periodical) result[0][j] = u_n[Nx - 1][j];
 	}
 
 	return result;

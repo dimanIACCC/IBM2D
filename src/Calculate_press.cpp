@@ -37,10 +37,6 @@ double Calculate_Press_correction(Matrix &delta_p, Matrix &b_p, Param par){
 				if (i == n1 - 1 && j == 0     )  help = delta_p[i - 1][j + 1];   // RD
 				if (i == n1 - 1 && j == n2 - 1)  help = delta_p[i - 1][j - 1];   // RU
 
-				if (i == n1 - 1)  help = 0.0; // Right boundary condition
-				if (i == 0 && par.BC == periodical) help = 0.;  // Left boundary condition for periodical problem
-
-
 				if     (i > 0 && i < n1 - 1 && j > 0 && j < n2 - 1){
 					if (i > 1 && i < n1 - 2 && j > 1 && j < n2 - 2)
 						help = A * (dx2 * (delta_p[i + 1][j] + delta_p[i - 1][j])
@@ -62,6 +58,10 @@ double Calculate_Press_correction(Matrix &delta_p, Matrix &b_p, Param par){
 						      + dy2 * (kyp + kym));
 					}
 				}
+
+				if (i == n1 - 1)  help = 0.0; // Right boundary condition
+				if (i == 0 && par.BC == periodical) help = 0.;  // Left boundary condition for periodical problem
+				if (i == 1 && par.BC == periodical) help = 0.;  // Left boundary condition for periodical problem
 
 				if (fabs(help - delta_p[i][j]) > eps){
 					eps = fabs(help - delta_p[i][j]);

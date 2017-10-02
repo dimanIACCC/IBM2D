@@ -36,12 +36,12 @@ int main(int argc, char *argv[]) {
 	#pragma region SetMatrices
 	CreateMatrix(U_n, par.N1, par.N2 + 1);
 	CreateMatrix(U_new, par.N1, par.N2 + 1);
-	CreateMatrix(U_prev, par.N1, par.N2 + 1);
+	CreateMatrix(U_s, par.N1, par.N2 + 1);
 	CreateMatrix(B_u, par.N1, par.N2 + 1);
 	CreateMatrix(Force_x, par.N1, par.N2 + 1);
 	CreateMatrix(V_n, par.N1 + 1, par.N2);
 	CreateMatrix(V_new, par.N1 + 1, par.N2);
-	CreateMatrix(V_prev, par.N1 + 1, par.N2);
+	CreateMatrix(V_s, par.N1 + 1, par.N2);
 	CreateMatrix(B_v, par.N1 + 1, par.N2);
 	CreateMatrix(Force_y, par.N1 + 1, par.N2);
 	CreateMatrix(P, par.N1 + 1, par.N2 + 1);
@@ -61,105 +61,115 @@ int main(int argc, char *argv[]) {
 	force.open(WorkDir + "force.plt", std::ios::out);
 	force << "Variables = n, Fx, Fy" << std::endl;
 
-	ApplyInitialData(U_new, P, par); // Applying initial data to velocity
-	U_n = U_new;
-	U_prev = U_new;
+	ApplyInitialData(U_n, P, par); // Applying initial data to velocity
 
 	std::list<Circle> solidList; // list of immersed solids
 	Read_Solids(WorkDir + "Solids.txt", solidList, par); // read Solids from file
 
 	Output(P, U_new, V_new, -1, solidList, par, WorkDir);
 
-	int n = 0; // iteration counter
-	while (n <= par.N_max) {
+	for (int n = 0; n <= par.N_max; ++n) {
 
 		Add_Solids(solidList, n, par);
 
-		CalculateForce(Force_x, Force_y, solidList, U_new, V_new, par);
+		CalculateForce(Force_x, Force_y, solidList, U_n, V_n, par);
 		force << n << " " << Summ(Force_x) << " " << Summ(Force_y) << std::endl;
 
-		#pragma region Prediction of velocity
-		B_u = CalculateB(U_n, V_n, U_prev, V_prev, P, Force_x, par, Du);
-		B_v = CalculateB(V_n, U_n, V_prev, U_prev, P, Force_y, par, Dv);
+		U_s = U_n;
+		V_s = V_n;
+		double s_max = 1000;
+		for (int s = 0; s <= s_max; ++s) {
+			if (par.BC == periodical) {
+				for (size_t j = 0; j < P[0].size(); ++j) {
+					P[0][j] = par.L * dpdx_Poiseuille(par.H, par.Re);
+					P[1][j] = par.L * dpdx_Poiseuille(par.H, par.Re);
+				}
+			}
+			#pragma region Prediction of velocity
+			B_u = CalculateB(U_n, V_n, U_s, V_s, P, Force_x, par, Du);
+			B_v = CalculateB(V_n, U_n, V_s, U_s, P, Force_y, par, Dv);
 
-		#pragma omp parallel sections num_threads(2)
-		{
-
-			#pragma omp section
+			U_new = U_s;
+			V_new = V_s;
+			#pragma omp parallel sections num_threads(2)
 			{
-				BiCGStab(U_new, par.N1, par.N2 + 1, A_u, B_u, par, Du);
+
+				#pragma omp section
+				{
+					BiCGStab(U_new, A_u, B_u, par, Du);
+				}
+				#pragma omp section
+				{
+					BiCGStab(V_new, A_v, B_v, par, Dv);
+				}
+
 			}
-			#pragma omp section
-			{
-				BiCGStab(V_new, par.N1 + 1, par.N2, A_v, B_v, par, Dv);
+
+			#pragma endregion Prediction of velocity
+
+			P_Right = Calculate_Press_Right(U_new, V_new, par);
+			double eps_p = Calculate_Press_correction(Delta_P, P_Right, par);
+
+			double Delta_P_max = 0.0;
+			double P_max = 0.0;
+			for (size_t i = 1; i < P.size()-1; ++i) {
+				for (size_t j = 1; j < P[0].size()-1; ++j) {
+					if (fabs(Delta_P[i][j]) > Delta_P_max)   Delta_P_max = fabs(Delta_P[i][j]);
+					if (fabs(      P[i][j]) >       P_max)         P_max = fabs(      P[i][j]);
+				}
+			}
+			double relax = 0.1 * std::min(P_max / Delta_P_max, 1.0);
+			std::cout << "s = " << s << ", delta_P / P = " << Delta_P_max / P_max << std::endl;
+
+			for (size_t i = 0; i < P.size(); ++i) {
+				for (size_t j = 0; j < P[0].size(); ++j) {
+					P[i][j] += relax * Delta_P[i][j];
+				}
 			}
 
-		}
-
-		#pragma endregion Prediction of velocity
-
-		P_Right = Calculate_Press_Right(U_n, V_n, par);
-
-		double eps_p = Calculate_Press_correction(Delta_P, P_Right, par);
-		// if (n % par.output_step == 0) Output_dp(Delta_P, n, par, WorkDir);
-
-
-		double relax = 0.1;
-		for (int i = 0; i < par.N1 + 1; ++i) {
-			for (int j = 0; j < par.N2 + 1; ++j) {
-				P[i][j] = P[i][j] + relax * Delta_P[i][j];
+			for (size_t i = 1; i < U_new.size() - 1; ++i) {
+				for (size_t j = 1; j < U_new[0].size() - 1; ++j) {
+					U_new[i][j] -= relax * par.d_t * (Delta_P[i + 1][j] - Delta_P[i][j]) / par.d_x;
+				}
 			}
-		}
-		if (par.BC == periodical) {
-			size_t n1 = P.size();
-			size_t n2 = P[0].size();
-			for (size_t j = 0; j < n2; ++j) {
-				P[0][j] = par.L * dpdx_Poiseuille(par.H, par.Re);
-				P[1][j] = par.L * dpdx_Poiseuille(par.H, par.Re);
-			}
-		}
 
-		for (int i = 1; i < par.N1 - 1; ++i) {
-			for (int j = 1; j < par.N2; ++j) {
-				U_new[i][j] -= par.d_t * (Delta_P[i + 1][j] - Delta_P[i][j]) / par.d_x;
+			for (size_t i = 1; i < V_new.size() - 1; ++i) {
+				for (size_t j = 1; j < V_new[0].size() - 1; ++j) {
+					V_new[i][j] -= relax * par.d_t * (Delta_P[i][j + 1] - Delta_P[i][j]) / par.d_y;
+				}
 			}
-		}
 
-		for (int j = 1; j < par.N2; ++j) {
-			int i = par.N1 - 1;
-			U_new[i][j] = U_new[i - 1][j];
-		}
-
-		for (int i = 1; i < par.N1 + 1; ++i) {
-			for (int j = 1; j < par.N2 - 1; ++j) {
-				V_new[i][j] -= par.d_t * (Delta_P[i][j + 1] - Delta_P[i][j]) / par.d_y;
+			if (Delta_P_max / P_max < 0.01) {
+				std::cout << "s iterations: " << s << std::endl;
+				break;
 			}
+
+			U_s = U_new;
+			V_s = V_new;
+
+
 		}
 
 		#pragma region calculating eps_u and eps_v
 		double eps_u = 0.0;
-		for (int i = 0; i < par.N1; ++i) {
-			for (int j = 0; j < par.N2 + 1; ++j) {
+		for (size_t i = 0; i < par.N1; ++i) {
+			for (size_t j = 0; j < par.N2 + 1; ++j) {
 				if (fabs(U_n[i][j] - U_new[i][j]) > eps_u) {
 					eps_u = fabs(U_n[i][j] - U_new[i][j]);
 				}
-
-				U_prev[i][j] = U_n[i][j];
 				U_n[i][j] = U_new[i][j];
 			}
 		}
 		double eps_v = 0.0;
-		for (int i = 0; i < par.N1 + 1; ++i) {
-			for (int j = 0; j < par.N2; ++j) {
+		for (size_t i = 0; i < par.N1 + 1; ++i) {
+			for (size_t j = 0; j < par.N2; ++j) {
 				if (fabs(V_n[i][j] - V_new[i][j]) > eps_v) {
 					eps_v = fabs(V_n[i][j] - V_new[i][j]);
 				}
-				V_prev[i][j] = V_n[i][j];
 				V_n[i][j] = V_new[i][j];
 			}
 		}
 		#pragma endregion calculating eps_u and eps_v
-
 
 		#pragma region collisions check
 		///--------------collisions between particles-----------------
@@ -198,6 +208,7 @@ int main(int argc, char *argv[]) {
 
 		if (n % par.output_step == 0) {
 			Output(P, U_new, V_new, n, solidList, par, WorkDir);
+			Output_dp(Delta_P, n, par, WorkDir);
 		}
 
 
@@ -207,8 +218,6 @@ int main(int argc, char *argv[]) {
 			break;
 		}
 
-
-		++n;
 	}
 	log.close();
 	std::cout << "Over" << std::endl;
@@ -262,7 +271,7 @@ void ApplyInitialData(Matrix &u, Matrix &p, Param par) {
 			switch (par.BC) {
 				case u_infinity: u[i][j] = 1.0; break;
 				case u_inflow:   u[i][j] = 1.0 * ux_Poiseuille(xu[2], par.H); break;
-				case periodical: u[i][j] = 1.0 * ux_Poiseuille(xu[2], par.H); break;
+				case periodical: u[i][j] = 1.3 * ux_Poiseuille(xu[2], par.H); break;
 				default: std::cout << "ApplyInitialData: unknown BC" << std::endl;
 			}
 		}
@@ -271,7 +280,7 @@ void ApplyInitialData(Matrix &u, Matrix &p, Param par) {
 	for (size_t i = 0; i < p.size(); ++i) {
 		for (size_t j = 0; j < p[1].size(); ++j) {
 			GeomVec xp = x_p(i, j, par);
-			p[i][j] = 1. * (par.L - xp[1]) * dpdx_Poiseuille(par.H, par.Re);
+			p[i][j] = 0.1 * (par.L - xp[1]) * dpdx_Poiseuille(par.H, par.Re);
 		}
 	}
 }

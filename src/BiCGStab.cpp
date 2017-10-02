@@ -1,6 +1,10 @@
 #include "BiCGStab.h"
 
-void BiCGStab(Matrix &x, int const n1, int const n2, ublas::matrix<Template> &A, Matrix &b, Param par, Direction Dir){
+void BiCGStab(Matrix &x, ublas::matrix<Template> &A, Matrix &b, Param par, Direction Dir){
+
+	size_t n1 = x.size();
+	size_t n2 = x[0].size();
+
 	double eps = 0.0;
 	double help_value = 0.0;
 
