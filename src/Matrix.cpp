@@ -56,3 +56,39 @@ double RD(Matrix &A, size_t i, size_t j, Direction dir) {
 		std::cout << "RD: wrong direction" << std::endl;
 	return result;
 }
+
+double max(Matrix &A) {
+	double eps = 0.0;
+	for (size_t i = 0; i < A.size(); ++i) {
+		for (size_t j = 0; j < A[0].size(); ++j) {
+			const double eps_tmp = fabs(A[i][j]);
+			if (eps_tmp > eps) {
+				eps = eps_tmp;
+			}
+		}
+	}
+	return eps;
+}
+
+double diff(Matrix &A, Matrix &B) {
+	double eps = 0.0;
+	for (size_t i = 0; i < A.size(); ++i) {
+		for (size_t j = 0; j < A[0].size(); ++j) {
+			const double eps_tmp = fabs(A[i][j] - B[i][j]);
+			if (eps_tmp > eps) {
+				eps = eps_tmp;
+			}
+		}
+	}
+	return eps;
+}
+
+double Summ(Matrix& A) {
+	double sum = 0;
+	for (size_t i = 0; i < A.size(); i++) {
+		for (size_t j = 0; j < A[0].size(); j++) {
+			sum += A[i][j];
+		}
+	}
+	return sum;
+}

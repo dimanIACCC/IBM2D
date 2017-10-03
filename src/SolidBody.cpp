@@ -66,7 +66,7 @@ void SolidBody::move(double d_t) {
 	}
 }
 
-double SolidBody::ds(int i) {
+double SolidBody::ds(size_t i) {
 	GeomVec xL, xR;
 	if (i > 0)    xL = Nodes[i-1].x;
 	else          xL = Nodes[Nn-1].x;

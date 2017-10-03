@@ -37,24 +37,4 @@ void DoTestForce() {
 
 	}
 }
-double diff(Matrix A, Matrix B) {
-	double dif = 0;
-	for (int i = 0; i < (int)A.size(); i++) {
-		for (int j = 0; j < (int)A[0].size(); j++)
-		{
-			if(abs(A[i][j] - B[i][j]) > dif) dif = abs(A[i][j] - B[i][j]);
-		}
-	}
-	return dif;
-}
 
-double Summ(Matrix& force) {
-	double sum = 0;
-	for (int i = 0; i < (int)force.size(); i++)
-		for (int j = 0; j < (int)force[0].size(); j++)
-		{
-			sum += force[i][j];
-		}
-
-	return sum;
-}

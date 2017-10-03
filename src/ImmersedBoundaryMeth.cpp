@@ -66,7 +66,7 @@ int main(int argc, char *argv[]) {
 	std::list<Circle> solidList; // list of immersed solids
 	Read_Solids(WorkDir + "Solids.txt", solidList, par); // read Solids from file
 
-	Output(P, U_new, V_new, -1, solidList, par, WorkDir);
+	Output(P, U_n, V_n, -1, solidList, par, WorkDir);
 
 	for (int n = 0; n <= par.N_max; ++n) {
 
@@ -79,12 +79,7 @@ int main(int argc, char *argv[]) {
 		V_s = V_n;
 		double s_max = 1000;
 		for (int s = 0; s <= s_max; ++s) {
-			if (par.BC == periodical) {
-				for (size_t j = 0; j < P[0].size(); ++j) {
-					P[0][j] = par.L * dpdx_Poiseuille(par.H, par.Re);
-					P[1][j] = par.L * dpdx_Poiseuille(par.H, par.Re);
-				}
-			}
+
 			#pragma region Prediction of velocity
 			B_u = CalculateB(U_n, V_n, U_s, V_s, P, Force_x, par, Du);
 			B_v = CalculateB(V_n, U_n, V_s, U_s, P, Force_y, par, Dv);
@@ -108,16 +103,9 @@ int main(int argc, char *argv[]) {
 			#pragma endregion Prediction of velocity
 
 			P_Right = Calculate_Press_Right(U_new, V_new, par);
-			double eps_p = Calculate_Press_correction(Delta_P, P_Right, par);
+			double Delta_P_max = Calculate_Press_correction(Delta_P, P_Right, par);
+			double P_max = max(P);
 
-			double Delta_P_max = 0.0;
-			double P_max = 0.0;
-			for (size_t i = 1; i < P.size()-1; ++i) {
-				for (size_t j = 1; j < P[0].size()-1; ++j) {
-					if (fabs(Delta_P[i][j]) > Delta_P_max)   Delta_P_max = fabs(Delta_P[i][j]);
-					if (fabs(      P[i][j]) >       P_max)         P_max = fabs(      P[i][j]);
-				}
-			}
 			double relax = 0.1 * std::min(P_max / Delta_P_max, 1.0);
 			std::cout << "s = " << s << ", delta_P / P = " << Delta_P_max / P_max << std::endl;
 
@@ -146,30 +134,13 @@ int main(int argc, char *argv[]) {
 
 			U_s = U_new;
 			V_s = V_new;
-
-
 		}
 
-		#pragma region calculating eps_u and eps_v
-		double eps_u = 0.0;
-		for (size_t i = 0; i < par.N1; ++i) {
-			for (size_t j = 0; j < par.N2 + 1; ++j) {
-				if (fabs(U_n[i][j] - U_new[i][j]) > eps_u) {
-					eps_u = fabs(U_n[i][j] - U_new[i][j]);
-				}
-				U_n[i][j] = U_new[i][j];
-			}
-		}
-		double eps_v = 0.0;
-		for (size_t i = 0; i < par.N1 + 1; ++i) {
-			for (size_t j = 0; j < par.N2; ++j) {
-				if (fabs(V_n[i][j] - V_new[i][j]) > eps_v) {
-					eps_v = fabs(V_n[i][j] - V_new[i][j]);
-				}
-				V_n[i][j] = V_new[i][j];
-			}
-		}
-		#pragma endregion calculating eps_u and eps_v
+		double eps_u = diff(U_n, U_new);
+		double eps_v = diff(V_n, V_new);
+
+		U_n = U_new;
+		V_n = V_new;
 
 		#pragma region collisions check
 		///--------------collisions between particles-----------------
@@ -208,11 +179,11 @@ int main(int argc, char *argv[]) {
 
 		if (n % par.output_step == 0) {
 			Output(P, U_new, V_new, n, solidList, par, WorkDir);
-			Output_dp(Delta_P, n, par, WorkDir);
+			//Output_dp(Delta_P, n, par, WorkDir);
 		}
 
 
-		const double epsilon = 1e-5;
+		const double epsilon = 1e-3;
 		if (eps_u < epsilon && eps_v < epsilon) {
 			Output(P, U_new, V_new, n, solidList, par, WorkDir);
 			break;
@@ -271,7 +242,7 @@ void ApplyInitialData(Matrix &u, Matrix &p, Param par) {
 			switch (par.BC) {
 				case u_infinity: u[i][j] = 1.0; break;
 				case u_inflow:   u[i][j] = 1.0 * ux_Poiseuille(xu[2], par.H); break;
-				case periodical: u[i][j] = 1.3 * ux_Poiseuille(xu[2], par.H); break;
+				case periodical: u[i][j] = 1.0 * ux_Poiseuille(xu[2], par.H); break;
 				default: std::cout << "ApplyInitialData: unknown BC" << std::endl;
 			}
 		}
@@ -283,6 +254,14 @@ void ApplyInitialData(Matrix &u, Matrix &p, Param par) {
 			p[i][j] = 0.1 * (par.L - xp[1]) * dpdx_Poiseuille(par.H, par.Re);
 		}
 	}
+
+	if (par.BC == periodical) {
+		for (size_t j = 0; j < p[0].size(); ++j) {
+			p[0][j] = par.L * dpdx_Poiseuille(par.H, par.Re);
+			p[1][j] = par.L * dpdx_Poiseuille(par.H, par.Re);
+		}
+	}
+
 }
 
 

@@ -25,3 +25,7 @@ double D(Matrix &A, size_t i, size_t j, Direction dir);
 double U(Matrix &A, size_t i, size_t j, Direction dir);
 
 double RD(Matrix &A, size_t i, size_t j, Direction dir);
+
+double max(Matrix &A);
+double diff(Matrix &A, Matrix &B);
+double Summ(Matrix& A);

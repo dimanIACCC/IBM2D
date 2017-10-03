@@ -4,12 +4,12 @@
 
 double Calculate_Press_correction(Matrix &delta_p, Matrix &b_p, Param par){
 
-	for (int i = 0; i < (int)delta_p.size(); ++i) {
+	for (size_t i = 0; i < delta_p.size(); ++i) {
 		std::fill(delta_p[i].begin(), delta_p[i].end(), 0);
 	}
 
-	int n = 0;
-	double eps = 0.0;
+	double eps;
+	double delta_p_max;
 
 	double dx2 = 1.0 / (par.d_x*par.d_x);
 	double dy2 = 1.0 / (par.d_y*par.d_y);
@@ -19,13 +19,14 @@ double Calculate_Press_correction(Matrix &delta_p, Matrix &b_p, Param par){
 
 	double help;
 
-	int const n1 = par.N1 + 1;
-	int const n2 = par.N2 + 1;
+	size_t n1 = delta_p.size();
+	size_t n2 = delta_p[0].size();
 
-	while (n < par.N_Zeidel){
+	for (int n = 0; n < par.N_Zeidel; n++) {
 		eps = 0.0;
-		for (int i = 0; i < n1; ++i){
-			for (int j = 0; j < n2; ++j){
+		delta_p_max = 0.0;
+		for (size_t i = 0; i < n1; ++i){
+			for (size_t j = 0; j < n2; ++j){
 
 				if (i == 0     )                 help = delta_p[i + 1][j];       // L
 				if (i == n1 - 1)                 help = delta_p[i - 1][j];       // R
@@ -63,6 +64,9 @@ double Calculate_Press_correction(Matrix &delta_p, Matrix &b_p, Param par){
 				if (i == 0 && par.BC == periodical) help = 0.;  // Left boundary condition for periodical problem
 				if (i == 1 && par.BC == periodical) help = 0.;  // Left boundary condition for periodical problem
 
+				if (fabs(help) > delta_p_max) {
+					delta_p_max = fabs(help);
+				}
 				if (fabs(help - delta_p[i][j]) > eps){
 					eps = fabs(help - delta_p[i][j]);
 				}
@@ -73,17 +77,17 @@ double Calculate_Press_correction(Matrix &delta_p, Matrix &b_p, Param par){
 		}
 
 
-		if (eps < par.Zeidel_eps){
+		if (eps/delta_p_max < par.Zeidel_eps){
 			break;
 		}
-		n++;
+
 	}
 
-	if (eps > par.Zeidel_eps) {
-		std::cout << "Zeidel has not converged, eps_p = " << eps << std::endl;
+	if (eps / delta_p_max > par.Zeidel_eps) {
+		std::cout << "Zeidel has not converged, eps_p = " << eps << ",   delta_p_max = " << delta_p_max << std::endl;
 	}
 
-	return eps;
+	return delta_p_max;
 
 }
 
@@ -91,13 +95,13 @@ double Calculate_Press_correction(Matrix &delta_p, Matrix &b_p, Param par){
 Matrix Calculate_Press_Right(Matrix &u, Matrix &v, Param par){
 	double d = 0.0;
 
-	int const n1 = par.N1 + 1;
-	int const n2 = par.N2 + 1;
+	size_t n1 = par.N1 + 1;
+	size_t n2 = par.N2 + 1;
 	CreateMatrix(result, n1, n2);
 
 
-	for (int i = 1; i < n1 - 1; ++i){
-		for (int j = 1; j < n2 - 1; ++j){
+	for (size_t i = 1; i < n1 - 1; ++i){
+		for (size_t j = 1; j < n2 - 1; ++j){
 
 			d = (1.0 / par.d_x) * (u[i][j] - u[i - 1][j])
 			  + (1.0 / par.d_y) * (v[i][j] - v[i][j - 1]);
@@ -113,11 +117,11 @@ Matrix Calculate_Press_Right(Matrix &u, Matrix &v, Param par){
 	result[n1 - 1][n2 - 1] = 0.0;
 
 
-	for (int i = 1; i < n1 - 1; ++i){
+	for (size_t i = 1; i < n1 - 1; ++i){
 		result[i][0] = 0.0;
 		result[i][n2 - 1] = 0.0;
 	}
-	for (int j = 1; j < n2 - 1; ++j){
+	for (size_t j = 1; j < n2 - 1; ++j){
 		result[0][j] = 0.0;
 		result[n1 - 1][j] = 0.0;
 	}
