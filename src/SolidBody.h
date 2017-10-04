@@ -46,3 +46,4 @@ public:
 void Read_Solids(std::string filename, std::list<Circle>& Solids, Param par);
 void Add_Solids(std::list<Circle>& Solids, int n, Param par);
 bool Collide(Circle& s1, Circle& s2, Param par);
+void Solids_move(std::list<Circle> &solidList, Param par);

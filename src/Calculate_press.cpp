@@ -61,6 +61,7 @@ double Calculate_Press_correction(Matrix &delta_p, Matrix &b_p, Param par){
 				}
 
 				if (i == n1 - 1)  help = 0.0; // Right boundary condition
+				if (i == n1 - 2)  help = 0.0; // Right boundary condition
 				if (i == 0 && par.BC == periodical) help = 0.;  // Left boundary condition for periodical problem
 				if (i == 1 && par.BC == periodical) help = 0.;  // Left boundary condition for periodical problem
 
