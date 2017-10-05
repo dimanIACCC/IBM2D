@@ -104,12 +104,12 @@ void OutputVelocity_V(Matrix v, int n, std::list<Circle> iList, Param par){
 	output.close();
 }
 
-void Output(Matrix p, Matrix u, Matrix v, int n, std::list<Circle> iList, Param par) {
+void Output(Matrix p, Matrix u, Matrix v, int n, std::list<Circle> iList, Param par,fs::path ResultFolder) {
 
 	std::ofstream output;
-	std::string filename = "Result/step" + std::to_string(n) + ".plt";
+	//std::string filename = "Result/step" + std::to_string(n) + ".plt";
 
-	output.open(filename.c_str());
+	output.open(ResultFolder.append(L"\step" + std::to_wstring(n) + L".plt").c_str());
 
 	output << "title = " << '"' << "sample mesh" << '"' << std::endl;
 	output << "Variables = x y p u v" << std::endl;
@@ -143,4 +143,53 @@ void Output(Matrix p, Matrix u, Matrix v, int n, std::list<Circle> iList, Param 
 	}
 
 	output.close();
+}
+
+void MakeResultDir(fs::path dir_Result) {
+	//(L"\Result");
+
+	try
+	{
+		if (exists(dir_Result)) {
+			fs::remove_all(dir_Result);
+			fs::create_directory(dir_Result);
+		}
+		else {
+			fs::create_directory(dir_Result);
+		}
+	}
+	catch (const fs::filesystem_error& ex)
+	{
+		std::cout << ex.what() << '\n' << "Enter any key";
+		std::cin.get();
+	}
+}
+void SetLog(std::ostream& log, Param par) {
+
+	log << "The IBM program starts.		";
+	time_t t = std::chrono::system_clock::to_time_t(std::chrono::system_clock::now());   // get time now
+	log << ctime(&t) << std::endl;
+	log << "The parameters are the following:" << std::endl;
+	log << "Reynolds number               : Re  = " << par.Re << std::endl;
+	log << "Channel length                : L   = " << par.L << std::endl;
+	log << "Channel width                 : W   = " << par.H << std::endl;
+	log << "Number of nodes on            : N1  = " << par.N1 << std::endl;
+	log << "Number of nodes on            : N2  = " << par.N2 << std::endl;
+	log << "Number of nodes for a particle: Nn  = " << par.Nn << std::endl;
+	log << "Time step                     : tau = " << par.d_t << std::endl;
+	log << "Force parameter alpha         : alpha = " << par.alpha_f << std::endl;
+	log << "Force parameter beta          : beta  = " << par.beta_f << std::endl;
+	log << "Tolerance for Zeidel method   : tol = " << par.Zeidel_eps << std::endl;
+	log << std::endl;
+
+}
+
+void PushLog(std::ostream& log, int n, double eps_u, double eps_v) {
+	time_t t = std::chrono::system_clock::to_time_t(std::chrono::system_clock::now()); // get time now
+	std::string s_time = ctime(&t);
+	s_time.erase(7, 1);
+	s_time.erase(0, 4);
+	s_time.erase(s_time.size() - 6, 5);
+	log << "n = " << std::setw(6) << n << "\t eps_u = " << std::fixed << eps_u << "\t eps_v = " << std::fixed << eps_v << "\t" << s_time;
+	std::cout << "n = " << std::setw(6) << n << "\t eps_u = " << std::fixed << eps_u << "\t eps_v = " << std::fixed << eps_v << "\t" << s_time;
 }

@@ -4,6 +4,7 @@
 using namespace std;
 void DoTesting() {
 	std::cout << "Start testing" << std::endl;
+	MakeResultDir(L"\TestsResult");
 	int Re = 20;
 	//DoTestForce(Re);
 	Re = 100;
@@ -11,22 +12,23 @@ void DoTesting() {
 
 
 	std::cout << "End of testing block" << std::endl;
-	cout << "Enter any key" << endl;
-	cin.get();
+	
 }
 
 void DoTestForce(int Re) {
 	//
 	//Realized test for overrunning flow on the fixed object with default(?) input parametres and Re=20 or Re=100
 	//
+	bool Overflow = true;
+	fs::path dir = L"\TestsResult\\Overflow(Re=" + to_wstring(Re) + (wchar_t)')';
+	MakeResultDir(dir);
 
 	Param par;
 	par.Re = Re;
 	par.alpha_f = -8e-5;
 	par.beta_f = -2e3;
-	/*par.N1 *= 2.5;
-	par.N2 *= 2.5;*/
-	const double epsilon = 1e-5;
+
+	const double epsilon = 1e-7;
 
 #pragma region BodyOfTest
 	CreateMatrix(U_n, par.N1, par.N2 + 1);
@@ -47,17 +49,25 @@ void DoTestForce(int Re) {
 	Matrix OperatorA_v[5];
 	Calculate_A_u(OperatorA_u, par, par.Re);
 	Calculate_A_v(OperatorA_v, par, par.Re);
+	
+	std::ofstream log;
 
+	
+	log.open(dir.append(L"\log.txt").c_str(), std::ios::out);
+	SetLog(log, par);
+	dir.remove_filename();
 	std::ofstream forceDrug;
 	std::ofstream forceLift;
-	forceDrug.open("Result/forceDrug.plt", std::ios::out);
-	forceLift.open("Result/forceLift.plt", std::ios::out);
+	forceDrug.open(dir.append(L"forceDrug.plt").c_str(), std::ios::out);
+	dir.remove_filename();
+	forceLift.open(dir.append(L"forceLift.plt").c_str(), std::ios::out);
 	ApplyInitialVelocity(U_new, par); // Applying initial data to velocity 
 	U_n = U_new;
 	U_prev = U_new;
 
 	std::list<Circle> solidList; // list of immersed solids
-	Circle c(par.L/2, par.H/2, 0, 0, 0, par.rho, par.Nn, false, par.r);
+	//Circle c(par.L / 2, par.H / 2, 0, 0, 0, par.rho, par.Nn, false, par.r);
+	Circle c(10, 3.5, 0, 0, 0, par.rho, par.Nn, false, 1);
 	solidList.push_back(c);
 	double minF=0, maxF=0,prevValue, now;
 	bool increase;
@@ -84,6 +94,7 @@ void DoTestForce(int Re) {
 
 
 		//<---------- prediction of velocity --------------------------
+
 		B_u = CalculateB_u(U_n, V_n, U_prev, V_prev, P, Force_x, par);
 		B_v = CalculateB_v(U_n, V_n, U_prev, V_prev, P, Force_y, par);
 #pragma omp parallel sections num_threads(2)
@@ -91,11 +102,11 @@ void DoTestForce(int Re) {
 
 #pragma omp section
 			{
-				BiCGStab(U_new, par.N1, par.N2 + 1, OperatorA_u, B_u, par, false);
+				BiCGStab(U_new, par.N1, par.N2 + 1, OperatorA_u, B_u, par, Overflow);
 			}
 #pragma omp section
 			{
-				BiCGStab(V_new, par.N1 + 1, par.N2, OperatorA_v, B_v, par, false);
+				BiCGStab(V_new, par.N1 + 1, par.N2, OperatorA_v, B_v, par, Overflow);
 			}
 
 		}
@@ -110,7 +121,7 @@ void DoTestForce(int Re) {
 			}
 		}
 
-		double eps_p = Calculate_Press_correction(Delta_P, P_Right, par, false);
+		double eps_p = Calculate_Press_correction(Delta_P, P_Right, par, Overflow);
 
 		for (int i = 0; i < par.N1 + 1; ++i) {
 			for (int j = 0; j < par.N2 + 1; ++j) {
@@ -191,10 +202,11 @@ void DoTestForce(int Re) {
 		}
 
 		if (n % par.output_step == 0) {
-			//cout << "n = " << n << endl;
+			std::cout << "n = " << std::setw(6) << n << "\t eps_u = " << std::fixed << eps_u << "\t eps_v = " << std::fixed << eps_v << endl;
 		}
+
 		if (n % par.output_step == 0) {
-			Output(P, U_new, V_new, n, solidList, par);
+			Output(P, U_new, V_new, n, solidList, par,dir.remove_filename());
 		}
 		++n;
 	}
@@ -205,7 +217,7 @@ void DoTestForce(int Re) {
 
 void ApplyInitialVelocity(Matrix &u, Param par) {
 
-	// Poiseuille flow 
+	// horizantal flow 
 	for (int i = 0; i < par.N1; ++i) {
 		for (int j = 0; j < par.N2+1; ++j) {
 			u[i][j] = 1;

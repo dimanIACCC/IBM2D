@@ -6,11 +6,9 @@
 #include "PredictVel.h"
 #include "Testing.h"
 
-#include <boost/filesystem.hpp>
 
 
 
-namespace fs = boost::filesystem;
 
 
 #pragma warning(disable : 4996)//for using <chrono>
@@ -19,25 +17,23 @@ namespace fs = boost::filesystem;
 // fuctions
 
 
-
-void SetLog(std::ostream &log, Param par);
-void PushLog(std::ostream &log, int n, double eps_u, double eps_v);
 void ApplyInitialData(Matrix& u, Param par);
-void MakeResultDir();
 void CalcForceDrugLift(Matrix& f, int n, std::ostream &stream);
 int sgn(double x);
 
 
 int main(int argc, char *argv[]) {
 
-	MakeResultDir();
-
 	for (int i = 1; i < argc; i++) {
 		if ((std::string)argv[i] == (std::string)"-d")DoTesting();
 	}
-
-
-	const double epsilon = 1e-3;
+	std::cout << "Start main program? (Y/N)" << std::endl;
+	char ch;
+	std::cin >> ch;
+	if ((ch != 'Y') || (ch != 'y')) return 0;
+	fs::path ResultFolder = L"\Result";
+	MakeResultDir(ResultFolder);
+	const double epsilon = 1e-7;
 
 	Param par("input.txt"); // Construct Parameters using file input.txt
 	CreateMatrix(U_n, par.N1, par.N2 + 1);
@@ -61,25 +57,24 @@ int main(int argc, char *argv[]) {
 
 
 	std::ofstream log;
-	
-
 	std::string filelog = "Result/log.txt";
 	log.open(filelog, std::ios::out);
 	SetLog(log, par);
 
-	ApplyInitialData(U_new, par); // Applying initial data to velocity 
+	//ApplyInitialData(U_new, par); // Applying initial data to velocity 
+	ApplyInitialVelocity(U_new, par);
 	U_n = U_new;
 	U_prev = U_new;
 
 	std::list<Circle> solidList; // list of immersed solids
 	Read_Solids("Solids.txt", solidList, par); // read Solids from file
 
-	Output(P, U_new, V_new, -1, solidList, par);
+	Output(P, U_new, V_new, -1, solidList, par,ResultFolder);
 
 	int n = 0; // iteration counter
 	while (n <= par.N_max) {
-		//commented because in that configaration is overflow testing
-	//	Add_Solids(solidList, 20, n, 0, 200, par);
+		
+		Add_Solids(solidList, 20, n, 0, 200, par);
 
 		CalculateForce(Force_x, Force_y, solidList, U_new, V_new, par);
 
@@ -101,7 +96,7 @@ int main(int argc, char *argv[]) {
 					}
 		
 				}
-		//ExplicPredVel(U_new, V_new, U_n, V_n, P, Force_x, Force_y, par);
+		
 
 		//<----------end of prediction of velocity --------------------
 
@@ -205,13 +200,13 @@ int main(int argc, char *argv[]) {
 		log.flush();
 
 		if (n % par.output_step == 0) {
-			Output(P, U_new, V_new, n, solidList, par);
+			Output(P, U_new, V_new, n, solidList, par, ResultFolder);
 		}
 
 
 
 		if (eps_u < epsilon && eps_v < epsilon) {
-			Output(P, U_new, V_new, n, solidList, par);
+			Output(P, U_new, V_new, n, solidList, par, ResultFolder);
 			break;
 		}
 
@@ -231,35 +226,8 @@ int main(int argc, char *argv[]) {
 
 
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-void SetLog(std::ostream& log, Param par) {
 
-	log << "The IBM program starts.		";
-	time_t t = std::chrono::system_clock::to_time_t(std::chrono::system_clock::now());   // get time now
-	log << ctime(&t) << std::endl;
-	log << "The parameters are the following:" << std::endl;
-	log << "Reynolds number               : Re  = " << par.Re << std::endl;
-	log << "Channel length                : L   = " << par.L << std::endl;
-	log << "Channel width                 : W   = " << par.H << std::endl;
-	log << "Number of nodes on            : N1  = " << par.N1 << std::endl;
-	log << "Number of nodes on            : N2  = " << par.N2 << std::endl;
-	log << "Number of nodes for a particle: Nn  = " << par.Nn << std::endl;
-	log << "Time step                     : tau = " << par.d_t << std::endl;
-	log << "Force parameter alpha         : alpha = " << par.alpha_f << std::endl;
-	log << "Force parameter beta          : beta  = " << par.beta_f << std::endl;
-	log << "Tolerance for Zeidel method   : tol = " << par.Zeidel_eps << std::endl;
-	log << std::endl;
 
-}
-
-void PushLog(std::ostream& log, int n, double eps_u, double eps_v) {
-	time_t t = std::chrono::system_clock::to_time_t(std::chrono::system_clock::now()); // get time now
-	std::string s_time = ctime(&t);
-	s_time.erase(7, 1);
-	s_time.erase(0, 4);
-	s_time.erase(s_time.size() - 6, 5);
-	log << "n = " << std::setw(6) << n << "\t eps_u = " << std::fixed << eps_u << "\t eps_v = " << std::fixed << eps_v << "\t" << s_time;
-	std::cout << "n = " << std::setw(6) << n << "\t eps_u = " << std::fixed << eps_u << "\t eps_v = " << std::fixed << eps_v << "\t" << s_time;
-}
 
 // Apply initial data for velocity
 void ApplyInitialData(Matrix &u, Param par) {
@@ -281,22 +249,4 @@ int sgn(double x)
 	return x;
 }
 
-void MakeResultDir() {
-	fs::path dir_Result(L"\Result");
 
-	try
-	{
-		if (exists(dir_Result)) {
-			fs::remove_all(dir_Result);
-			fs::create_directory(dir_Result);
-		}
-		else {
-			fs::create_directory(dir_Result);
-		}
-	}
-	catch (const fs::filesystem_error& ex)
-	{
-		std::cout << ex.what() << '\n' << "Enter any key";
-		std::cin.get();
-	}
-}

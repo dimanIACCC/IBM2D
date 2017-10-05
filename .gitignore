@@ -1,4 +1,5 @@
 Result/
+TestsResult/
 Release/
 Debug/
 .vs/ImmersedBoundaryMeth/
@@ -7,3 +8,4 @@ x64/
 Debug/
 input.txt
 Solids.txt
+*.zip
