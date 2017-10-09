@@ -18,7 +18,6 @@
 
 
 void ApplyInitialData(Matrix& u, Param par);
-void CalcForceDrugLift(Matrix& f, int n, std::ostream &stream);
 int sgn(double x);
 
 
@@ -61,8 +60,7 @@ int main(int argc, char *argv[]) {
 	log.open(filelog, std::ios::out);
 	SetLog(log, par);
 
-	//ApplyInitialData(U_new, par); // Applying initial data to velocity 
-	ApplyInitialVelocity(U_new, par);
+	ApplyInitialData(U_new, par); // Applying initial data to velocity 
 	U_n = U_new;
 	U_prev = U_new;
 
@@ -109,7 +107,7 @@ int main(int argc, char *argv[]) {
 			}
 		}
 
-		double eps_p = Calculate_Press_correction(Delta_P, P_Right, par, false);
+		double eps_p = Calculate_Press_correction(Delta_P, P_Right, par,log, false);
 
 		for (int i = 0; i < par.N1 + 1; ++i) {
 			for (int j = 0; j < par.N2 + 1; ++j) {

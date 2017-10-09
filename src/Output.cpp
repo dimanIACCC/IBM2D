@@ -151,8 +151,15 @@ void MakeResultDir(fs::path dir_Result) {
 	try
 	{
 		if (exists(dir_Result)) {
-			fs::remove_all(dir_Result);
-			fs::create_directory(dir_Result);
+			std::cout << "The folder is already exist! Remove all files? (Y/N)" << std::endl;
+			char answer = std::cin.get();
+			if ( (answer == 'Y') ||  (answer == 'y') ) {
+				fs::remove_all(dir_Result);
+				fs::create_directory(dir_Result);
+			}
+			else {
+				exit(0);
+			}
 		}
 		else {
 			fs::create_directory(dir_Result);

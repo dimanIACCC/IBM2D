@@ -4,7 +4,7 @@
 using namespace std;
 void DoTesting() {
 	std::cout << "Start testing" << std::endl;
-	MakeResultDir(L"\TestsResult");
+	//MakeResultDir(L"\TestsResult");
 	int Re = 20;
 	//DoTestForce(Re);
 	Re = 100;
@@ -20,7 +20,7 @@ void DoTestForce(int Re) {
 	//Realized test for overrunning flow on the fixed object with default(?) input parametres and Re=20 or Re=100
 	//
 	bool Overflow = true;
-	fs::path dir = L"\TestsResult\\Overflow(Re=" + to_wstring(Re) + (wchar_t)')';
+	fs::path dir = L"TestsResult\\Overflow(Re=" + to_wstring(Re) + (wchar_t)')';
 	MakeResultDir(dir);
 
 	Param par;
@@ -61,17 +61,19 @@ void DoTestForce(int Re) {
 	forceDrug.open(dir.append(L"forceDrug.plt").c_str(), std::ios::out);
 	dir.remove_filename();
 	forceLift.open(dir.append(L"forceLift.plt").c_str(), std::ios::out);
+	dir.remove_filename();
+
 	ApplyInitialVelocity(U_new, par); // Applying initial data to velocity 
 	U_n = U_new;
 	U_prev = U_new;
 
 	std::list<Circle> solidList; // list of immersed solids
 	//Circle c(par.L / 2, par.H / 2, 0, 0, 0, par.rho, par.Nn, false, par.r);
-	Circle c(10, 3.5, 0, 0, 0, par.rho, par.Nn, false, 1);
+	Circle c(10, 3.5, 0, 0, 0, par.rho, par.Nn, false, 0.7);
 	solidList.push_back(c);
-	double minF=0, maxF=0,prevValue, now;
+	double minF=0, maxF=0,prevValue, curValue;
 	bool increase;
-	int n = 0; // iteration counter
+	int n = 0,n0; // iteration counter
 	while (n <= par.N_max) {
 
 		CalculateForce(Force_x, Force_y, solidList, U_new, V_new, par);
@@ -79,18 +81,25 @@ void DoTestForce(int Re) {
 			CalcForceDrugLift(Force_x, n - 1, forceDrug);
 			CalcForceDrugLift(Force_y, n - 1, forceLift);
 		}
-		
-		//if ((n > 3000 )&&( Re = 100)) {
-		//	now = Sum(Force_x);
-		//	if (n == 3002) {
-		//		(prevValue > Sum(Force_x)) ? increase = false : increase = true;
-		//	}
-		//	else if(n!=3001) {
-		//		if ((increase == true) && (prevValue > now))maxF = prevValue;
-		//		if ((increase == false) && (prevValue < now))minF = prevValue;
-		//	}
-		//	prevValue = now;
-		//}
+		n0 = 15000; //that condition depends on initial parameters and was calculated empericaly;
+		if ((n > n0)&&( Re = 100)) {
+			curValue = Sum(Force_x);
+			if (n == n0+1) {
+				(prevValue > Sum(Force_x)) ? increase = false : increase = true;
+			}
+			else if(n!=n0) {
+				if ((increase == true) && (prevValue > curValue))maxF = prevValue;
+				if ((increase == false) && (prevValue < curValue))minF = prevValue;
+			}
+			prevValue = curValue;
+			if ((maxF != 0) && (minF != 0)) {
+				cout << "Amplitude is " << abs(maxF - minF) << endl;
+				cout << "Average is " << abs(maxF - minF)/2 << endl;
+				log << "Amplitude is " << abs(maxF - minF) << endl;
+				log << "Average is " << abs(maxF - minF) / 2 << endl;
+				return (void)0;
+			}
+		}
 
 
 		//<---------- prediction of velocity --------------------------
@@ -121,7 +130,7 @@ void DoTestForce(int Re) {
 			}
 		}
 
-		double eps_p = Calculate_Press_correction(Delta_P, P_Right, par, Overflow);
+		double eps_p = Calculate_Press_correction(Delta_P, P_Right, par,log, Overflow);
 
 		for (int i = 0; i < par.N1 + 1; ++i) {
 			for (int j = 0; j < par.N2 + 1; ++j) {
@@ -172,11 +181,7 @@ void DoTestForce(int Re) {
 		//--------------------------------------------------------
 
 #pragma endregion
-		//if ((Re = 100) && (maxF != 0) && (minF != 0)) {
-		//	cout << "Amplitude is " << abs(maxF - minF) << endl;
-		//	cout << "Average is " << abs(maxF - minF)/2 << endl;
-		//	break;
-		//}
+
 		if (eps_u < epsilon && eps_v < epsilon) {
 			if (Re < 43) {
 				//the line is drawn with two points (Cd1,Nx1) & (Cd2,Nx2)
@@ -206,7 +211,7 @@ void DoTestForce(int Re) {
 		}
 
 		if (n % par.output_step == 0) {
-			Output(P, U_new, V_new, n, solidList, par,dir.remove_filename());
+			Output(P, U_new, V_new, n, solidList, par,dir);
 		}
 		++n;
 	}
@@ -220,7 +225,7 @@ void ApplyInitialVelocity(Matrix &u, Param par) {
 	// horizantal flow 
 	for (int i = 0; i < par.N1; ++i) {
 		for (int j = 0; j < par.N2+1; ++j) {
-			u[i][j] = 1;
+			u[i][j] = 4;
 		}
 	}
 }
