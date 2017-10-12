@@ -27,6 +27,7 @@ public:
 	double V;       // volume
 	std::vector<Node> Nodes;   // Nodes of the SolidBody mesh
 	size_t Nn;                    // Number of Nodes
+	bool copied;                  // true - Solid was copied from Output boundary to Input boundary
 	
 	SolidBody(double x, double y, double ux, double uy, double omega, double rho, int Nn, bool moving);
 	~SolidBody();

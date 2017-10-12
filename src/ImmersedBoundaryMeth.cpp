@@ -66,7 +66,7 @@ int main(int argc, char *argv[]) {
 		CalculateForce(Fx, Fy, solidList, U_n, V_n, par);
 		force << n << " " << Summ(Fx) << " " << Summ(Fy) << std::endl;
 
-		Calculate_u_p(U_n, V_n, U_new, V_new, P, Fx, Fy, A_u, A_v, par);
+		Calculate_u_p(U_n, V_n, U_new, V_new, P, Fx, Fy, A_u, A_v, solidList, par);
 
 		double eps_u = diff(U_n, U_new);
 		double eps_v = diff(V_n, V_new);
@@ -85,7 +85,7 @@ int main(int argc, char *argv[]) {
 		}
 
 
-		const double epsilon = 1e-5;
+		const double epsilon = 1e-6;
 		if (eps_u < epsilon && eps_v < epsilon) {
 			Output(P, U_new, V_new, n, solidList, par, WorkDir);
 			break;

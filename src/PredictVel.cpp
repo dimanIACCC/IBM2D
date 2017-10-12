@@ -80,8 +80,11 @@ Matrix Operator_Ax(ublas::matrix<Template> &A, Matrix &u, Param par, Direction D
 	}
 
 	for (size_t j = 0; j < Ny; ++j) {
-		result[0][j] = u[0][j];                                                                                 // inflow u = u0
-		result[Nx - 1][j] = (3.0 * u[Nx - 1][j] - 4.0 * u[Nx - 2][j] + 1.0 * u[Nx - 3][j]) / (2.0*par.d_x); 	// outflow du/dx = 0
+		switch (par.BC) {
+			case u_infinity:	result[0][j] = u[0][j];		result[Nx - 1][j] = (3.0 * u[Nx - 1][j] - 4.0 * u[Nx - 2][j] + 1.0 * u[Nx - 3][j]) / (2.0*par.d_x);		break;
+			case u_inflow  :	result[0][j] = u[0][j];		result[Nx - 1][j] = (3.0 * u[Nx - 1][j] - 4.0 * u[Nx - 2][j] + 1.0 * u[Nx - 3][j]) / (2.0*par.d_x);		break;
+			case periodical:	result[0][j] = u[0][j];		result[Nx - 1][j] = u[Nx - 1][j];	break;
+		}
 	}
 	
 	return result;
@@ -127,11 +130,13 @@ Matrix CalculateB(Matrix &u_n, Matrix &v_n, Matrix &u_s, Matrix &v_s, Matrix &p,
 		}
 	}
 
-	// outflow du/dx = 0
+
 	for (size_t j = 0; j < Ny; ++j) {
-		result[0][j] = u_n[0][j];
-		result[Nx - 1][j] = 0.0;
-		if (par.BC == periodical) result[0][j] = u_n[Nx - 1][j];
+		switch (par.BC) {
+			case u_infinity:	result[0][j] = u_n[0][j]     ;		result[Nx - 1][j] = 0;		break;
+			case u_inflow  :	result[0][j] = u_n[0][j]     ;		result[Nx - 1][j] = 0;		break;
+			case periodical:	result[0][j] = u_n[Nx - 3][j];		result[Nx - 1][j] = u_n[2][j];	break;
+		}
 	}
 
 	return result;

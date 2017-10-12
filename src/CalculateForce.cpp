@@ -94,7 +94,7 @@ void CalculateForce(Matrix& force_x, Matrix& force_y, std::list<Circle> &iList, 
 
 			//calculating Integral and force f in Lagrange nodes
 			solid.Nodes[k].Integral +=  (solid.Nodes[k].uf - solid.Nodes[k].us) * par.d_t;
-			solid.Nodes[k].f = par.alpha_f * solid.Nodes[k].Integral + par.beta_f  *(solid.Nodes[k].uf - solid.Nodes[k].us);
+			solid.Nodes[k].f = par.alpha_f * solid.Nodes[k].Integral - 2.0 * (solid.Nodes[k].uf - solid.Nodes[k].us) / par.d_t;
 
 
 			double ds = solid.ds(k);

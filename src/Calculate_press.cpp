@@ -4,10 +4,6 @@
 
 double Calculate_Press_correction(Matrix &delta_p, Matrix &b_p, Param par){
 
-	for (size_t i = 0; i < delta_p.size(); ++i) {
-		std::fill(delta_p[i].begin(), delta_p[i].end(), 0);
-	}
-
 	double eps;
 	double delta_p_max;
 
@@ -60,10 +56,16 @@ double Calculate_Press_correction(Matrix &delta_p, Matrix &b_p, Param par){
 					}
 				}
 
-				if (i == n1 - 1)  help = 0.0; // Right boundary condition
-				if (i == n1 - 2)  help = 0.0; // Right boundary condition
-				if (i == 0 && par.BC == periodical) help = 0.;  // Left boundary condition for periodical problem
-				if (i == 1 && par.BC == periodical) help = 0.;  // Left boundary condition for periodical problem
+				if ( (i == n1 - 1 || i == n1 - 2 || i == n1 - 3)    &&   (j == 0 || j == 1 || j == n2 - 2 || j == n2 - 1) )  help = 0.0; // Right boundary condition
+
+				if (par.BC == periodical) { // Left boundary condition for periodical problem
+					if (i == 0     ) help = delta_p[n1 - 3][j];
+					if (i == n1 - 1) help = delta_p[2     ][j];
+					if (i == 1     ) help = delta_p[n1 - 3][j];
+					if (i == n1 - 2) help = delta_p[2     ][j];
+
+					if ( (i == 0 || i == 1 || i == 2) && (j == 0 || j == 1 || j == n2 - 2 || j == n2 - 1) )  help = 0.0;
+				}
 
 				if (fabs(help) > delta_p_max) {
 					delta_p_max = fabs(help);
@@ -93,7 +95,7 @@ double Calculate_Press_correction(Matrix &delta_p, Matrix &b_p, Param par){
 }
 
 
-Matrix Calculate_Press_Right(Matrix &u, Matrix &v, Param par){
+Matrix Calculate_Press_Right(Matrix &u, Matrix &v, Matrix &Fx, Matrix &Fy, Param par){
 	double d = 0.0;
 
 	size_t n1 = par.N1 + 1;
@@ -104,10 +106,13 @@ Matrix Calculate_Press_Right(Matrix &u, Matrix &v, Param par){
 	for (size_t i = 1; i < n1 - 1; ++i){
 		for (size_t j = 1; j < n2 - 1; ++j){
 
-			d = (1.0 / par.d_x) * (u[i][j] - u[i - 1][j])
-			  + (1.0 / par.d_y) * (v[i][j] - v[i][j - 1]);
+			double d = (1.0 / par.d_x) * (u[i][j] - u[i - 1][j])
+			         + (1.0 / par.d_y) * (v[i][j] - v[i][j - 1]);
 
-			result[i][j] = d / par.d_t;
+			double dF = (1.0 / par.d_x) * (Fx[i][j] - Fx[i - 1][j])
+				      + (1.0 / par.d_y) * (Fy[i][j] - Fy[i][j - 1]);
+
+			result[i][j] = d / par.d_t - dF;
 
 		}
 
