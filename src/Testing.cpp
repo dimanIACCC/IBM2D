@@ -69,7 +69,7 @@ void DoTestForce(int Re) {
 
 	std::list<Circle> solidList; // list of immersed solids
 	//Circle c(par.L / 2, par.H / 2, 0, 0, 0, par.rho, par.Nn, false, par.r);
-	Circle c(10, 3.5, 0, 0, 0, par.rho, par.Nn, false, 0.7);
+	Circle c(10, 3.5, 0, 0, 0, par.rho, par.Nn, false, 1);
 	solidList.push_back(c);
 	double minF=0, maxF=0,prevValue, curValue;
 	bool increase;
@@ -81,15 +81,21 @@ void DoTestForce(int Re) {
 			CalcForceDrugLift(Force_x, n - 1, forceDrug);
 			CalcForceDrugLift(Force_y, n - 1, forceLift);
 		}
-		n0 = 15000; //that condition depends on initial parameters and was calculated empericaly;
+		n0 = 200000; //that condition depends on initial parameters and was calculated empericaly;
 		if ((n > n0)&&( Re = 100)) {
 			curValue = Sum(Force_x);
-			if (n == n0+1) {
+			if (n == n0+2) {
 				(prevValue > Sum(Force_x)) ? increase = false : increase = true;
 			}
-			else if(n!=n0) {
-				if ((increase == true) && (prevValue > curValue))maxF = prevValue;
-				if ((increase == false) && (prevValue < curValue))minF = prevValue;
+			else if(n!=n0+1) {
+				if ((increase == true) && (prevValue > curValue)) {
+					maxF = prevValue; 
+					increase = false;
+				}
+				if ((increase == false) && (prevValue < curValue)) {
+					minF = prevValue;
+					increase = true;
+				}
 			}
 			prevValue = curValue;
 			if ((maxF != 0) && (minF != 0)) {
@@ -208,6 +214,8 @@ void DoTestForce(int Re) {
 
 		if (n % par.output_step == 0) {
 			std::cout << "n = " << std::setw(6) << n << "\t eps_u = " << std::fixed << eps_u << "\t eps_v = " << std::fixed << eps_v << endl;
+			PushLog(log, n, eps_u, eps_v);
+			log.flush();
 		}
 
 		if (n % par.output_step == 0) {
@@ -225,7 +233,7 @@ void ApplyInitialVelocity(Matrix &u, Param par) {
 	// horizantal flow 
 	for (int i = 0; i < par.N1; ++i) {
 		for (int j = 0; j < par.N2+1; ++j) {
-			u[i][j] = 4;
+			u[i][j] = 1;
 		}
 	}
 }
