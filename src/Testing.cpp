@@ -71,42 +71,44 @@ void DoTestForce(int Re) {
 	//Circle c(par.L / 2, par.H / 2, 0, 0, 0, par.rho, par.Nn, false, par.r);
 	Circle c(10, 3.5, 0, 0, 0, par.rho, par.Nn, false, 1);
 	solidList.push_back(c);
-	double minF=0, maxF=0,prevValue, curValue;
-	bool increase;
+	double minF=0, maxF=0;
 	int n = 0,n0; // iteration counter
+	n0 = 200000; //that condition depends on initial parameters and was calculated empericaly;
 	while (n <= par.N_max) {
 
 		CalculateForce(Force_x, Force_y, solidList, U_new, V_new, par);
 		if (Re > 43) {
 			CalcForceDrugLift(Force_x, n - 1, forceDrug);
 			CalcForceDrugLift(Force_y, n - 1, forceLift);
-		}
-		n0 = 200000; //that condition depends on initial parameters and was calculated empericaly;
-		if ((n > n0)&&( Re = 100)) {
-			curValue = Sum(Force_x);
-			if (n == n0+2) {
-				(prevValue > Sum(Force_x)) ? increase = false : increase = true;
-			}
-			else if(n!=n0+1) {
-				if ((increase == true) && (prevValue > curValue)) {
-					maxF = prevValue; 
-					increase = false;
+
+
+
+			if (n == n0 + 20e3) {
+				forceDrug.close();
+				ifstream inForce;
+				inForce.open(dir.append(L"forceDrug.plt").c_str());
+				for (int i = 0; i < 2 * n0; i++) {
+					string s;
+					inForce >> s;
 				}
-				if ((increase == false) && (prevValue < curValue)) {
-					minF = prevValue;
-					increase = true;
+				while (!inForce.eof()) {
+					double value, number;
+					inForce >> number >> value;
+					if (number == n0 - 1) {
+						maxF = minF = value;
+					}
+					if (value > maxF)maxF = value;
+					if (value < minF)minF = value;
 				}
-			}
-			prevValue = curValue;
-			if ((maxF != 0) && (minF != 0)) {
-				cout << "Amplitude is " << abs(maxF - minF) << endl;
-				cout << "Average is " << abs(maxF - minF)/2 << endl;
+				if ((abs(abs(maxF - minF) - 0.1431) < 10e-3) && (abs((maxF + minF) / 2 + 23.8066) < 10e-3))	cout << "OK!" << endl;
+				else cout << "Not good" << endl;
+				log << "Min is " << minF << endl;
+				log << "Max is " << maxF << endl;
 				log << "Amplitude is " << abs(maxF - minF) << endl;
-				log << "Average is " << abs(maxF - minF) / 2 << endl;
+				log << "Average is " << (maxF + minF) / 2 << endl;
 				return (void)0;
 			}
 		}
-
 
 		//<---------- prediction of velocity --------------------------
 
