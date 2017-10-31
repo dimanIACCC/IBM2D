@@ -101,10 +101,10 @@ GeomVec x_p(size_t i, size_t j, Param par) {
 	result[1] = (i - 0.5) * par.d_x;
 	result[2] = (j - 0.5) * par.d_y;
 	result[3] = 0.0;
-	if (i == 0     ) result[1] = 0.0;
-	if (j == 0     ) result[2] = 0.0;
-	if (i == par.N1) result[1] = (i - 1) * par.d_x;
-	if (j == par.N2) result[2] = (j - 1) * par.d_y;
+	//if (i == 0     ) result[1] = 0.0;
+	//if (j == 0     ) result[2] = 0.0;
+	//if (i == par.N1) result[1] = (i - 1) * par.d_x;
+	//if (j == par.N2) result[2] = (j - 1) * par.d_y;
 	return result;
 }
 
@@ -114,8 +114,8 @@ GeomVec x_u(size_t i, size_t j, Param par) {
 	result[1] =  i        * par.d_x;
 	result[2] = (j - 0.5) * par.d_y;
 	result[3] = 0.0;
-	if (j == 0     ) result[2] = 0.0;
-	if (j == par.N2) result[2] = (j - 1) * par.d_y;
+	//if (j == 0     ) result[2] = 0.0;
+	//if (j == par.N2) result[2] = (j - 1) * par.d_y;
 	return result;
 }
 
@@ -125,7 +125,7 @@ GeomVec x_v(size_t i, size_t j, Param par) {
 	result[1] = (i - 0.5) * par.d_x;
 	result[2] =  j        * par.d_y;
 	result[3] = 0.0;
-	if (i == 0) result[1] = 0.0;
-	if (i == par.N1) result[1] = (i - 1) * par.d_x;
+	//if (i == 0) result[1] = 0.0;
+	//if (i == par.N1) result[1] = (i - 1) * par.d_x;
 	return result;
 }

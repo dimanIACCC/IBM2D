@@ -66,7 +66,7 @@ int main(int argc, char *argv[]) {
 		CalculateForce(Fx, Fy, solidList, U_n, V_n, par);
 		force << n << " " << Summ(Fx) << " " << Summ(Fy) << std::endl;
 
-		Calculate_u_p(U_n, V_n, U_new, V_new, P, Fx, Fy, A_u, A_v, solidList, par);
+		Calculate_u_p(U_n, V_n, U_new, V_new, P, Fx, Fy, A_u, A_v, solidList, par, WorkDir);
 
 		double eps_u = diff(U_n, U_new);
 		double eps_v = diff(V_n, V_new);
@@ -81,7 +81,6 @@ int main(int argc, char *argv[]) {
 
 		if (n % par.output_step == 0) {
 			Output(P, U_new, V_new, n, solidList, par, WorkDir);
-			//Output_dp(Delta_P, n, par, WorkDir);
 		}
 
 

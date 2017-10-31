@@ -208,17 +208,17 @@ void Solids_move(std::list<Circle> &solidList, Param par) {
 
 		//Right boundary conditions for Solids
 		if (it->xc[1] - it->r < par.L) {
-			if (par.BC == periodical    &&    it->xc[1] + it->r > par.L    &&     it->copied == false) {
-				Circle c = *it;
-				c.xc[1] -= par.L;
-				for (size_t k = 0; k < c.Nn; ++k)  c.Nodes[k].x[1] -= par.L;
-				solidList.push_back(c);
-				it->copied = true;
-			}
 			it++;
 		}
-		else
-			solidList.erase(++it);
+		else {
+			if (par.BC == periodical) {
+				it->xc[1] -= par.L;
+				for (size_t k = 0; k < it->Nn; ++k)  it->Nodes[k].x[1] -= par.L;
+				it++;
+			}
+			else
+			it = solidList.erase(it);
+		}
 
 	}
 
