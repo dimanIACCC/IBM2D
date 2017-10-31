@@ -3,88 +3,56 @@
 
 
 
+<<<<<<< HEAD
 double Calculate_Press_correction(Matrix& delta_p, Matrix &b_p, Param par, std::ostream& log, bool OverFlow){
+=======
+double Calculate_Press_correction(Matrix &delta_p, Matrix &b_p, Param par){
+>>>>>>> refs/remotes/origin/Kuranakov
 
-	int n = 0;
-	double eps = 0.0;
+	double eps;
+	double delta_p_max;
 
-	double a = (1.0 / (par.d_x*par.d_x) + 1.0 / (par.d_y*par.d_y));
-	double b = 1.0 / (par.d_x*par.d_x);
-	double c = 1.0 / (par.d_y*par.d_y);
-	double d = 0.0;
+	double dx2 = 1.0 / (par.d_x*par.d_x);
+	double dy2 = 1.0 / (par.d_y*par.d_y);
+	double A   = 1.0 / (2.0 * (dx2 + dy2));
+
 	double help;
 
-	int const n1 = par.N1 + 1;
-	int const n2 = par.N2 + 1;
+	size_t n1 = delta_p.size();
+	size_t n2 = delta_p[0].size();
 
-	while (n < par.N_Zeidel){
+	for (int n = 0; n < par.N_Zeidel; n++) {
 		eps = 0.0;
-		for (int i = 0; i < n1; ++i){
-			for (int j = 0; j < n2; ++j){
-				if (0 == i && 0 == j){
-					help = delta_p[i + 1][j + 1];
+		delta_p_max = 0.0;
+		for (size_t i = 0; i < n1; ++i){
+			for (size_t j = 0; j < n2; ++j){
+
+				help = A * (dx2 * (R(delta_p, i, j, Du, n1, n2) + L(delta_p, i, j, Du, n1, n2))
+				          + dy2 * (U(delta_p, i, j, Du, n1, n2) + D(delta_p, i, j, Du, n1, n2)) - b_p[i][j]);
+
+				if (i == 0     )                 help = delta_p[i + 1][j];       // L
+				if (i == n1 - 1)                 help = delta_p[i - 1][j];       // R
+				if (j == 0     )                 help = delta_p[i][j + 1];       // D
+				if (j == n2 - 1)                 help = delta_p[i][j - 1];       // U
+
+				if (i == 0      && j == 0     )  help = delta_p[i + 1][j + 1];   // LD
+				if (i == 0      && j == n2 - 1)  help = delta_p[i + 1][j - 1];   // LU
+				if (i == n1 - 1 && j == 0     )  help = delta_p[i - 1][j + 1];   // RD
+				if (i == n1 - 1 && j == n2 - 1)  help = delta_p[i - 1][j - 1];   // RU
+
+				if (par.BC == periodical && i == 0     ) help = delta_p[n1 - 2][j];
+				if (par.BC == periodical && i == n1 - 1) help = delta_p[1][j];
+
+				if (j == 0 || j == 1 || j == n2 - 2 || j == n2 - 1) {
+					if ( i == n1 - 1 || i == n1 - 2)
+						help = 0.0; // Right boundary condition
+					if ((i == 0      || i == 1     ) && par.BC == periodical)
+						help = 0.0; // Left boundary condition for periodical problem
 				}
 
-				if (0 == i && 0 != j && n2 - 1 != j){
-					help = delta_p[i + 1][j];
+				if (fabs(help) > delta_p_max) {
+					delta_p_max = fabs(help);
 				}
-
-				if (0 == i && n2 - 1 == j){
-					help = delta_p[i + 1][j - 1];
-				}
-
-				if (n1 - 1 == i && 0 != j && n2 - 1 != j) {
-					if (OverFlow) help = delta_p[i - 1][j];
-					else help = 0.0;
-				}
-				if (n1 - 1 == i && 0 == j) {
-					if (OverFlow) help = delta_p[i - 1][j + 1];
-					else help = 0.0;
-				}
-				if (n1 - 1 == i && n2 - 1 == j) {
-					if (OverFlow) help = delta_p[i - 1][j - 1];
-					else help = 0.0;
-				}
-
-
-				if (0 != i && n1 - 1 != i && 0 == j){
-					help = delta_p[i][j + 1];
-				}
-
-				if (0 != i && n1 - 1 != i && n2 - 1 == j){
-					help = delta_p[i][j - 1];
-				}
-
-				if (0 != i && n1 - 1 != i && 0 != j && n2 - 1 != j){
-					help = (1.0 / (2.0*a)) * (b * (delta_p[i + 1][j] + delta_p[i - 1][j]) + c * (delta_p[i][j + 1] + delta_p[i][j - 1]) - b_p[i][j]);
-
-					if (1 == i){
-						help = (1.0 / (12.0*b + 2.0*c)) * (b * (4.0*delta_p[i + 1][j] + 8.0*delta_p[i - 1][j]) + c * (delta_p[i][j + 1] + delta_p[i][j - 1]) - b_p[i][j]);
-					}
-					if (n1 - 2 == i){
-						help = (1.0 / (12.0*b + 2.0*c)) * (b * (8.0*delta_p[i + 1][j] + 4.0*delta_p[i - 1][j]) + c * (delta_p[i][j + 1] + delta_p[i][j - 1]) - b_p[i][j]);
-					}
-					if (1 == j){
-						help = (1.0 / (2.0*b + 12.0*c)) * (b * (delta_p[i + 1][j] + delta_p[i - 1][j]) + c * (4.0*delta_p[i][j + 1] + 8.0*delta_p[i][j - 1]) - b_p[i][j]);
-					}
-					if (n2 - 2 == j){
-						help = (1.0 / (2.0*b + 12.0*c)) * (b * (delta_p[i + 1][j] + delta_p[i - 1][j]) + c * (8.0*delta_p[i][j + 1] + 4.0*delta_p[i][j - 1]) - b_p[i][j]);
-					}
-
-					if (1 == i && 1 == j){
-						help = (1.0 / (12.0*a)) * (b * (4.0*delta_p[i + 1][j] + 8.0*delta_p[i - 1][j]) + c * (4.0*delta_p[i][j + 1] + 8.0*delta_p[i][j - 1]) - b_p[i][j]);
-					}
-					if (1 == i && n2 - 2 == j){
-						help = (1.0 / (12.0*a)) * (b * (4.0*delta_p[i + 1][j] + 8.0*delta_p[i - 1][j]) + c * (8.0*delta_p[i][j + 1] + 4.0*delta_p[i][j - 1]) - b_p[i][j]);
-					}
-					if (n1 - 2 == i && 1 == j){
-						help = (1.0 / (12.0*a)) * (b * (8.0*delta_p[i + 1][j] + 4.0*delta_p[i - 1][j]) + c * (4.0*delta_p[i][j + 1] + 8.0*delta_p[i][j - 1]) - b_p[i][j]);
-					}
-					if (n1 - 2 == i && n2 - 2 == j){
-						help = (1.0 / (12.0*a)) * (b * (8.0*delta_p[i + 1][j] + 4.0*delta_p[i - 1][j]) + c * (8.0*delta_p[i][j + 1] + 4.0*delta_p[i][j - 1]) - b_p[i][j]);
-					}
-				}
-
 				if (fabs(help - delta_p[i][j]) > eps){
 					eps = fabs(help - delta_p[i][j]);
 				}
@@ -95,36 +63,45 @@ double Calculate_Press_correction(Matrix& delta_p, Matrix &b_p, Param par, std::
 		}
 
 
-		if (eps < par.Zeidel_eps){
+		if (eps/delta_p_max < par.Zeidel_eps){
 			break;
 		}
-		n++;
+
 	}
 
+<<<<<<< HEAD
 	if (eps > par.Zeidel_eps) {
 		std::cout << "Zeidel has not converged, eps_p = " << eps << std::endl;
 		//log << "Zeidel has not converged, eps_p = " << eps << std::endl;
+=======
+	if (eps / delta_p_max > par.Zeidel_eps) {
+		std::cout << "Zeidel has not converged, eps_p = " << eps << ",   delta_p_max = " << delta_p_max << std::endl;
+>>>>>>> refs/remotes/origin/Kuranakov
 	}
 
-	return eps;
+	return delta_p_max;
 
 }
 
 
-Matrix Calculate_Press_Right(Matrix &u, Matrix &v, Param par){
+Matrix Calculate_Press_Right(Matrix &u, Matrix &v, Matrix &Fx, Matrix &Fy, Param par){
 	double d = 0.0;
 
-	int const n1 = par.N1 + 1;
-	int const n2 = par.N2 + 1;
+	size_t n1 = par.N1 + 1;
+	size_t n2 = par.N2 + 1;
 	CreateMatrix(result, n1, n2);
 
 
-	for (int i = 1; i < n1 - 1; ++i){
-		for (int j = 1; j < n2 - 1; ++j){
+	for (size_t i = 1; i < n1 - 1; ++i){
+		for (size_t j = 1; j < n2 - 1; ++j){
 
-			d = (1.0 / par.d_x) * (u[i][j] - u[i - 1][j]) + (1.0 / par.d_y) * (v[i][j] - v[i][j - 1]);
+			double d = (1.0 / par.d_x) * (u[i][j] - u[i - 1][j])
+			         + (1.0 / par.d_y) * (v[i][j] - v[i][j - 1]);
 
-			result[i][j] = d / par.d_t;
+			double dF = (1.0 / par.d_x) * (Fx[i][j] - Fx[i - 1][j])
+				      + (1.0 / par.d_y) * (Fy[i][j] - Fy[i][j - 1]);
+
+			result[i][j] = d / par.d_t - dF;
 
 		}
 
@@ -135,11 +112,11 @@ Matrix Calculate_Press_Right(Matrix &u, Matrix &v, Param par){
 	result[n1 - 1][n2 - 1] = 0.0;
 
 
-	for (int i = 1; i < n1 - 1; ++i){
+	for (size_t i = 1; i < n1 - 1; ++i){
 		result[i][0] = 0.0;
 		result[i][n2 - 1] = 0.0;
 	}
-	for (int j = 1; j < n2 - 1; ++j){
+	for (size_t j = 1; j < n2 - 1; ++j){
 		result[0][j] = 0.0;
 		result[n1 - 1][j] = 0.0;
 	}

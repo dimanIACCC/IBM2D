@@ -1,7 +1,11 @@
 #include "stdafx.h"
 #include "BiCGStab.h"
 
-void BiCGStab(Matrix &x, int const n1, int const n2, Matrix operator_A[5], Matrix &b, Param par,bool OverFlow){
+void BiCGStab(Matrix &x, ublas::matrix<Template> &A, Matrix &b, Param par, Direction Dir){
+
+	size_t n1 = x.size();
+	size_t n2 = x[0].size();
+
 	double eps = 0.0;
 	double help_value = 0.0;
 
@@ -40,11 +44,11 @@ void BiCGStab(Matrix &x, int const n1, int const n2, Matrix operator_A[5], Matri
 	// }
 
 
-	r = Operator_Ax(operator_A, x, n1, n2, par, OverFlow);
+	r = Operator_Ax(A, x, par, Dir);
 
 
-	for (int j = 0; j < n2; ++j){
-		for (int i = 0; i < n1; ++i){
+	for (size_t j = 0; j < n2; ++j){
+		for (size_t i = 0; i < n1; ++i){
 			help_value = b[i][j] - r[i][j];
 
 			r[i][j] = help_value;
@@ -72,8 +76,8 @@ void BiCGStab(Matrix &x, int const n1, int const n2, Matrix operator_A[5], Matri
 
 		// 3.
 
-		for (int i = 0; i < n1; ++i){
-			for (int j = 0; j < n2; ++j){
+		for (size_t i = 0; i < n1; ++i){
+			for (size_t j = 0; j < n2; ++j){
 
 				p[i][j] = r[i][j] + beta * (p[i][j] - omega * v[i][j]);
 
@@ -82,7 +86,7 @@ void BiCGStab(Matrix &x, int const n1, int const n2, Matrix operator_A[5], Matri
 
 		// 4.
 
-		v = Operator_Ax(operator_A, p, n1, n2,par, OverFlow);
+		v = Operator_Ax(A, p, par, Dir);
 
 
 		// 5.
@@ -92,8 +96,8 @@ void BiCGStab(Matrix &x, int const n1, int const n2, Matrix operator_A[5], Matri
 
 		// 6.
 
-		for (int j = 0; j < n2; ++j){
-			for (int i = 0; i < n1; ++i){
+		for (size_t j = 0; j < n2; ++j){
+			for (size_t i = 0; i < n1; ++i){
 				s[i][j] = r[i][j] - alpha * v[i][j];
 
 
@@ -103,7 +107,7 @@ void BiCGStab(Matrix &x, int const n1, int const n2, Matrix operator_A[5], Matri
 
 		// 7. 
 
-		t = Operator_Ax(operator_A, s, n1, n2,par, OverFlow);
+		t = Operator_Ax(A, s, par, Dir);
 
 		// 8.
 
@@ -113,8 +117,8 @@ void BiCGStab(Matrix &x, int const n1, int const n2, Matrix operator_A[5], Matri
 		// 9.
 		// 10.
 
-		for (int j = 0; j < n2; ++j){
-			for (int i = 0; i < n1; ++i){
+		for (size_t j = 0; j < n2; ++j){
+			for (size_t i = 0; i < n1; ++i){
 
 				// if ( i < M1 && j < M2 ){
 				// 	continue;
@@ -156,15 +160,13 @@ void BiCGStab(Matrix &x, int const n1, int const n2, Matrix operator_A[5], Matri
 
 }
 
-double ScalarOperator(Matrix &a, Matrix &b, int n1, int n2){
+double ScalarOperator(Matrix &a, Matrix &b, size_t n1, size_t n2){
 
 	double result = 0;
-	//написать сумму скал€рных произведений строк матрицы
 
-	for (int i = 0; i < n1; ++i){
-		for (int j = 0; j < n2; ++j){
+	for (size_t i = 0; i < n1; ++i){
+		for (size_t j = 0; j < n2; ++j){
 			result += a[i][j] * b[i][j];
-
 		}
 	}
 

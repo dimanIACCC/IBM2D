@@ -2,343 +2,159 @@
 #include "PredictVel.h"
 
 
-void ExplicPredVel(Matrix& U_predict, Matrix& V_predict, Matrix& U_n, Matrix& V_n, Matrix& P, Matrix& Force_x, Matrix& Force_y, Param par) {
+void Calculate_A(ublas::matrix<Template> &A, Param par, double Re, Direction Dir) {
+
+	size_t n1 = A.size1();
+	size_t n2 = A.size2();
+	size_t N;
+
+	double d_u, d_v;
+
+	if      (Dir == Du) { d_u = par.d_x;	d_v = par.d_y;	N = n2; }
+	else if (Dir == Dv) { d_u = par.d_y;	d_v = par.d_x;	N = n1; }
+
+	double d_uu = 1.0 / (d_u*d_u);
+	double d_vv = 1.0 / (d_v*d_v);
+
+	for (size_t j = 0; j < n2; ++j) {
+		for (size_t i = 0; i < n1; ++i) {
+
+			A(i, j).C =  1.0 /      Re *(d_uu + d_vv) + 1.0 / par.d_t;
+			A(i, j).U = -1.0 / (2.0*Re)* d_vv;
+			A(i, j).R = -1.0 / (2.0*Re)* d_uu;
+			A(i, j).D = -1.0 / (2.0*Re)* d_vv;
+			A(i, j).L = -1.0 / (2.0*Re)* d_uu;
+
+		}
+	}
+}
+
+Matrix Operator_Ax(ublas::matrix<Template> &A, Matrix &u, Param par, Direction Dir) {
+
+	size_t Nx = u.size();
+	size_t Ny = u[0].size();
+
+	CreateMatrix(result, Nx, Ny);
+
+	for (size_t j = 0; j < Ny; ++j) {
+		for (size_t i = 0; i < Nx; ++i) {
+			result[i][j] = A(i, j).C * u[i][j]
+			             + A(i, j).U * U(u, i, j, Dir, Nx, Ny)
+			             + A(i, j).R * R(u, i, j, Dir, Nx, Ny)
+			             + A(i, j).D * D(u, i, j, Dir, Nx, Ny)
+			             + A(i, j).L * L(u, i, j, Dir, Nx, Ny);
+		}
+	}
+
+	// Up-Down BC
+	for (size_t i = 0; i < Nx; ++i) {
+
+		size_t j = 0;
+		result[i][j] = u[i][j];
+		if ((par.BC == u_infinity) && (Dir == Du)) result[i][j] = (u[i][j + 1] - u[i][j]) / par.d_y;
+
+		j = Ny - 1;
+		result[i][j] = u[i][j];
+		if ((par.BC == u_infinity) && (Dir == Du)) result[i][j] = (u[i][j] - u[i][j - 1]) / par.d_y;
+
+	}
+
+	for (size_t j = 0; j < Ny; ++j) {
+		switch (par.BC) {
+			case u_infinity:	result[0][j] = u[0][j];		result[Nx - 1][j] = (3.0 * u[Nx - 1][j] - 4.0 * u[Nx - 2][j] + 1.0 * u[Nx - 3][j]) / (2.0*par.d_x);		break;
+			case u_inflow  :	result[0][j] = u[0][j];		result[Nx - 1][j] = (3.0 * u[Nx - 1][j] - 4.0 * u[Nx - 2][j] + 1.0 * u[Nx - 3][j]) / (2.0*par.d_x);		break;
+		}
+	}
 	
-	for (int i = 0; i <(int)U_predict.size(); i++) {
-		U_predict[i][0]                    = U_n[i][0]; 
-		U_predict[i][U_predict[0].size() - 1] = U_n[i][U_predict[0].size() -1];
-	}
-	//for (int i = 0; i < U_predict[0].size(); i++) { U_predict[0][i] = U_n[0][i]; U_predict[U_predict[0].size() -1 ][i] = U_n[U_predict[0].size() -1][i];}
-	for (int i = 0; i < (int)V_predict.size(); i++) {
-		V_predict[i][0] = V_n[i][0];
-		V_predict[i][V_predict[0].size() - 1] = V_n[i][V_predict[0].size() - 1];
-	}
-	//for (int i = 0; i < U_predict[0].size(); i++);
-	
-
-	for (int i = 1; i < (int)U_predict.size()-1; i++) {
-		for (int j = 1; j < (int)U_predict[0].size()-1; j++)
-		{
-			double LaplasU = (U_n[i + 1][j] - 2 * U_n[i][j] + U_n[i - 1][j]) / pow(par.d_x, 2) + (U_n[i][j + 1] - 2 * U_n[i][j] + U_n[i][j - 1]) / pow(par.d_y, 2);
-			double CentrDiffx_U = (U_n[i + 1][j] - U_n[i - 1][j]) / (2 * par.d_x);
-			double CentrDiffy_U = (U_n[i][j + 1] - U_n[i][j - 1]) / (2 * par.d_y);
-			double GradPressX   = (P[i + 1][j] - P[i - 1][j]) / (2 * par.d_x);
-			U_predict[i][j] = par.d_t*(LaplasU - U_n[i][j] * CentrDiffx_U - V_n[i][j] * CentrDiffy_U) + U_n[i][j] - GradPressX +par.d_t*Force_x[i][j];
-		}
-	}
-	for (int i = 1; i < (int)V_predict.size()-1; i++) {
-		for (int j = 1; j < (int)V_predict[0].size()-1; j++)
-		{
-			double LaplasV = (V_n[i + 1][j] - 2 * V_n[i][j] + V_n[i - 1][j]) / pow(par.d_x, 2) + (V_n[i][j + 1] - 2 * V_n[i][j] + V_n[i][j - 1]) / pow(par.d_y, 2);
-			double CentrDiffx_V = (V_n[i + 1][j] - V_n[i - 1][j]) / (2 * par.d_x);
-			double CentrDiffy_V = (V_n[i][j + 1] - V_n[i][j - 1]) / (2 * par.d_y);
-			double GradPressY   = (P[i][j + 1] - P[i][j - 1]) / (2 * par.d_y);
-			V_predict[i][j] = par.d_t*(LaplasV - U_n[i][j] * CentrDiffx_V - V_n[i][j] * CentrDiffy_V) + V_n[i][j] - GradPressY + par.d_t*Force_y[i][j];
-		}
-	}
-
-
-
-}
-
-
-void Calculate_A_u(Matrix A[5], Param par, double Re) {
-
-	double d_xx = 1.0 / (par.d_x*par.d_x);
-	double d_yy = 1.0 / (par.d_y*par.d_y);
-	int const n1 = par.N1;
-	int const n2 = par.N2 + 1;
-
-	for (int i = 0; i < 5; i++) {
-		A[i].resize(n1);
-		for (int j = 0; j < n1; j++) {
-			A[i][j].resize(n2);
-			fill(A[i][j].begin(), A[i][j].end(), 0);
-		}
-	}
-
-	for (int j = 1; j < (n2 - 1); ++j) {
-		for (int i = 1; i < (n1 - 1); ++i) {
-
-			A[0][i][j] = 1.0 / par.d_t + (1.0 / Re) * (d_xx + d_yy);
-			A[1][i][j] = -1.0 / (2.0*Re*par.d_y*par.d_y);
-			A[2][i][j] = -1.0 / (2.0*Re*par.d_x*par.d_x);
-			A[3][i][j] = -1.0 / (2.0*Re*par.d_y*par.d_y);
-			A[4][i][j] = -1.0 / (2.0*Re*par.d_x*par.d_x);
-
-
-			if (j == 1) {
-				A[0][i][j] = 1.0 / par.d_t + (1.0 / Re) * (d_xx + 2.0*d_yy);
-				A[1][i][j] = -2.0 / (3.0*Re*par.d_y*par.d_y);
-				A[2][i][j] = -1.0 / (2.0*Re*par.d_x*par.d_x);
-				A[3][i][j] = -4.0 / (3.0*Re*par.d_y*par.d_y);
-				A[4][i][j] = -1.0 / (2.0*Re*par.d_x*par.d_x);
-			}
-
-			if (j == n2 - 2) {
-				A[0][i][j] = 1.0 / par.d_t + (1.0 / Re) * (d_xx + 2.0*d_yy);
-				A[1][i][j] = -4.0 / (3.0*Re*par.d_y*par.d_y);
-				A[2][i][j] = -1.0 / (2.0*Re*par.d_x*par.d_x);
-				A[3][i][j] = -2.0 / (3.0*Re*par.d_y*par.d_y);
-				A[4][i][j] = -1.0 / (2.0*Re*par.d_x*par.d_x);
-			}
-		}
-	}
-
-	for (int i = 1; i < n1 - 1; ++i) {
-		int j = 0;
-		A[0][i][j] = 1.0;
-		A[1][i][j] = 1.0;
-		j = n2 - 1;
-		A[0][i][j] = 1.0;
-		A[1][i][j] = 1.0;
-
-
-	}
-
-	// outflow du/dx = 0
-	for (int j = 0; j < n2; ++j) {
-		A[0][n1 - 1][j] = 3.0 / (2.0*par.d_x);
-		A[1][n1 - 1][j] = -4.0 / (2.0*par.d_x);
-		A[2][n1 - 1][j] = 1.0 / (2.0*par.d_x);
-		A[0][0][j] = 1.0;
-	}
-
-
-
-}
-
-void Calculate_A_v(Matrix A[5], Param par, double Re) {
-
-	double d_xx = 1.0 / (par.d_x*par.d_x);
-	double d_yy = 1.0 / (par.d_y*par.d_y);
-	int const n1 = par.N1 + 1;
-	int const n2 = par.N2;
-
-	for (int i = 0; i < 5; i++) {
-		A[i].resize(n1);
-		for (int j = 0; j < n1; j++) {
-			A[i][j].resize(n2);
-			fill(A[i][j].begin(), A[i][j].end(), 0);
-		}
-	}
-
-
-	for (int j = 1; j < (n2 - 1); ++j) {
-		for (int i = 1; i < (n1 - 1); ++i) {
-			A[0][i][j] = 1.0 / par.d_t + (1.0 / Re) * (d_xx + d_yy);
-			A[1][i][j] = -1.0 / (2.0*Re*par.d_y*par.d_y);
-			A[2][i][j] = -1.0 / (2.0*Re*par.d_x*par.d_x);
-			A[3][i][j] = -1.0 / (2.0*Re*par.d_y*par.d_y);
-			A[4][i][j] = -1.0 / (2.0*Re*par.d_x*par.d_x);
-
-			if (i == 1) {
-				A[0][i][j] = 1.0 / par.d_t + (1.0 / Re) * (2.0*d_xx + d_yy);
-				A[1][i][j] = -1.0 / (2.0*Re*par.d_y*par.d_y);
-				A[2][i][j] = -2.0 / (3.0*Re*par.d_x*par.d_x);
-				A[3][i][j] = -1.0 / (2.0*Re*par.d_y*par.d_y);
-				A[4][i][j] = -4.0 / (3.0*Re*par.d_x*par.d_x);
-			}
-
-			if (i == n1 - 2) {
-				A[0][i][j] = 1.0 / par.d_t + (1.0 / Re) * (2.0*d_xx + d_yy);
-				A[1][i][j] = -1.0 / (2.0*Re*par.d_y*par.d_y);
-				A[2][i][j] = -4.0 / (3.0*Re*par.d_x*par.d_x);
-				A[3][i][j] = -1.0 / (2.0*Re*par.d_y*par.d_y);
-				A[4][i][j] = -2.0 / (3.0*Re*par.d_x*par.d_x);
-			}
-
-		}
-	}
-
-	for (int i = 1; i < n1 - 1; ++i) {
-
-
-		int j = 0;
-		A[0][i][j] = -par.d_y * 0.5;
-		A[1][i][j] = 0.0;
-		j = n2 - 1;
-		A[0][i][j] = par.d_y * 0.5;
-		A[1][i][j] = 0.0;
-
-
-	}
-
-	// outflow du/dx = 0
-	for (int j = 0; j < n2; ++j) {
-		A[0][n1 - 1][j] = 3.0 / (2.0*par.d_x);
-		A[1][n1 - 1][j] = -4.0 / (2.0*par.d_x);
-		A[2][n1 - 1][j] = 1.0 / (2.0*par.d_x);
-		A[0][0][j] = 1.0;
-	}
-
-}
-
-Matrix Operator_Ax(Matrix A[5], Matrix &v, int const n1, int const n2, Param par,bool OverFlow) {
-
-	CreateMatrix(result, n1, n2);
-
-
-	for (int j = 1; j < (n2 - 1); ++j) {
-		for (int i = 1; i < (n1 - 1); ++i) {
-
-			result[i][j] = A[0][i][j] * v[i][j] + A[1][i][j] * v[i][j + 1] + A[2][i][j] * v[i + 1][j] + A[3][i][j] * v[i][j - 1] + A[4][i][j] * v[i - 1][j];
-		}
-	}
-	if (OverFlow) {
-		for (int i = 1; i < n1 - 1; ++i) {
-			int j = 0;
-			result[i][j] = (A[1][i][j] * v[i][j + 1] - A[0][i][j] * v[i][j]) / (par.d_y*0.5);
-			j = n2 - 1;
-			result[i][j] = (A[0][i][j] * v[i][j] - A[1][i][j] * v[i][j - 1]) / (par.d_y*0.5);
-		}
-
-	}
-	else {
-		for (int i = 1; i < n1 - 1; ++i) {
-			int j = 0;
-			result[i][j] = v[i][j];
-			j = n2 - 1;
-			result[i][j] = v[i][j];
-		}
-	}
-
-	// outflow du/dx = 0
-	for (int j = 0; j < n2; ++j) {
-
-		result[n1 - 1][j] = (3.0 * v[n1 - 1][j] - 4.0 * v[n1 - 2][j] + 1.0 * v[n1 - 3][j]) / (2.0*par.d_x);
-		result[0][j] = v[0][j];
-	}
-
 	return result;
 
 }
 
+Matrix CalculateB(Matrix &u_n, Matrix &v_n, Matrix &u_s, Matrix &v_s, Matrix &p, Matrix &force, Param par, Direction Dir) {
 
-Matrix CalculateB_u(Matrix &u_n, Matrix &v_n, Matrix &u_prev, Matrix &v_prev, Matrix &p, Matrix &force, Param par) {
+	size_t Nx = u_n.size();
+	size_t Ny = u_n[0].size();
+	size_t N;
 
-	double d_xx = 1.0 / (par.d_x*par.d_x);
-	double d_yy = 1.0 / (par.d_y*par.d_y);
-	int const n1 = par.N1;
-	int const n2 = par.N2 + 1;
+	double d_u, d_v;
 
-	double advective_term_n = 0.0;
-	double advective_term_prev = 0.0;
-	double diffusion_term = 0.0;
-	double pressure = 0.0;
-	double v_help = 0.0;
+	if      (Dir == Du) { d_u = par.d_x;	d_v = par.d_y;	N = Ny;}
+	else if (Dir == Dv) { d_u = par.d_y;	d_v = par.d_x;	N = Nx;}
+
+	double d_uu = 1.0 / (d_u*d_u);
+	double d_vv = 1.0 / (d_v*d_v);
+
+	double alpha = 0.5;
+
+	CreateMatrix(result, Nx, Ny);
 
 
-	CreateMatrix(result, n1, n2);
+	for (size_t i = 1; i < (Nx - 1); ++i) {
+		for (size_t j = 1; j < (Ny - 1); ++j) {
+			double advective_term_n    = advective_term(u_n, v_n, i, j, d_u, d_v, Dir, Nx, Ny);
+			double advective_term_s    = advective_term(u_s, v_s, i, j, d_u, d_v, Dir, Nx, Ny);
+			double diffusion_term_n    = diffusion_term(u_n     , i, j, d_uu, d_vv, Dir, Nx, Ny);
+			double pressure_term = (R(p, i, j, Dir, par.N1 + 1, par.N2 + 1) - p[i][j]) / d_u;
 
-	for (int j = 1; j < (n2 - 1); ++j) {
-		for (int i = 1; i < (n1 - 1); ++i) {
+			result[i][j] = -(       alpha  * advective_term_n
+			               + (1.0 - alpha) * advective_term_s)
+			                           - pressure_term
+			                           + diffusion_term_n / (2.0*par.Re)
+			                           + u_n[i][j] / par.d_t
+			                           + force[i][j];
+		}
+	}
 
-			v_help              = 0.25 * (v_n[i][j] + v_n[i + 1][j] + v_n[i][j - 1] + v_n[i + 1][j - 1]);
-			advective_term_n    = u_n[i][j] * (u_n[i + 1][j] - u_n[i - 1][j]) / (2.0*par.d_x) + v_help * (u_n[i][j + 1] - u_n[i][j - 1]) / (2.0*par.d_y);
-			v_help              = 0.25 * (v_prev[i][j] + v_prev[i + 1][j] + v_prev[i][j - 1] + v_prev[i + 1][j - 1]);
-			advective_term_prev = u_prev[i][j] * (u_prev[i + 1][j] - u_prev[i - 1][j]) / (2.0*par.d_x) + v_help * (u_prev[i][j + 1] - u_prev[i][j - 1]) / (2.0*par.d_y);
-			diffusion_term      = d_xx * (u_n[i + 1][j] - 2.0 * u_n[i][j] + u_n[i - 1][j]) + d_yy * (u_n[i][j + 1] - 2.0 * u_n[i][j] + u_n[i][j - 1]);
-			pressure            = (p[i + 1][j] - p[i][j]) / (par.d_x);
-			
-			result[i][j]        = -(3.0 / 2.0 * advective_term_n - 1.0 / 2.0 * advective_term_prev) - pressure + 1.0 / (2.0*par.Re) * (diffusion_term)+u_n[i][j] / par.d_t;
+	if (par.BC == periodical) {
+		for (size_t j = 1; j < Ny - 1; ++j) {
 
-			if (j == 1 || j == n2 - 2) {
-				v_help              = 0.25 * (v_n[i][j] + v_n[i + 1][j] + v_n[i][j - 1] + v_n[i + 1][j - 1]);
-				advective_term_n    = u_n[i][j] * (u_n[i + 1][j] - u_n[i - 1][j]) / (2.0*par.d_x) + v_help * (u_n[i][j + 1] - u_n[i][j - 1]) / (1.5*par.d_y);
-				v_help              = 0.25 * (v_prev[i][j] + v_prev[i + 1][j] + v_prev[i][j - 1] + v_prev[i + 1][j - 1]);
-				advective_term_prev = u_prev[i][j] * (u_prev[i + 1][j] - u_prev[i - 1][j]) / (2.0*par.d_x) + v_help * (u_prev[i][j + 1] - u_prev[i][j - 1]) / (1.5*par.d_y);
-				if (j == 1) {
-
-					diffusion_term = d_xx * (u_n[i + 1][j] - 2.0 * u_n[i][j] + u_n[i - 1][j]) + d_yy * (4.0*u_n[i][j + 1] - 12.0 * u_n[i][j] + 8.0*u_n[i][j - 1]) / 3.0;
-				}
-				if (j == n2 - 2) {
-
-					diffusion_term = d_xx * (u_n[i + 1][j] - 2.0 * u_n[i][j] + u_n[i - 1][j]) + d_yy * (8.0*u_n[i][j + 1] - 12.0 * u_n[i][j] + 4.0*u_n[i][j - 1]) / 3.0;
-				}
-
-				result[i][j] = -(3.0 / 2.0 * advective_term_n - 1.0 / 2.0 * advective_term_prev) - pressure + 1.0 / (2.0*par.Re) * (diffusion_term)+u_n[i][j] / par.d_t;
+			if (Dir == Du){
+				size_t i = 0;
+				double advective_term_n = advective_term(u_n, v_n, i, j, d_u, d_v, Dir, par.N1, par.N2);
+				double advective_term_s = advective_term(u_s, v_s, i, j, d_u, d_v, Dir, par.N1, par.N2);
+				double diffusion_term_n = diffusion_term(u_n, i, j, d_uu, d_vv, Dir, par.N1, par.N2);
+				double pressure_term = (p[1][j] - p[Nx - 2][j] - par.L * dpdx_Poiseuille(par.H, par.Re)) / d_u;
+				result[i][j] = -(alpha  * advective_term_n
+						+ (1.0 - alpha) * advective_term_s)
+						- pressure_term
+						+ diffusion_term_n / (2.0*par.Re)
+						+ u_n[i][j] / par.d_t
+						+ force[i][j];
+				result[Nx - 1][j] = result[0][j];
+			}
+			else if (Dir == Dv) {
+				result[0]     [j] = result[Nx- 2][j];
+				result[Nx - 1][j] = result[1][j];
 			}
 		}
 	}
 
-	// outflow du/dx = 0
-	for (int j = 0; j < n2; ++j) {
-		result[n1 - 1][j] = 0.0;
-		result[0][j] = u_n[0][j];
+
+	// Up-Down BC
+	for (size_t i = 0; i < Nx; ++i) {
+		result[i][0] = 0;
+		result[i][Ny - 1] = 0;
 	}
 
-	for (int i = 1; i < n1 - 1; ++i) {
-		for (int j = 1; j < n2 - 1; ++j) {
-
-			result[i][j] += force[i][j];
+	for (size_t j = 0; j < Ny; ++j) {
+		switch (par.BC) {
+			case u_infinity:	result[0][j] = u_n[0][j]     ;		result[Nx - 1][j] = 0;		break;
+			case u_inflow  :	result[0][j] = u_n[0][j]     ;		result[Nx - 1][j] = 0;		break;
 		}
 	}
-
 
 	return result;
 }
 
-Matrix CalculateB_v(Matrix &u_n, Matrix &v_n, Matrix &u_prev, Matrix &v_prev, Matrix &p, Matrix &force, Param par) {
-
-	double d_xx = 1.0 / (par.d_x*par.d_x);
-	double d_yy = 1.0 / (par.d_y*par.d_y);
-	int const n1 = par.N1 + 1;
-	int const n2 = par.N2;
-
-	double advective_term_n = 0.0;
-	double advective_term_prev = 0.0;
-	double diffusion_term = 0.0;
-	double pressure = 0.0;
-	double u_help = 0.0;
-
-	CreateMatrix(result, n1, n2);
-
-
-	for (int j = 1; j < (n2 - 1); ++j) {
-		for (int i = 1; i < (n1 - 1); ++i) {
-			u_help = 0.25 * (u_n[i][j] + u_n[i - 1][j] + u_n[i][j + 1] + u_n[i - 1][j + 1]);
-			advective_term_n = u_help * (v_n[i + 1][j] - v_n[i - 1][j]) / (2.0*par.d_x) + v_n[i][j] * (v_n[i][j + 1] - v_n[i][j - 1]) / (2.0*par.d_y);
-			u_help = 0.25 * (u_prev[i][j] + u_prev[i - 1][j] + u_prev[i][j + 1] + u_prev[i - 1][j + 1]);
-			advective_term_prev = u_help * (v_prev[i + 1][j] - v_prev[i - 1][j]) / (2.0*par.d_x) + v_prev[i][j] * (v_prev[i][j + 1] - v_prev[i][j - 1]) / (2.0*par.d_y);
-			diffusion_term = d_xx * (v_n[i + 1][j] - 2.0 * v_n[i][j] + v_n[i - 1][j]) + d_yy * (v_n[i][j + 1] - 2.0 * v_n[i][j] + v_n[i][j - 1]);
-			pressure = (p[i][j + 1] - p[i][j]) / (par.d_y);
-			result[i][j] = -(3.0 / 2.0 * advective_term_n - 1.0 / 2.0 * advective_term_prev) - pressure + 1.0 / (2.0*par.Re) * (diffusion_term)+v_n[i][j] / par.d_t;
-
-			if (i == 1 || i == n1 - 2) {
-
-
-				u_help = 0.25 * (u_n[i][j] + u_n[i - 1][j] + u_n[i][j + 1] + u_n[i - 1][j + 1]);
-				advective_term_n = u_help * (v_n[i + 1][j] - v_n[i - 1][j]) / (1.5*par.d_x) + v_n[i][j] * (v_n[i][j + 1] - v_n[i][j - 1]) / (2.0*par.d_y);
-				u_help = 0.25 * (u_prev[i][j] + u_prev[i - 1][j] + u_prev[i][j + 1] + u_prev[i - 1][j + 1]);
-				advective_term_prev = u_help * (v_prev[i + 1][j] - v_prev[i - 1][j]) / (1.5*par.d_x) + v_prev[i][j] * (v_prev[i][j + 1] - v_prev[i][j - 1]) / (2.0*par.d_y);
-				if (i == 1) {
-
-					diffusion_term = d_xx * (4.0*v_n[i + 1][j] - 12.0 * v_n[i][j] + 8.0*v_n[i - 1][j]) / 3.0 + d_yy * (v_n[i][j + 1] - 2.0 * v_n[i][j] + v_n[i][j - 1]);
-				}
-				if (i == n1 - 2) {
-
-					diffusion_term = d_xx * (8.0*v_n[i + 1][j] - 12.0 * v_n[i][j] + 4.0*v_n[i - 1][j]) / 3.0 + d_yy * (v_n[i][j + 1] - 2.0 * v_n[i][j] + v_n[i][j - 1]);
-				}
-
-				result[i][j] = -(3.0 / 2.0 * advective_term_n - 1.0 / 2.0 * advective_term_prev) - pressure + 1.0 / (2.0*par.Re) * (diffusion_term)+v_n[i][j] / par.d_t;
-			}
-		}
-
-	}
-
-
-	for (int j = 0; j < n2; ++j) {
-		result[n1 - 1][j] = 0.0;
-		result[0][j] = v_n[0][j];
-	}
-
-	for (int i = 1; i < n1 - 1; ++i) {
-		for (int j = 1; j < n2 - 1; ++j) {
-			result[i][j] += force[i][j];
-		}
-	}
-
+double advective_term(Matrix &u, Matrix &v, size_t i, size_t j, double d_x, double d_y, Direction Dir, size_t N1, size_t N2) {
+	double v_help = 0.25 * (v[i][j] + R(v, i, j, Dir, N1, N2) + D(v, i, j, Dir, N1, N2) + RD(v, i, j, Dir, N1, N2));
+	double result = u[i][j] * (R(u, i, j, Dir, N1, N2) - L(u, i, j, Dir, N1, N2)) / (2.0*d_x)
+	               + v_help * (U(u, i, j, Dir, N1, N2) - D(u, i, j, Dir, N1, N2)) / (2.0*d_y);
 	return result;
+}
 
+double diffusion_term(Matrix &u, size_t i, size_t j, double d_xx, double d_yy, Direction Dir, size_t N1, size_t N2) {
+	double result = d_xx * (R(u, i, j, Dir, N1, N2) - 2.0 * u[i][j] + L(u, i, j, Dir, N1, N2))
+	              + d_yy * (U(u, i, j, Dir, N1, N2) - 2.0 * u[i][j] + D(u, i, j, Dir, N1, N2));
+	return result;
 }

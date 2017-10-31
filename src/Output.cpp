@@ -1,10 +1,10 @@
 #include "stdafx.h"
 #include "Output.h"
 
-void OutputPressure(Matrix p, int n, std::list<Circle> iList, Param par){
+void OutputPressure(Matrix p, int n, std::list<Circle> iList, Param par, std::string WorkDir){
 
 	std::ofstream output;
-	std::string filename = "Result/solution_pressure" + std::to_string(n) + ".plt";
+	std::string filename = WorkDir + "solution_pressure" + std::to_string(n) + ".plt";
 
 	output.open(filename.c_str());
 
@@ -34,10 +34,10 @@ void OutputPressure(Matrix p, int n, std::list<Circle> iList, Param par){
 }
 
 
-void OutputVelocity_U(Matrix u, int n, std::list<Circle> iList, Param par){
+void OutputVelocity_U(Matrix u, int n, std::list<Circle> iList, Param par, std::string WorkDir){
 
 	std::ofstream output;
-	std::string filename = "Result/solution_velocity_u" + std::to_string(n) + ".plt";
+	std::string filename = WorkDir + "solution_velocity_u" + std::to_string(n) + ".plt";
 
 	output.open(filename.c_str());
 
@@ -68,13 +68,13 @@ void OutputVelocity_U(Matrix u, int n, std::list<Circle> iList, Param par){
 }
 
 
-void OutputVelocity_V(Matrix v, int n, std::list<Circle> iList, Param par){
+void OutputVelocity_V(Matrix v, int n, std::list<Circle> iList, Param par, std::string WorkDir){
 
 	std::ofstream output;
 
 	// Solution v
 
-	std::string filename = "Result/solution_velocity_v" + std::to_string(n) + ".plt";
+	std::string filename = WorkDir + "solution_velocity_v" + std::to_string(n) + ".plt";
 
 	output.open(filename.c_str());
 
@@ -104,10 +104,10 @@ void OutputVelocity_V(Matrix v, int n, std::list<Circle> iList, Param par){
 	output.close();
 }
 
+
 void Output(Matrix p, Matrix u, Matrix v, int n, std::list<Circle> iList, Param par,fs::path ResultFolder) {
 
 	std::ofstream output;
-	//std::string filename = "Result/step" + std::to_string(n) + ".plt";
 
 	output.open(ResultFolder.append(L"\step" + std::to_wstring(n) + L".plt").c_str());
 
@@ -187,6 +187,9 @@ void SetLog(std::ostream& log, Param par) {
 	log << "Force parameter alpha         : alpha = " << par.alpha_f << std::endl;
 	log << "Force parameter beta          : beta  = " << par.beta_f << std::endl;
 	log << "Tolerance for Zeidel method   : tol = " << par.Zeidel_eps << std::endl;
+	log << "Step number for start of Solids adding  : AddSolids_start    = " << par.AddSolids_start    << std::endl;
+	log << "Step interval for Solids adding         : AddSolids_interval = " << par.AddSolids_interval << std::endl;
+	log << "Number of added Solids                  : AddSolids_N        = " << par.AddSolids_N        << std::endl;
 	log << std::endl;
 
 }
@@ -200,3 +203,26 @@ void PushLog(std::ostream& log, int n, double eps_u, double eps_v) {
 	log << "n = " << std::setw(6) << n << "\t eps_u = " << std::fixed << eps_u << "\t eps_v = " << std::fixed << eps_v << "\t" << s_time;
 	std::cout << "n = " << std::setw(6) << n << "\t eps_u = " << std::fixed << eps_u << "\t eps_v = " << std::fixed << eps_v << "\t" << s_time;
 }
+
+void Output_dp(Matrix dp, int n, Param par, std::string WorkDir) {
+
+	std::ofstream output;
+	std::string filename = WorkDir + "dp" + std::to_string(n) + ".plt";
+
+	output.open(filename.c_str());
+
+	output << "title = " << '"' << "sample mesh" << '"' << std::endl;
+	output << "Variables = x y dp" << std::endl;
+	output << "zone T=" << '"' << n << '"' << ",  i=" << dp.size() << ", j=" << dp[0].size() << ", f=point" << std::endl;
+	output << "SolutionTime = " << n << std::endl;
+
+	for (int j = 0; j <= par.N2; ++j) {
+		for (int i = 0; i <= par.N1; ++i) {
+			GeomVec xp = x_p(i, j, par);
+			output << xp[1] << " " << xp[2] << " " << dp[i][j] << std::endl;
+		}
+	}
+
+	output.close();
+}
+

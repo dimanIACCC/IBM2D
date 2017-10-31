@@ -92,7 +92,7 @@ ublas::matrix<double> InvertMat(ublas::matrix<double> A) {
 	ublas::matrix<double> inverse(ublas::identity_matrix<double>(A.size1()));
 
 	pmatrix pm(A.size1());                  	// create a permutation matrix for the LU-factorization
-	int res = ublas::lu_factorize(A, pm);       // perform LU-factorization
+	size_t res = ublas::lu_factorize(A, pm);       // perform LU-factorization
 	if (res != 0) std::cout << "InvertGeomMat: cannot inverse Matrix" << std::endl;
 	lu_substitute(A, pm, inverse);             // backsubstitute to get the inverse matrix
 

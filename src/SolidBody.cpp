@@ -16,6 +16,7 @@ SolidBody::SolidBody(double x, double y, double ux, double uy, double omega, dou
 	this->Nn = Nn;
 	Nodes.resize(Nn);
 	this->moving = moving;
+	this->copied = false;
 }
 
 
@@ -56,7 +57,7 @@ void SolidBody::velocities() {
 void SolidBody::move(double d_t) {
 	if (moving) {
 		//update position
-		for (int k = 0; k < Nn; ++k) {
+		for (size_t k = 0; k < Nn; ++k) {
 			//rotate
 			GeomVec r = Nodes[k].x - xc;
 			GeomVec x_temp = rotate_Vector_around_vector(r, omega  * length(r) * d_t); //
@@ -67,7 +68,7 @@ void SolidBody::move(double d_t) {
 	}
 }
 
-double SolidBody::ds(int i) {
+double SolidBody::ds(size_t i) {
 	GeomVec xL, xR;
 	if (i > 0)    xL = Nodes[i-1].x;
 	else          xL = Nodes[Nn-1].x;
@@ -131,9 +132,9 @@ void Read_Solids(std::string filename, std::list<Circle>& Solids, Param par) {
 
 }
 
-void Add_Solids(std::list<Circle>& Solids, int nSolids, int n, int n_start, int n_interval, Param par) {
-	if ((n % n_interval) == n_start) { //create new solids starting from $n_start$ iteration with interval of $n_interval$ iterations
-		for (int i = 0; i < nSolids; i++) { // add $nSolids$ solids
+void Add_Solids(std::list<Circle>& Solids, int n, Param par) {
+	if ((n % par.AddSolids_interval) == par.AddSolids_start && (n >= par.AddSolids_start)) { //create new solids starting from $AddSolids_start$ iteration with interval of $AddSolids_interval$ iterations
+		for (int i = 0; i < par.AddSolids_N; i++) { // add $AddSolids_N$ solids
 			GeomVec x;
 			x[0] = 0;
 			x[1] = par.L / 10 + par.L / 10 * 0.95 * (double(rand()) - RAND_MAX / 2) / RAND_MAX;
@@ -181,4 +182,45 @@ bool Collide(Circle& s1, Circle& s2, Param par) {
 		}
 	}
 	return result;
+}
+
+void Solids_move(std::list<Circle> &solidList, Param par) {
+
+	///--------------collisions between particles-----------------
+	for (auto one = solidList.begin(); one != solidList.end(); one++) {
+		for (auto two = next(one); two != solidList.end(); two++) {
+			if (Collide(*one, *two, par)) if (Debug) std::cout << "Collision detected" << std::endl;
+		}
+	}
+	///-------------collision with walls--------------------------
+	for (auto one = solidList.begin(); one != solidList.end(); one++) {
+		double DistUpper = par.H - one->xc[2];//<----distance to upper wall
+		double DistLower = one->xc[2];//<-------distance to lower wall
+		if (DistUpper < par.k_dist * one->r || DistLower < par.k_dist * one->r) {
+			if (Debug) std::cout << "Collision with wall detected" << std::endl;
+			one->uc[2] = -one->uc[2];
+		}
+	}
+
+	///
+	for (auto it = solidList.begin(); it != solidList.end();) {
+
+		it->move(par.d_t);
+
+		//Right boundary conditions for Solids
+		if (it->xc[1] - it->r < par.L) {
+			it++;
+		}
+		else {
+			if (par.BC == periodical) {
+				it->xc[1] -= par.L;
+				for (size_t k = 0; k < it->Nn; ++k)  it->Nodes[k].x[1] -= par.L;
+				it++;
+			}
+			else
+			it = solidList.erase(it);
+		}
+
+	}
+
 }
