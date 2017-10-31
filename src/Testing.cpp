@@ -4,9 +4,8 @@
 using namespace std;
 void DoTesting() {
 	std::cout << "Start testing" << std::endl;
-	//MakeResultDir(L"\TestsResult");
 	int Re = 20;
-	//DoTestForce(Re);
+	DoTestForce(Re);
 	Re = 100;
 	DoTestForce(Re);
 
@@ -80,8 +79,6 @@ void DoTestForce(int Re) {
 		if (Re > 43) {
 			CalcForceDrugLift(Force_x, n - 1, forceDrug);
 			CalcForceDrugLift(Force_y, n - 1, forceLift);
-
-
 
 			if (n == n0 + 20e3) {
 				forceDrug.close();

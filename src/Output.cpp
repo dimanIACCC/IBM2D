@@ -167,7 +167,7 @@ void MakeResultDir(fs::path dir_Result) {
 	}
 	catch (const fs::filesystem_error& ex)
 	{
-		std::cout << ex.what() << '\n' << "Enter any key";
+		std::cout << ex.what() << std::endl << "Enter any key";
 		std::cin.get();
 	}
 }
