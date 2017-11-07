@@ -136,8 +136,8 @@ void Output(Matrix p, Matrix u, Matrix v, int n, std::list<Circle> iList, Param 
 			output << solid.Nodes[i].x[1] << " "
 			       << solid.Nodes[i].x[2] << " "
 			       << solid.omega[3]      << " "
-			       << solid.Nodes[i].us[1] << " "
-			       << solid.Nodes[i].us[2] << " " << std::endl;
+			       << solid.Nodes[i].uf[1] << " "
+			       << solid.Nodes[i].uf[2] << " " << std::endl;
 		}
 	}
 

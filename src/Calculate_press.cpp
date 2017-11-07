@@ -27,6 +27,7 @@ double Calculate_Press_correction(Matrix &delta_p, Matrix &b_p, Param par){
 
 				if (i == 0     )                 help = delta_p[i + 1][j];       // L
 				if (i == n1 - 1)                 help = delta_p[i - 1][j];       // R
+
 				if (j == 0     )                 help = delta_p[i][j + 1];       // D
 				if (j == n2 - 1)                 help = delta_p[i][j - 1];       // U
 
@@ -35,15 +36,22 @@ double Calculate_Press_correction(Matrix &delta_p, Matrix &b_p, Param par){
 				if (i == n1 - 1 && j == 0     )  help = delta_p[i - 1][j + 1];   // RD
 				if (i == n1 - 1 && j == n2 - 1)  help = delta_p[i - 1][j - 1];   // RU
 
-				if (par.BC == periodical && i == 0     ) help = delta_p[n1 - 2][j];
-				if (par.BC == periodical && i == n1 - 1) help = delta_p[1][j];
+				if (par.BC == periodical) {
+					//periodical pressure
+					if (i == 0     ) help = delta_p[n1 - 2][j];
+					if (i == n1 - 1) help = delta_p[1][j];
 
-				if (j == 0 || j == 1 || j == n2 - 2 || j == n2 - 1) {
-					if ( i == n1 - 1 || i == n1 - 2)
-						help = 0.0; // Right boundary condition
-					if ((i == 0      || i == 1     ) && par.BC == periodical)
-						help = 0.0; // Left boundary condition for periodical problem
+					// fixed pressure and zero pressure gradient in corners
+					if (i == 1 || i == n1 - 2)
+					if (j == 1 || j == 2 || j == n2 - 3 || j == n2 - 2)
+							help = 0.0; // corners
 				}
+
+
+				// Output pressure for non-periodical BC
+				if (par.BC != periodical && i == n1 - 2 )
+						help = 0.0; // whole boundary
+
 
 				if (fabs(help) > delta_p_max) {
 					delta_p_max = fabs(help);

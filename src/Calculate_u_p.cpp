@@ -50,7 +50,7 @@ void Calculate_u_p(Matrix &U_n  , Matrix &V_n,
 			P_Right = Calculate_Press_Right(U_new, V_new, Fx, Fy, par);
 			double Delta_P_max = Calculate_Press_correction(Delta_P, P_Right, par);
 			double P_max = std::max(max(P), 1.e-4);
-			double relax = 0.02 * std::min(P_max / Delta_P_max, 1.0);
+			double relax = std::min(P_max / Delta_P_max, 0.02);
 
 			std::cout << "s = " << s << ", delta_P / P = " << Delta_P_max / P_max << std::endl;
 		#pragma endregion Pressure
@@ -58,14 +58,14 @@ void Calculate_u_p(Matrix &U_n  , Matrix &V_n,
 		#pragma region New P and U
 			P += Delta_P * relax;
 
-			for (size_t i = 0; i < U_new.size() - 1; ++i) {
-				for (size_t j = 0; j < U_new[0].size() - 1; ++j) {
+			for (size_t i = 0; i < U_new.size(); ++i) {
+				for (size_t j = 0; j < U_new[0].size(); ++j) {
 					U_new[i][j] -= relax * par.d_t * (Delta_P[i + 1][j] - Delta_P[i][j]) / par.d_x;
 				}
 			}
 
-			for (size_t i = 0; i < V_new.size() - 1; ++i) {
-				for (size_t j = 0; j < V_new[0].size() - 1; ++j) {
+			for (size_t i = 0; i < V_new.size(); ++i) {
+				for (size_t j = 0; j < V_new[0].size(); ++j) {
 					V_new[i][j] -= relax * par.d_t * (Delta_P[i][j + 1] - Delta_P[i][j]) / par.d_y;
 				}
 			}
@@ -111,15 +111,17 @@ void ApplyInitialData(Matrix &u, Matrix &p, Param par) {
 	for (size_t i = 0; i < p.size(); ++i) {
 		for (size_t j = 0; j < p[0].size(); ++j) {
 			GeomVec xp = x_p(i, j, par);
-			p[i][j] = 0.0;
+			p[i][j] = (par.L - xp[1]) * dpdx_Poiseuille(par.H, par.Re);
 		}
 	}
 
 	size_t Nx = p.size();
 	if (par.BC == periodical) {
 		for (size_t j = 0; j < p[0].size(); ++j) {
-			p[0][j]      = par.L * dpdx_Poiseuille(par.H, par.Re);
-			p[1][j]      = par.L * dpdx_Poiseuille(par.H, par.Re);
+			//p[0][j]      = par.L * dpdx_Poiseuille(par.H, par.Re);
+			//p[1][j]      = par.L * dpdx_Poiseuille(par.H, par.Re);
+			//p[Nx-2][j]   = 0;
+			//p[Nx-1][j]   = 0;
 		}
 	}
 

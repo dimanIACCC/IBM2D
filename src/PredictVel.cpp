@@ -63,6 +63,7 @@ Matrix Operator_Ax(ublas::matrix<Template> &A, Matrix &u, Param par, Direction D
 		switch (par.BC) {
 			case u_infinity:	result[0][j] = u[0][j];		result[Nx - 1][j] = (3.0 * u[Nx - 1][j] - 4.0 * u[Nx - 2][j] + 1.0 * u[Nx - 3][j]) / (2.0*par.d_x);		break;
 			case u_inflow  :	result[0][j] = u[0][j];		result[Nx - 1][j] = (3.0 * u[Nx - 1][j] - 4.0 * u[Nx - 2][j] + 1.0 * u[Nx - 3][j]) / (2.0*par.d_x);		break;
+			case periodical:	if (Dir == Dv) { result[0][j] = u[0][j];		result[Nx - 1][j] = u[Nx - 1][j]; }		break;
 		}
 	}
 	
@@ -74,12 +75,11 @@ Matrix CalculateB(Matrix &u_n, Matrix &v_n, Matrix &u_s, Matrix &v_s, Matrix &p,
 
 	size_t Nx = u_n.size();
 	size_t Ny = u_n[0].size();
-	size_t N;
 
 	double d_u, d_v;
 
-	if      (Dir == Du) { d_u = par.d_x;	d_v = par.d_y;	N = Ny;}
-	else if (Dir == Dv) { d_u = par.d_y;	d_v = par.d_x;	N = Nx;}
+	if      (Dir == Du) { d_u = par.d_x;	d_v = par.d_y;}
+	else if (Dir == Dv) { d_u = par.d_y;	d_v = par.d_x;}
 
 	double d_uu = 1.0 / (d_u*d_u);
 	double d_vv = 1.0 / (d_v*d_v);
@@ -98,33 +98,34 @@ Matrix CalculateB(Matrix &u_n, Matrix &v_n, Matrix &u_s, Matrix &v_s, Matrix &p,
 
 			result[i][j] = -(       alpha  * advective_term_n
 			               + (1.0 - alpha) * advective_term_s)
-			                           - pressure_term
-			                           + diffusion_term_n / (2.0*par.Re)
-			                           + u_n[i][j] / par.d_t
-			                           + force[i][j];
+			                               - pressure_term
+			                               + diffusion_term_n / (2.0*par.Re)
+			                               + u_n[i][j] / par.d_t
+			                               + force[i][j];
 		}
 	}
 
 	if (par.BC == periodical) {
-		for (size_t j = 1; j < Ny - 1; ++j) {
-
-			if (Dir == Du){
+		if (Dir == Du) {
+			for (size_t j = 1; j < Ny; ++j) {
 				size_t i = 0;
 				double advective_term_n = advective_term(u_n, v_n, i, j, d_u, d_v, Dir, par.N1, par.N2);
 				double advective_term_s = advective_term(u_s, v_s, i, j, d_u, d_v, Dir, par.N1, par.N2);
-				double diffusion_term_n = diffusion_term(u_n, i, j, d_uu, d_vv, Dir, par.N1, par.N2);
-				double pressure_term = (p[1][j] - p[Nx - 2][j] - par.L * dpdx_Poiseuille(par.H, par.Re)) / d_u;
-				result[i][j] = -(alpha  * advective_term_n
-						+ (1.0 - alpha) * advective_term_s)
-						- pressure_term
-						+ diffusion_term_n / (2.0*par.Re)
-						+ u_n[i][j] / par.d_t
-						+ force[i][j];
+				double diffusion_term_n = diffusion_term(u_n, i, j, d_uu, d_vv, Dir, par.N1, par.N2 + 1);
+				double pressure_term = (p[1][j] - p[par.N1 - 1][j] - par.L * dpdx_Poiseuille(par.H, par.Re)) / d_u;
+				result[i][j] = -(alpha * advective_term_n
+				       + (1.0 - alpha) * advective_term_s)
+				                       - pressure_term
+				                       + diffusion_term_n / (2.0*par.Re)
+				                       + u_n[i][j] / par.d_t
+				                       + force[i][j];
 				result[Nx - 1][j] = result[0][j];
 			}
-			else if (Dir == Dv) {
-				result[0]     [j] = result[Nx- 2][j];
-				result[Nx - 1][j] = result[1][j];
+		}
+		else if (Dir == Dv) {
+			for (size_t j = 0; j < Ny; ++j) {
+				result[0]     [j] = u_n[Nx - 2][j];
+				result[Nx - 1][j] = u_n[1][j];
 			}
 		}
 	}
@@ -132,8 +133,18 @@ Matrix CalculateB(Matrix &u_n, Matrix &v_n, Matrix &u_s, Matrix &v_s, Matrix &p,
 
 	// Up-Down BC
 	for (size_t i = 0; i < Nx; ++i) {
-		result[i][0] = 0;
-		result[i][Ny - 1] = 0;
+		if      (Dir == Du) {
+			result[i][0] = -u_n[i][1];
+			result[i][Ny - 1] = -u_n[i][Ny - 2];
+			if (par.BC == u_infinity) {
+				result[i][0] = 0;
+				result[i][Ny - 1] = 0;
+			}
+		}
+		else if (Dir == Dv) {
+			result[i][0] = 0;
+			result[i][Ny - 1] = 0;
+		}
 	}
 
 	for (size_t j = 0; j < Ny; ++j) {

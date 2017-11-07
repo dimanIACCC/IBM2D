@@ -24,10 +24,10 @@ void GetInfluenceArea(int &i_min, int &i_max, int &j_min, int &j_max, size_t &Ni
 	j_max = (int)(x[2] / par.d_y) + size;
 	j_min = (int)(x[2] / par.d_y) - size;
 
-	if (i_min < 0) {
+	if (i_min < 0 && par.BC != periodical) {
 		i_min = 0;
 	}
-	if (j_min < 0 && par.BC != periodical) {
+	if (j_min < 0) {
 		j_min = 0;
 	}
 	if (i_max >= Ni && par.BC != periodical) {
@@ -77,26 +77,34 @@ void CalculateForce(Matrix& force_x, Matrix& force_y, std::list<Circle> &iList, 
 
 			//calculating fluid velocity uf in Lagrange nodes by using near Euler nodes and discrete delta function
 			solid.Nodes[k].uf[1] = 0.0;
-			for (size_t i = ix_min; i <= ix_max; ++i) {
-				for (size_t j = jx_min; j <= jx_max; ++j) {
-					int i_real = 1 + (i - 1) % (nx1 - 1);
+			for (int i = ix_min; i <= ix_max; ++i) {
+				for (int j = jx_min; j <= jx_max; ++j) {
+					int i_real = i;
+					if (i_real < 0      ) i_real += nx1 - 1;
+					if (i_real >= nx1 - 1) i_real -= nx1 - 1;
 					GeomVec xu = x_u(i_real, j, par);
 					GeomVec xs = solid.Nodes[k].x;
-					if (i > i_real) xs[1] -= par.L;
-					if (i < i_real) xs[1] += par.L;
-					solid.Nodes[k].uf[1] += u[i_real][j] * DeltaFunction(xu[1] -  xs[1], xu[2] - xs[2], par) * par.d_x * par.d_y;
+					solid.Nodes[k].uf[1] += u[i_real][j] * DeltaFunction(xu[1] - xs[1]        , xu[2] - xs[2], par) * par.d_x * par.d_y;
+					if (par.BC = periodical) {
+					solid.Nodes[k].uf[1] += u[i_real][j] * DeltaFunction(xu[1] - xs[1] - par.L, xu[2] - xs[2], par) * par.d_x * par.d_y;
+					solid.Nodes[k].uf[1] += u[i_real][j] * DeltaFunction(xu[1] - xs[1] + par.L, xu[2] - xs[2], par) * par.d_x * par.d_y;
+					}
 				}
 			}
 
 			solid.Nodes[k].uf[2] = 0.0;
-			for (size_t i = iy_min; i <= iy_max; ++i) {
-				for (size_t j = jy_min; j <= jy_max; ++j) {
-					int i_real = 1 + (i - 1) % (ny1 - 2);
+			for (int i = iy_min; i <= iy_max; ++i) {
+				for (int j = jy_min; j <= jy_max; ++j) {
+					int i_real = i;
+					if (i_real < 0      ) i_real += ny1 - 1;
+					if (i_real > ny1 - 1) i_real -= ny1 - 1;
 					GeomVec xv = x_v(i_real, j, par);
 					GeomVec xs = solid.Nodes[k].x;
-					if (i > i_real) xs[1] -= par.L;
-					if (i < i_real) xs[1] += par.L;
-					solid.Nodes[k].uf[2] += v[i_real][j] * DeltaFunction(xv[1] -  xs[1], xv[2] - xs[2], par) * par.d_x * par.d_y;
+					solid.Nodes[k].uf[2] += v[i_real][j] * DeltaFunction(xv[1] - xs[1]        , xv[2] - xs[2], par) * par.d_x * par.d_y;
+					if (par.BC = periodical) {
+					solid.Nodes[k].uf[2] += v[i_real][j] * DeltaFunction(xv[1] - xs[1] - par.L, xv[2] - xs[2], par) * par.d_x * par.d_y;
+					solid.Nodes[k].uf[2] += v[i_real][j] * DeltaFunction(xv[1] - xs[1] + par.L, xv[2] - xs[2], par) * par.d_x * par.d_y;
+					}
 				}
 			}
 
@@ -107,38 +115,46 @@ void CalculateForce(Matrix& force_x, Matrix& force_y, std::list<Circle> &iList, 
 
 			double ds = solid.ds(k);
 			// calculating force force_temp for Euler nodes caused by k-th solid
-			for (size_t i = ix_min; i <= ix_max; ++i) {
-				for (size_t j = jx_min; j <= jx_max; ++j) {
-					size_t i_real = 1 + (i - 1) % (nx1 - 1);
+			for (int i = ix_min; i <= ix_max; ++i) {
+				for (int j = jx_min; j <= jx_max; ++j) {
+					int i_real = i;
+					if (i_real < 0      ) i_real += nx1 - 1;
+					if (i_real >= nx1 - 1) i_real -= nx1 - 1;
 					GeomVec xu = x_u(i_real, j, par);
 					GeomVec xs = solid.Nodes[k].x;
-					force_x_temp[i_real][j] += solid.Nodes[k].f[1] * DeltaFunction(xu[1] -  xs[1]         , xu[2] - xs[2], par) * ds * ds;
-					if (xs[1] > par.L)
-					force_x_temp[i_real][j] += solid.Nodes[k].f[1] * DeltaFunction(xu[1] - (xs[1] - par.L), xu[2] - xs[2], par) * ds * ds;
+					force_x_temp[i_real][j] += solid.Nodes[k].f[1] * DeltaFunction(xu[1] - xs[1]        , xu[2] - xs[2], par) * ds * ds;
+					if (par.BC = periodical) {
+					force_x_temp[i_real][j] += solid.Nodes[k].f[1] * DeltaFunction(xu[1] - xs[1] - par.L, xu[2] - xs[2], par) * ds * ds;
+					force_x_temp[i_real][j] += solid.Nodes[k].f[1] * DeltaFunction(xu[1] - xs[1] + par.L, xu[2] - xs[2], par) * ds * ds;
+					}
 				}
 			}
 
-			for (size_t i = iy_min; i <= iy_max; ++i) {
-				for (size_t j = jy_min; j <= jy_max; ++j) {
-					size_t i_real = 1 + (i - 1) % (ny1 - 2);
+			for (int i = iy_min; i <= iy_max; ++i) {
+				for (int j = jy_min; j <= jy_max; ++j) {
+					int i_real = i;
+					if (i_real < 0      ) i_real += ny1 - 1;
+					if (i_real > ny1 - 1) i_real -= ny1 - 1;
 					GeomVec xv = x_v(i_real, j, par);
 					GeomVec xs = solid.Nodes[k].x;
-					force_y_temp[i_real][j] += solid.Nodes[k].f[2] * DeltaFunction(xv[1] - xs[1]          , xv[2] - xs[2], par) * ds * ds;
-					if (xs[1] > par.L)
-					force_y_temp[i_real][j] += solid.Nodes[k].f[2] * DeltaFunction(xv[1] - (xs[1] - par.L), xv[2] - xs[2], par) * ds * ds;
+					force_y_temp[i_real][j] += solid.Nodes[k].f[2] * DeltaFunction(xv[1] - xs[1]        , xv[2] - xs[2], par) * ds * ds;
+					if (par.BC = periodical) {
+					force_y_temp[i_real][j] += solid.Nodes[k].f[2] * DeltaFunction(xv[1] - xs[1] - par.L, xv[2] - xs[2], par) * ds * ds;
+					force_y_temp[i_real][j] += solid.Nodes[k].f[2] * DeltaFunction(xv[1] - xs[1] + par.L, xv[2] - xs[2], par) * ds * ds;
+					}
 				}
 			}
 		}
 
-		int ix_max = 0;
-		int ix_min = nx1;
-		int jx_max = 0;
-		int jx_min = nx2;
+		int ix_max = 0 - nx1;
+		int ix_min = 2 * nx1;
+		int jx_max = 0 - nx2;
+		int jx_min = 2 * nx2;
 
-		int iy_max = 0;
-		int iy_min = ny1;
-		int jy_max = 0;
-		int jy_min = ny2;
+		int iy_max = 0 - ny1;
+		int iy_min = 2 * ny1;
+		int jy_max = 0 - ny2;
+		int jy_min = 2 * ny2;
 
 		for (size_t k = 0; k < solid.Nn; ++k) {
 
@@ -180,9 +196,11 @@ void CalculateForce(Matrix& force_x, Matrix& force_y, std::list<Circle> &iList, 
 		// summarizing force for Euler nodes and for solids
 		std::fill(solid.f.begin(),   solid.f.end()  , 0.0);
 		std::fill(solid.tau.begin(), solid.tau.end(), 0.0);
-		for (size_t i = ix_min; i <= ix_max; ++i) {
-			for (size_t j = jx_min; j <= jx_max; ++j) {
-				int i_real = 1 + (i - 1) % (nx1 - 1);
+		for (int i = ix_min; i <= ix_max; ++i) {
+			for (int j = jx_min; j <= jx_max; ++j) {
+				int i_real = i;
+				if (i_real < 0      ) i_real += nx1 - 1;
+				if (i_real >= nx1 - 1) i_real -= nx1 - 1;
 				force_x[i_real][j] += force_x_temp[i_real][j];
 				solid.f[1] += force_x_temp[i_real][j] * par.d_x * par.d_y;
 				GeomVec r = x_u(i, j, par) - solid.xc;
@@ -195,7 +213,9 @@ void CalculateForce(Matrix& force_x, Matrix& force_y, std::list<Circle> &iList, 
 		}
 		for (size_t i = iy_min; i <= iy_max; ++i) {
 			for (size_t j = jy_min; j <= jy_max; ++j) {
-				int i_real = 1 + (i - 1) % (ny1 - 2);
+				int i_real = i;
+				if (i_real < 0      ) i_real += ny1 - 1;
+				if (i_real > ny1 - 1) i_real -= ny1 - 1;
 				force_y[i_real][j] += force_y_temp[i_real][j];
 				solid.f[2] += force_y_temp[i_real][j] * par.d_x * par.d_y;
 				GeomVec r = x_v(i, j, par) - solid.xc;

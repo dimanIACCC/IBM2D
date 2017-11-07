@@ -81,6 +81,8 @@ int main(int argc, char *argv[]) {
 
 		if (n % par.output_step == 0) {
 			Output(P, U_new, V_new, n, solidList, par, WorkDir);
+			//OutputVelocity_U(U_new, n, solidList, par, WorkDir);
+			//OutputVelocity_V(V_new, n, solidList, par, WorkDir);
 		}
 
 
