@@ -1,7 +1,7 @@
 #include "SolidBody.h"
 
 
-SolidBody::SolidBody(double x, double y, double ux, double uy, double omega, double rho, int Nn, bool moving)
+SolidBody::SolidBody(double x, double y, double ux, double uy, double omega, double rho, int Nn, bool moving, int name)
 {
 	std::fill(this->xc.begin()   , this->xc.end(),    0.0); // fill vector xc    with zeros
 	std::fill(this->uc.begin()   , this->uc.end()   , 0.0); // fill vector uc    with zeros
@@ -15,7 +15,7 @@ SolidBody::SolidBody(double x, double y, double ux, double uy, double omega, dou
 	this->Nn = Nn;
 	Nodes.resize(Nn);
 	this->moving = moving;
-	this->copied = false;
+	this->name = name;
 }
 
 
@@ -24,8 +24,8 @@ SolidBody::~SolidBody()
 
 }
 
-Circle::Circle(double x, double y, double ux, double uy, double omega, double rho, int Nn, bool moving, double r) :
-     SolidBody(       x,        y,        ux,        uy,        omega,        rho,     Nn,      moving) {
+Circle::Circle(double x, double y, double ux, double uy, double omega, double rho, int Nn, bool moving, int name, double r) :
+     SolidBody(       x,        y,        ux,        uy,        omega,        rho,     Nn,      moving,     name) {
 	this->r = r;
 
 	for (int i = 0; i < Nn; ++i){
@@ -37,7 +37,7 @@ Circle::Circle(double x, double y, double ux, double uy, double omega, double rh
 }
 
 Circle::Circle(double x, double y, Param par):
-	    Circle(       x,        y, 0.0, 0.0, 0.0, par.rho, par.Nn, true, par.r) {
+	    Circle(       x,        y, 0.0, 0.0, 0.0, par.rho, par.Nn, true, 1, par.r) {
 	this->uc[1] = ux_Poiseuille(y, par.H);
 }
  
@@ -120,7 +120,7 @@ void Read_Solids(std::string filename, std::list<Circle>& Solids, Param par) {
 					ux = 0;
 					uy = 0;
 				}
-				Circle c(x, y, ux, uy, omega, rho, Nn, moving, r);
+				Circle c(x, y, ux, uy, omega, rho, Nn, moving, 1, r);
 				Solids.push_back(c);
 			}
 		}
@@ -132,12 +132,12 @@ void Read_Solids(std::string filename, std::list<Circle>& Solids, Param par) {
 }
 
 void Add_Solids(std::list<Circle>& Solids, int n, Param par) {
-	if ((n % par.AddSolids_interval) == par.AddSolids_start && (n >= par.AddSolids_start)) { //create new solids starting from $AddSolids_start$ iteration with interval of $AddSolids_interval$ iterations
+	if (   (n - par.AddSolids_start) % par.AddSolids_interval == 0   &&   (n >= par.AddSolids_start)) { //create new solids starting from $AddSolids_start$ iteration with interval of $AddSolids_interval$ iterations
 		for (int i = 0; i < par.AddSolids_N; i++) { // add $AddSolids_N$ solids
 			GeomVec x;
 			x[0] = 0;
-			x[1] = par.L / 10 + par.L / 10 * 0.95 * (double(rand()) - RAND_MAX / 2) / RAND_MAX;
-			x[2] = par.H / 2  + par.H / 2  * 0.95 * (double(rand()) - RAND_MAX / 2) / RAND_MAX;
+			x[1] =              par.r + par.L / 10 * (0.5 + 0.9 * (double(rand()) - RAND_MAX / 2) / RAND_MAX);
+			x[2] = (par.H)                         * (0.5 + 0.9 * (double(rand()) - RAND_MAX / 2) / RAND_MAX);
 			x[3] = 0;
 			Circle c(x[1], x[2], par);
 			// check if new Solid does not cross other Solids

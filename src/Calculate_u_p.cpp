@@ -19,7 +19,7 @@ void Calculate_u_p(Matrix &U_n  , Matrix &V_n,
 	U_s = U_n;
 	V_s = V_n;
 
-	double s_max = 1000;
+	int s_max = 1000;
 	for (int s = 0; s <= s_max; ++s) {
 
 		#pragma region Velocity
@@ -81,7 +81,8 @@ void Calculate_u_p(Matrix &U_n  , Matrix &V_n,
 			//Output_dp(Delta_P, s, par, WorkDir);
 			//Output(P, U_new, V_new, s, solidList, par, WorkDir);
 		}
-		if (Delta_P_max / P_max < 0.01) {
+		double eps_P = 1.e-3;
+		if (Delta_P_max / P_max < eps_P) {
 			std::cout << "s iterations: " << s << std::endl;
 			break;
 		}

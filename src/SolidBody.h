@@ -27,9 +27,9 @@ public:
 	double V;       // volume
 	std::vector<Node> Nodes;   // Nodes of the SolidBody mesh
 	size_t Nn;                    // Number of Nodes
-	bool copied;                  // true - Solid was copied from Output boundary to Input boundary
+	int name;                     // integer name of the solid
 	
-	SolidBody(double x, double y, double ux, double uy, double omega, double rho, int Nn, bool moving);
+	SolidBody(double x, double y, double ux, double uy, double omega, double rho, int Nn, bool moving, int name);
 	~SolidBody();
 	void velocities();      // calculates the velocities in all Nodes of the SolidBody
 	void move(double d_t); // move Solid using $uc$ and $omega$
@@ -39,7 +39,7 @@ public:
 class Circle : public SolidBody{
 public:
 	double r;
-	Circle(double x, double y, double ux, double uy, double omega, double rho, int Nn, bool moving, double r);
+	Circle(double x, double y, double ux, double uy, double omega, double rho, int Nn, bool moving, int name, double r);
 	Circle(double x, double y, Param par);
 	~Circle();
 };

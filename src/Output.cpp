@@ -130,15 +130,26 @@ void Output(Matrix p, Matrix u, Matrix v, int n, std::list<Circle> iList, Param 
 	}
 
 	for (auto& solid : iList) {
-		output << "zone T = circle" << ",  i=" << solid.Nn << ", f=point" << std::endl;
+		output << "zone T = circle" << ",  i=" << solid.Nn+2 << ", f=point" << std::endl;
 		output << "SolutionTime = " << n << std::endl;
+
+			output << solid.xc[1]          << " "
+			       << solid.xc[2]          << " "
+			       << solid.omega[3]       << " "
+			       << solid.uc[1]          << " "
+			       << solid.uc[2]          << " " << std::endl;
 		for (int i = 0; i < solid.Nn; ++i) {
-			output << solid.Nodes[i].x[1] << " "
-			       << solid.Nodes[i].x[2] << " "
-			       << solid.omega[3]      << " "
+			output << solid.Nodes[i].x[1]  << " "
+			       << solid.Nodes[i].x[2]  << " "
+			       << solid.omega[3]       << " "
 			       << solid.Nodes[i].uf[1] << " "
 			       << solid.Nodes[i].uf[2] << " " << std::endl;
 		}
+			output << solid.Nodes[0].x[1]  << " "
+			       << solid.Nodes[0].x[2]  << " "
+			       << solid.omega[3]       << " "
+			       << solid.Nodes[0].uf[1] << " "
+			       << solid.Nodes[0].uf[2] << " " << std::endl;
 	}
 
 	output.close();

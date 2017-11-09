@@ -11,7 +11,7 @@ Param::Param() {
 	alpha_f = 0;
 	beta_f = -2000;
 	Nn = 50;
-	rho = 10 / (M_PI * 0.5 * 0.5); // corresponds to old formula for force
+	rho = 10;
 	r = 0.5;
 	output_step = 50;
 	N_max = 5000000;
