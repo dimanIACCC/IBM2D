@@ -1,6 +1,8 @@
 #include "stdafx.h"
 #include "Parameters.h"
 
+
+
 Param::Param() {
 	// default parameters
 	Re = 20;
@@ -76,6 +78,10 @@ Param::Param(std::string filename): Param(){
 	d_x = L / (N1 - 1);
 	d_y = H / (N2 - 1);
 
+}
+
+Param::~Param()
+{
 }
 
 Boundary_Conditions string_to_BC(std::string s) {

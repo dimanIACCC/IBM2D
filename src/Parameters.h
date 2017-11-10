@@ -2,6 +2,9 @@
 
 #include "GeomVec.h"
 #include "String.h"
+#include <boost/filesystem.hpp>
+
+namespace fs = boost::filesystem;
 
 enum Boundary_Conditions {
 	u_infinity, u_inflow, periodical
@@ -34,6 +37,7 @@ public:
 	Boundary_Conditions BC;   // Boundary Conditions
 	Param();
 	Param(std::string filename);
+	~Param();
 };
 
 Boundary_Conditions string_to_BC(std::string s);

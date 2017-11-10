@@ -20,9 +20,12 @@
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="src\BiCGStab.h" />
+    <ClInclude Include="src\BodyOfProgram.h" />
     <ClInclude Include="src\CalculateForce.h" />
     <ClInclude Include="src\Calculate_press.h" />
+    <ClInclude Include="src\Calculate_u_p.h" />
     <ClInclude Include="src\GeomVec.h" />
+    <ClInclude Include="src\Matrix.h" />
     <ClInclude Include="src\Output.h" />
     <ClInclude Include="src\Parameters.h" />
     <ClInclude Include="src\PredictVel.h" />
@@ -34,10 +37,13 @@
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="src\BiCGStab.cpp" />
+    <ClCompile Include="src\BodyOfProgram.cpp" />
     <ClCompile Include="src\CalculateForce.cpp" />
     <ClCompile Include="src\Calculate_press.cpp" />
+    <ClCompile Include="src\Calculate_u_p.cpp" />
     <ClCompile Include="src\GeomVec.cpp" />
     <ClCompile Include="src\ImmersedBoundaryMeth.cpp" />
+    <ClCompile Include="src\Matrix.cpp" />
     <ClCompile Include="src\Output.cpp" />
     <ClCompile Include="src\Parameters.cpp" />
     <ClCompile Include="src\PredictVel.cpp" />

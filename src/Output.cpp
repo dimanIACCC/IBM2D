@@ -104,12 +104,12 @@ void OutputVelocity_V(Matrix v, int n, std::list<Circle> iList, Param par, std::
 	output.close();
 }
 
-
-void Output(Matrix p, Matrix u, Matrix v, int n, std::list<Circle> iList, Param par,fs::path ResultFolder) {
+void Output(Matrix p, Matrix u, Matrix v, int n, std::list<Circle> iList, Param par, std::string WorkDir) {
 
 	std::ofstream output;
+	std::string filename = WorkDir + "step" + std::to_string(n) + ".plt";
 
-	output.open(ResultFolder.append(L"\step" + std::to_wstring(n) + L".plt").c_str());
+	output.open(filename.c_str());
 
 	output << "title = " << '"' << "sample mesh" << '"' << std::endl;
 	output << "Variables = x y p u v" << std::endl;
@@ -120,11 +120,11 @@ void Output(Matrix p, Matrix u, Matrix v, int n, std::list<Circle> iList, Param 
 		for (int i = 0; i <= par.N1; ++i) {
 			GeomVec xp = x_p(i, j, par);
 			double u_, v_;
-			if      (i == 0)      u_ =  u[0][j];
-			else if (i == par.N1) u_ =  u[par.N1 - 1][j];
+			if (i == 0)      u_ = u[0][j];
+			else if (i == par.N1) u_ = u[par.N1 - 1][j];
 			else                  u_ = (u[i - 1][j] + u[i][j]) * 0.5;
-			if      (j == 0)      v_ =  v[i][0];
-			else if (j == par.N2) v_ =  v[i][par.N2 - 1];
+			if (j == 0)      v_ = v[i][0];
+			else if (j == par.N2) v_ = v[i][par.N2 - 1];
 			else                  v_ = (v[i][j - 1] + v[i][j]) * 0.5;
 			output << xp[1] << " " << xp[2] << " " << p[i][j] << " " << u_ << " " << v_ << std::endl;
 		}
@@ -135,10 +135,10 @@ void Output(Matrix p, Matrix u, Matrix v, int n, std::list<Circle> iList, Param 
 		output << "SolutionTime = " << n << std::endl;
 		for (int i = 0; i < solid.Nn; ++i) {
 			output << solid.Nodes[i].x[1] << " "
-			       << solid.Nodes[i].x[2] << " "
-			       << solid.omega[3]      << " "
-			       << solid.Nodes[i].us[1] << " "
-			       << solid.Nodes[i].us[2] << " " << std::endl;
+				<< solid.Nodes[i].x[2] << " "
+				<< solid.omega[3] << " "
+				<< solid.Nodes[i].us[1] << " "
+				<< solid.Nodes[i].us[2] << " " << std::endl;
 		}
 	}
 

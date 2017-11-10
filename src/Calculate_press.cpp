@@ -3,11 +3,7 @@
 
 
 
-<<<<<<< HEAD
-double Calculate_Press_correction(Matrix& delta_p, Matrix &b_p, Param par, std::ostream& log, bool OverFlow){
-=======
 double Calculate_Press_correction(Matrix &delta_p, Matrix &b_p, Param par){
->>>>>>> refs/remotes/origin/Kuranakov
 
 	double eps;
 	double delta_p_max;
@@ -69,14 +65,11 @@ double Calculate_Press_correction(Matrix &delta_p, Matrix &b_p, Param par){
 
 	}
 
-<<<<<<< HEAD
-	if (eps > par.Zeidel_eps) {
-		std::cout << "Zeidel has not converged, eps_p = " << eps << std::endl;
-		//log << "Zeidel has not converged, eps_p = " << eps << std::endl;
-=======
+
+
 	if (eps / delta_p_max > par.Zeidel_eps) {
 		std::cout << "Zeidel has not converged, eps_p = " << eps << ",   delta_p_max = " << delta_p_max << std::endl;
->>>>>>> refs/remotes/origin/Kuranakov
+		
 	}
 
 	return delta_p_max;
