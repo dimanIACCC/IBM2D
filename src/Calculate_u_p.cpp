@@ -81,7 +81,7 @@ void Calculate_u_p(Matrix &U_n  , Matrix &V_n,
 			//Output_dp(Delta_P, s, par, WorkDir);
 			//Output(P, U_new, V_new, s, solidList, par, WorkDir);
 		}
-		if (Delta_P_max / P_max < 0.01) {
+		if (Delta_P_max / P_max < 0.1) {
 			std::cout << "s iterations: " << s << std::endl;
 			break;
 		}

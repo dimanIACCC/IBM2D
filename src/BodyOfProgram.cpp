@@ -76,7 +76,7 @@ void BodyOfProgram(std::string WorkDir, int Re, bool TEST) {
 		}
 
 
-		const double epsilon = 1e-6;
+		const double epsilon = 1e-7;
 		if (eps_u < epsilon && eps_v < epsilon) {
 
 			Output(P, U_new, V_new, n, solidList, par, WorkDir);
@@ -90,17 +90,32 @@ void BodyOfProgram(std::string WorkDir, int Re, bool TEST) {
 					int Nx1 = 101;
 					int Nx2 = 202;
 					if (par.N1 / (double)Nx1 > 1.5) {
-						if (abs((solidList.front().f[1] - Cd1) / (Cd2 - Cd1) - (par.N1 - Nx1) / (Nx2 - Nx1)) < 0.5)std::cout << "OK!" << std::endl;
-						else std::cout << "Not OK" << std::endl;
-						//cout << std::endl << "Cx = " << solidList.front().f[1] << " Cy = " << solidList.front().f[2] << std::endl;
+						if (abs((solidList.front().f[1] - Cd1) / (Cd2 - Cd1) - (par.N1 - Nx1) / (Nx2 - Nx1)) < 0.5) {
+							std::cout << "OK!" << std::endl;
+							log << "OK!" << std::endl;
+						}
+						else {
+							std::cout << "Not OK" << std::endl;
+							log << "Not OK" << std::endl;
+						}
+						
 					}
 					else {
 						double Cd_expected = Cd1 * Nx1 / (double)par.N1;
-						if (abs(Cd_expected - solidList.front().f[1]) < 0.8)std::cout << "OK!" << std::endl;
-						else std::cout << "Not OK" << std::endl;
+						if (abs(Cd_expected - solidList.front().f[1]) < 0.8) {
+							std::cout << "OK!" << std::endl;
+							log << "OK!" << std::endl;
+						}
+						else {
+							std::cout << "Not OK" << std::endl;
+							log << "Not OK" << std::endl;
+						}
 					}
 				}
-				else std::cout << "That`s strange" << "Re =" << par.Re << std::endl;
+				else {
+					std::cout << "That`s strange" << "Re =" << par.Re << std::endl;
+					log << "That`s strange" << "Re =" << std::endl;
+				} 
 
 				break;
 			}
