@@ -12,7 +12,7 @@ void BodyOfProgram(std::string WorkDir, int Re, bool TEST) {
 		par.Re = Re;
 		par.alpha_f = -8e-5;
 		par.beta_f = -2e3;
-		if (Re > 43) par.N_max = 250e3;
+		if (Re > 43) par.N_max = 200e3;
 	}
 
 #pragma region SetMatrices
@@ -56,7 +56,6 @@ void BodyOfProgram(std::string WorkDir, int Re, bool TEST) {
 
 		CalculateForce(Fx, Fy, solidList, U_n, V_n, par);
 		force << n << " " << Summ(Fx) << " " << Summ(Fy) << std::endl;
-
 		Calculate_u_p(U_n, V_n, U_new, V_new, P, Fx, Fy, A_u, A_v, solidList, par, WorkDir);
 
 		double eps_u = diff(U_n, U_new);
@@ -85,10 +84,10 @@ void BodyOfProgram(std::string WorkDir, int Re, bool TEST) {
 				 
 					//the line is drawn with two points (Cd1,Nx1) & (Cd2,Nx2)
 					double Cd1 = -3.15387;
-					double Cd2 = -2.52765;
+					double Cd2 = -2.13; // Russel and Wang, 2003 
 
 					int Nx1 = 101;
-					int Nx2 = 202;
+					int Nx2 = 301;
 					if (par.N1 / (double)Nx1 > 1.5) {
 						if (abs((solidList.front().f[1] - Cd1) / (Cd2 - Cd1) - (par.N1 - Nx1) / (Nx2 - Nx1)) < 0.5) {
 							std::cout << "OK!" << std::endl;

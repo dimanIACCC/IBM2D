@@ -10,23 +10,23 @@ void DoTesting() {
 	fs::path dir;
 	//1.
 	//first test
-	/*std::cout << "First test for small Re" << std::endl;
+	std::cout << "First test for small Re" << std::endl;
 	dir = L"TestsResult\\Overflow(Re=" + to_wstring(Re) + (wchar_t)')' + (wchar_t)'\\';
 	MakeResultDir(dir);
 	BodyOfProgram(dir.string(),Re,true);
-	std::cout << "=======================" << std::endl;*/
+	std::cout << "=======================" << std::endl;
 
 	//2.
 	//second test
 	std::cout << "Second test for large Re" << std::endl;
 	Re = 100;
 	dir = L"TestsResult\\Overflow(Re=" + to_wstring(Re) + (wchar_t)')' + (wchar_t)'\\';
-	/*MakeResultDir(dir);
-	BodyOfProgram(dir.string(), Re,true);*/
+	MakeResultDir(dir);
+	BodyOfProgram(dir.string(), Re,true);
 
 	double minF = 0, maxF = 0;
 	double t1 = 0, t2 = 0;
-	int n0 = 2e5;
+	int n0 = 180e3;
 	ifstream inForce;
 	inForce.open(dir.append(L"force.plt").c_str());
 	for (int i = 0; i < 3 * n0 + 5; i++) {
