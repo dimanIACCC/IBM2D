@@ -27,7 +27,7 @@ int main(int argc, char *argv[]) {
 		else if (PAR == "-dir") if (VALUE.size() > 0) WorkDir = VALUE + '/';
 	}
 
-	Param par(WorkDir + "input.txt"); // Construct Parameters using file input.txt
+	Param par(WorkDir, "input.txt"); // Construct Parameters using file input.txt
 
 	#pragma region SetMatrices
 	CreateMatrix(U_n, par.N1, par.N2 + 1);
@@ -48,25 +48,18 @@ int main(int argc, char *argv[]) {
 	log.open(WorkDir + "log.txt", std::ios::out);
 	SetLog(log, par);
 
-	std::ofstream force;
-	force.open(WorkDir + "force.plt", std::ios::out);
-	force << "Variables = n, Fx, Fy" << std::endl;
-
 	ApplyInitialData(U_n, P, par); // Applying initial data to velocity
 
 	std::list<Circle> solidList; // list of immersed solids
 	Read_Solids(WorkDir + "Solids.txt", solidList, par); // read Solids from file
 
-	Output(P, U_n, V_n, -1, solidList, par, WorkDir);
+	Output(P, U_n, V_n, Fx, Fy, -1, solidList, par);
 
 	for (int n = 0; n <= par.N_max; ++n) {
 
 		Add_Solids(solidList, n, par);
 
-		CalculateForce(Fx, Fy, solidList, U_n, V_n, par);
-		force << n << " " << Summ(Fx) << " " << Summ(Fy) << std::endl;
-
-		Calculate_u_p(U_n, V_n, U_new, V_new, P, Fx, Fy, A_u, A_v, solidList, par, WorkDir);
+		Calculate_u_p(U_n, V_n, U_new, V_new, P, Fx, Fy, A_u, A_v, solidList, par);
 
 		double eps_u = diff(U_n, U_new);
 		double eps_v = diff(V_n, V_new);
@@ -74,21 +67,19 @@ int main(int argc, char *argv[]) {
 		U_n = U_new;
 		V_n = V_new;
 
-		Solids_move(solidList, par);
+		Solids_move(solidList, par, n);
 
 		PushLog(log, n, eps_u, eps_v);
 		log.flush();
 
 		if (n % par.output_step == 0) {
-			Output(P, U_new, V_new, n, solidList, par, WorkDir);
-			//OutputVelocity_U(U_new, n, solidList, par, WorkDir);
-			//OutputVelocity_V(V_new, n, solidList, par, WorkDir);
+			Output(P, U_new, V_new, Fx, Fy, n, solidList, par);
 		}
 
 
 		const double epsilon = 1e-6;
 		if (eps_u < epsilon && eps_v < epsilon) {
-			Output(P, U_new, V_new, n, solidList, par, WorkDir);
+			Output(P, U_new, V_new, Fx, Fy, n, solidList, par);
 			break;
 		}
 

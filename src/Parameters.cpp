@@ -23,17 +23,19 @@ Param::Param() {
 	AddSolids_start = 0;
 	AddSolids_interval = 200;
 	BC = u_inflow;
+	SolidName_max = 0;
+	WorkDir = "";
 
 	d_x = L / (N1 - 1);
 	d_y = H / (N2 - 1);
 }
 
-Param::Param(std::string filename): Param(){
+Param::Param(std::string WorkDir, std::string filename): Param(){
 	std::ifstream input;
 	std::string line;
 
 
-	input.open(filename.c_str());
+	input.open(WorkDir + filename);
 	if (input.is_open()) {
 		while (getline(input, line)) { // read line from file to string $line$
 			std::string PAR, VALUE;
@@ -72,6 +74,7 @@ Param::Param(std::string filename): Param(){
 		std::cout << "Using default parameters" << std::endl;
 	}
 
+	this->WorkDir = WorkDir;
 	d_x = L / (N1 - 1);
 	d_y = H / (N2 - 1);
 
@@ -95,7 +98,7 @@ double dpdx_Poiseuille(double H, double Re) {
 	return 8.0 / H / H / Re;
 }
 
-GeomVec x_p(size_t i, size_t j, Param par) {
+GeomVec x_p(int i, int j, Param par) {
 	GeomVec result;
 	result[0] = 0.0;
 	result[1] = (i - 0.5) * par.d_x;
@@ -108,7 +111,7 @@ GeomVec x_p(size_t i, size_t j, Param par) {
 	return result;
 }
 
-GeomVec x_u(size_t i, size_t j, Param par) {
+GeomVec x_u(int i, int j, Param par) {
 	GeomVec result;
 	result[0] = 0.0;
 	result[1] =  i        * par.d_x;
@@ -119,7 +122,7 @@ GeomVec x_u(size_t i, size_t j, Param par) {
 	return result;
 }
 
-GeomVec x_v(size_t i, size_t j, Param par) {
+GeomVec x_v(int i, int j, Param par) {
 	GeomVec result;
 	result[0] = 0.0;
 	result[1] = (i - 0.5) * par.d_x;

@@ -81,7 +81,7 @@ double Calculate_Press_correction(Matrix &delta_p, Matrix &b_p, Param par){
 }
 
 
-Matrix Calculate_Press_Right(Matrix &u, Matrix &v, Matrix &Fx, Matrix &Fy, Param par){
+Matrix Calculate_Press_Right(Matrix &u, Matrix &v, Param par){
 	double d = 0.0;
 
 	size_t n1 = par.N1 + 1;
@@ -95,10 +95,7 @@ Matrix Calculate_Press_Right(Matrix &u, Matrix &v, Matrix &Fx, Matrix &Fy, Param
 			double d = (1.0 / par.d_x) * (u[i][j] - u[i - 1][j])
 			         + (1.0 / par.d_y) * (v[i][j] - v[i][j - 1]);
 
-			double dF = (1.0 / par.d_x) * (Fx[i][j] - Fx[i - 1][j])
-				      + (1.0 / par.d_y) * (Fy[i][j] - Fy[i][j - 1]);
-
-			result[i][j] = d / par.d_t - dF;
+			result[i][j] = d / par.d_t;
 
 		}
 

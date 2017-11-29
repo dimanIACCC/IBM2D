@@ -100,8 +100,8 @@ Matrix CalculateB(Matrix &u_n, Matrix &v_n, Matrix &u_s, Matrix &v_s, Matrix &p,
 			               + (1.0 - alpha) * advective_term_s)
 			                               - pressure_term
 			                               + diffusion_term_n / (2.0*par.Re)
-			                               + u_n[i][j] / par.d_t
-			                               + force[i][j];
+			                               + u_n[i][j] / par.d_t;
+			                               //+ force[i][j];
 		}
 	}
 
@@ -117,8 +117,8 @@ Matrix CalculateB(Matrix &u_n, Matrix &v_n, Matrix &u_s, Matrix &v_s, Matrix &p,
 				       + (1.0 - alpha) * advective_term_s)
 				                       - pressure_term
 				                       + diffusion_term_n / (2.0*par.Re)
-				                       + u_n[i][j] / par.d_t
-				                       + force[i][j];
+				                       + u_n[i][j] / par.d_t;
+				                       //+ force[i][j];
 				result[Nx - 1][j] = result[0][j];
 			}
 		}
