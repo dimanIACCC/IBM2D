@@ -83,9 +83,6 @@ Param::Param(std::string WorkDir, std::string filename): Param(){
 
 }
 
-Param::~Param()
-{
-}
 
 Boundary_Conditions string_to_BC(std::string s) {
 	Boundary_Conditions BC;

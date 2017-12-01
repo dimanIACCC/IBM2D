@@ -28,7 +28,7 @@ SolidBody::~SolidBody()
 
 }
 
-Circle::Circle(double x, double y, double ux, double uy, double omega, double rho, int Nn, bool moving, int &name, double r) :
+Circle::Circle(double x, double y, double ux, double uy, double omega, double rho, int Nn, bool moving, int name, double r) :
      SolidBody(       x,        y,        ux,        uy,        omega,        rho,     Nn,      moving,      name) {
 	this->r = r;
 

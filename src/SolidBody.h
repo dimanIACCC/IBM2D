@@ -43,7 +43,7 @@ public:
 class Circle : public SolidBody{
 public:
 	double r;
-	Circle(double x, double y, double ux, double uy, double omega, double rho, int Nn, bool moving, int &name, double r);
+	Circle(double x, double y, double ux, double uy, double omega, double rho, int Nn, bool moving, int name, double r);
 	Circle(double x, double y, Param &par);
 	~Circle();
 };

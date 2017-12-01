@@ -4,7 +4,7 @@
 void BodyOfProgram(std::string WorkDir, int Re, bool TEST) {
 	Param par;
 	if (!TEST) {
-		Param par(WorkDir + "input.txt"); // Construct Parameters using file input.txt
+		Param par(WorkDir,"input.txt"); // Construct Parameters using file input.txt
 	}
 	else
 	{
@@ -18,12 +18,12 @@ void BodyOfProgram(std::string WorkDir, int Re, bool TEST) {
 #pragma region SetMatrices
 	CreateMatrix(U_n, par.N1, par.N2 + 1);
 	CreateMatrix(U_new, par.N1, par.N2 + 1);
-	CreateMatrix(Fx, par.N1, par.N2 + 1);
 	CreateMatrix(V_n, par.N1 + 1, par.N2);
 	CreateMatrix(V_new, par.N1 + 1, par.N2);
 	CreateMatrix(B_v, par.N1 + 1, par.N2);
-	CreateMatrix(Fy, par.N1 + 1, par.N2);
 	CreateMatrix(P, par.N1 + 1, par.N2 + 1);
+	CreateMatrix(Fx, par.N1, par.N2 + 1);
+	CreateMatrix(Fy, par.N1 + 1, par.N2);
 	ublas::matrix<Template> A_u(par.N1, par.N2 + 1);
 	ublas::matrix<Template> A_v(par.N1 + 1, par.N2);
 	Calculate_A(A_u, par, par.Re, Du);
@@ -46,17 +46,17 @@ void BodyOfProgram(std::string WorkDir, int Re, bool TEST) {
 	}
 	else
 	{
-		Circle c(10, 3.5, 0, 0, 0, par.rho, par.Nn, false, 1);
+		Circle c(10.0, 3.5, 0.0, 0.0, 0.0, par.rho, par.Nn, false,0, 1.0);
 		solidList.push_back(c);
 	}
-	Output(P, U_n, V_n, -1, solidList, par, WorkDir);
+	Output(P, U_n, V_n, Fx, Fy, -1, solidList, par);
 
 	for (int n = 0; n <= par.N_max; ++n) {
 		if(!TEST) Add_Solids(solidList, n, par);
 
-		CalculateForce(Fx, Fy, solidList, U_n, V_n, par);
-		force << n << " " << Summ(Fx) << " " << Summ(Fy) << std::endl;
-		Calculate_u_p(U_n, V_n, U_new, V_new, P, Fx, Fy, A_u, A_v, solidList, par, WorkDir);
+		/*CalculateForce(Fx, Fy, solidList, U_n, V_n, par);
+		force << n << " " << Summ(Fx) << " " << Summ(Fy) << std::endl;*/
+		Calculate_u_p(U_n, V_n, U_new, V_new, P, Fx, Fy, A_u, A_v, solidList, par);
 
 		double eps_u = diff(U_n, U_new);
 		double eps_v = diff(V_n, V_new);
@@ -64,21 +64,21 @@ void BodyOfProgram(std::string WorkDir, int Re, bool TEST) {
 		U_n = U_new;
 		V_n = V_new;
 
-		Solids_move(solidList, par);
+		Solids_move(solidList, par,n);
 
 		PushLog(log, n, eps_u, eps_v);
 		log.flush();
 
 		if (n % par.output_step == 0) {
 
-			Output(P, U_new, V_new, n, solidList, par, WorkDir);
+			Output(P, U_new, V_new, Fx, Fy, n, solidList, par);
 		}
 
 
 		const double epsilon = 1e-7;
 		if (eps_u < epsilon && eps_v < epsilon) {
 
-			Output(P, U_new, V_new, n, solidList, par, WorkDir);
+			Output(P, U_new, V_new, Fx, Fy, n, solidList, par);
 
 			if (TEST&& Re < 43) {
 				 

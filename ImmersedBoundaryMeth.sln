@@ -1,7 +1,7 @@
 ﻿
 Microsoft Visual Studio Solution File, Format Version 12.00
 # Visual Studio 15
-VisualStudioVersion = 15.0.26430.16
+VisualStudioVersion = 15.0.26730.12
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "ImmersedBoundaryMeth", "ImmersedBoundaryMeth.vcxproj", "{A677C252-A117-4B4A-BF5B-630ADF31D9DB}"
 EndProject
@@ -13,8 +13,8 @@ Global
 		Release|x86 = Release|x86
 	EndGlobalSection
 	GlobalSection(ProjectConfigurationPlatforms) = postSolution
-		{A677C252-A117-4B4A-BF5B-630ADF31D9DB}.Debug|x64.ActiveCfg = Debug|Win32
-		{A677C252-A117-4B4A-BF5B-630ADF31D9DB}.Debug|x64.Build.0 = Debug|Win32
+		{A677C252-A117-4B4A-BF5B-630ADF31D9DB}.Debug|x64.ActiveCfg = Debug|x64
+		{A677C252-A117-4B4A-BF5B-630ADF31D9DB}.Debug|x64.Build.0 = Debug|x64
 		{A677C252-A117-4B4A-BF5B-630ADF31D9DB}.Debug|x86.ActiveCfg = Debug|Win32
 		{A677C252-A117-4B4A-BF5B-630ADF31D9DB}.Debug|x86.Build.0 = Debug|Win32
 		{A677C252-A117-4B4A-BF5B-630ADF31D9DB}.Release|x64.ActiveCfg = Release|x64
@@ -24,5 +24,8 @@ Global
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
+	EndGlobalSection
+	GlobalSection(ExtensibilityGlobals) = postSolution
+		SolutionGuid = {CBB5A133-230D-4816-8F2E-C14C9702081F}
 	EndGlobalSection
 EndGlobal
