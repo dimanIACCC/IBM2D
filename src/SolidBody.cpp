@@ -2,7 +2,7 @@
 #include "SolidBody.h"
 
 
-SolidBody::SolidBody(double x, double y, double ux, double uy, double omega, double rho, int Nn, bool moving)
+SolidBody::SolidBody(double x, double y, double ux, double uy, double omega, double rho, int Nn, bool moving, int &name)
 {
 	std::fill(this->xc.begin()   , this->xc.end(),    0.0); // fill vector xc    with zeros
 	std::fill(this->uc.begin()   , this->uc.end()   , 0.0); // fill vector uc    with zeros
@@ -16,7 +16,10 @@ SolidBody::SolidBody(double x, double y, double ux, double uy, double omega, dou
 	this->Nn = Nn;
 	Nodes.resize(Nn);
 	this->moving = moving;
-	this->copied = false;
+	this->name = name;
+	this->omega_n = this->omega;
+	this->uc_n    = this->uc;
+	this->Fr = 0.;
 }
 
 
@@ -25,8 +28,8 @@ SolidBody::~SolidBody()
 
 }
 
-Circle::Circle(double x, double y, double ux, double uy, double omega, double rho, int Nn, bool moving, double r) :
-     SolidBody(       x,        y,        ux,        uy,        omega,        rho,     Nn,      moving) {
+Circle::Circle(double x, double y, double ux, double uy, double omega, double rho, int Nn, bool moving, int &name, double r) :
+     SolidBody(       x,        y,        ux,        uy,        omega,        rho,     Nn,      moving,      name) {
 	this->r = r;
 
 	for (int i = 0; i < Nn; ++i){
@@ -37,8 +40,9 @@ Circle::Circle(double x, double y, double ux, double uy, double omega, double rh
 	I =  V * r * r / 2.0; // angular momentum for unit density
 }
 
-Circle::Circle(double x, double y, Param par):
-	    Circle(       x,        y, 0.0, 0.0, 0.0, par.rho, par.Nn, true, par.r) {
+Circle::Circle(double x, double y, Param &par):
+	    Circle(       x,        y, 0.0, 0.0, 0.0, par.rho, par.Nn, true, par.SolidName_max, par.r) {
+	par.SolidName_max++;
 	this->uc[1] = ux_Poiseuille(y, par.H);
 }
  
@@ -78,7 +82,33 @@ double SolidBody::ds(size_t i) {
 	return result;
 }
 
-void Read_Solids(std::string filename, std::list<Circle>& Solids, Param par) {
+void SolidBody::log_init(std::string WorkDir) {
+	std::ofstream output;
+	std::string filename = WorkDir + "Solids/" + std::to_string(name) + ".plt";
+	output.open(filename);
+
+	output << "title = " << '"' << "Solid" << name << '"' << std::endl;
+	output << "Variables = x y u v fx fy omega tau n" << std::endl;
+}
+
+void SolidBody::log(std::string WorkDir, int n) {
+	std::ofstream output;
+	std::string filename = WorkDir + "Solids/" + std::to_string(name) + ".plt";
+	output.open(filename, std::ios::app);
+
+	output << xc[1] << "   "
+	       << xc[2] << "   "
+	       << uc[1] << "   "
+	       << uc[2] << "   "
+	       <<  f[1] << "   "
+	       <<  f[2] << "   "
+	       <<  omega[3] << "   "
+	       <<  tau[3]   << "   "
+	       <<  n        << "   "
+	       << std::endl;
+}
+
+void Read_Solids(std::string filename, std::list<Circle>& Solids, Param &par) {
 	std::ifstream input;
 	std::string line;
 
@@ -121,8 +151,10 @@ void Read_Solids(std::string filename, std::list<Circle>& Solids, Param par) {
 					ux = 0;
 					uy = 0;
 				}
-				Circle c(x, y, ux, uy, omega, rho, Nn, moving, r);
+				Circle c(x, y, ux, uy, omega, rho, Nn, moving, par.SolidName_max, r);
+				par.SolidName_max++;
 				Solids.push_back(c);
+				c.log_init(par.WorkDir);
 			}
 		}
 	}
@@ -132,13 +164,13 @@ void Read_Solids(std::string filename, std::list<Circle>& Solids, Param par) {
 
 }
 
-void Add_Solids(std::list<Circle>& Solids, int n, Param par) {
-	if ((n % par.AddSolids_interval) == par.AddSolids_start && (n >= par.AddSolids_start)) { //create new solids starting from $AddSolids_start$ iteration with interval of $AddSolids_interval$ iterations
+void Add_Solids(std::list<Circle>& Solids, int n, Param &par) {
+	if (   (n - par.AddSolids_start) % par.AddSolids_interval == 0   &&   (n >= par.AddSolids_start)) { //create new solids starting from $AddSolids_start$ iteration with interval of $AddSolids_interval$ iterations
 		for (int i = 0; i < par.AddSolids_N; i++) { // add $AddSolids_N$ solids
 			GeomVec x;
 			x[0] = 0;
-			x[1] = par.L / 10 + par.L / 10 * 0.95 * (double(rand()) - RAND_MAX / 2) / RAND_MAX;
-			x[2] = par.H / 2  + par.H / 2  * 0.95 * (double(rand()) - RAND_MAX / 2) / RAND_MAX;
+			x[1] =              par.r + par.L / 10 * (0.5 + 0.9 * (double(rand()) - RAND_MAX / 2) / RAND_MAX);
+			x[2] = (par.H)                         * (0.5 + 0.9 * (double(rand()) - RAND_MAX / 2) / RAND_MAX);
 			x[3] = 0;
 			Circle c(x[1], x[2], par);
 			// check if new Solid does not cross other Solids
@@ -151,6 +183,7 @@ void Add_Solids(std::list<Circle>& Solids, int n, Param par) {
 			}
 			if (add) {
 				Solids.push_back(c);
+				c.log_init(par.WorkDir);
 			}
 		}
 	}
@@ -184,7 +217,7 @@ bool Collide(Circle& s1, Circle& s2, Param par) {
 	return result;
 }
 
-void Solids_move(std::list<Circle> &solidList, Param par) {
+void Solids_move(std::list<Circle> &solidList, Param par, int n) {
 
 	///--------------collisions between particles-----------------
 	for (auto one = solidList.begin(); one != solidList.end(); one++) {
@@ -205,10 +238,18 @@ void Solids_move(std::list<Circle> &solidList, Param par) {
 	///
 	for (auto it = solidList.begin(); it != solidList.end();) {
 
+
+		if (it->moving) {
+			it->uc_n    = it->uc;
+			it->omega_n = it->omega;
+		}
+
 		it->move(par.d_t);
 
+		it->log(par.WorkDir, n);
+
 		//Right boundary conditions for Solids
-		if (it->xc[1] - it->r < par.L) {
+		if (it->xc[1] < par.L) {
 			it++;
 		}
 		else {
@@ -224,3 +265,25 @@ void Solids_move(std::list<Circle> &solidList, Param par) {
 	}
 
 }
+
+void Solids_zero_force(std::list<Circle>& Solids) {
+	for (auto& it : Solids) {
+		std::fill(it.f.begin(), it.f.end(), 0.0);
+		std::fill(it.tau.begin(), it.tau.end(), 0.0);
+		it.Fr_all = 0.;
+		for (size_t k = 0; k < it.Nn; ++k) {
+			std::fill(it.Nodes[k].f.begin(), it.Nodes[k].f.end(), 0.0);
+		}
+	}
+}
+
+void Solids_velocity_new(std::list<Circle>& Solids, Param par) {
+	for (auto& it : Solids) {
+		if (it.moving) {
+			it.uc    = it.uc_n    - it.f   * par.d_t * 1 / (it.rho - 1) / it.V;  // fluid density equals 1
+			it.omega = it.omega_n - it.tau * par.d_t * 1 / (it.rho - 1) / it.I;  // angular moment I is normalized with density
+		}
+	}
+}
+
+

@@ -9,3 +9,4 @@ Debug/
 input.txt
 Solids.txt
 *.zip
+src/ImmersedBoundaryMeth.cpp
