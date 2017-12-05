@@ -32,8 +32,8 @@ int main(int argc, char *argv[]) {
 		else if (PAR == "-dir") if (VALUE.size() > 0) WorkDir = VALUE + '/';
 	}
 	if (WorkDir == "") {
-		WorkDir = L"\Result";
-		MakeResultDir(WorkDir);
+		WorkDir = L"\Result\\";
+		CreateDirectory(WorkDir);
 	}
 
 

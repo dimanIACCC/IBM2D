@@ -8,7 +8,7 @@
 namespace fs = boost::filesystem;
 
 
-void MakeResultDir(fs::path dir_Result);
+void CreateDirectory(fs::path directory);
 void SetLog(std::ostream &log, Param par);
 void PushLog(std::ostream &log, int n, double eps_u, double eps_v);
 

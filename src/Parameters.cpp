@@ -33,7 +33,7 @@ Param::Param() {
 	d_y = H / (N2 - 1);
 }
 
-Param::Param(std::string WorkDir, std::string filename): Param(){
+Param::Param(std::string WorkDir, std::string filename) : Param() {
 	std::ifstream input;
 	std::string line;
 
@@ -44,7 +44,7 @@ Param::Param(std::string WorkDir, std::string filename): Param(){
 			std::string PAR, VALUE;
 			GetParValue(line, PAR, VALUE);
 			if (VALUE.size() > 0) {
-				if      (PAR == "Re")           Re = stod(VALUE);
+				if (PAR == "Re")           Re = stod(VALUE);
 				else if (PAR == "L")            L = stod(VALUE);
 				else if (PAR == "H")            H = stod(VALUE);
 				else if (PAR == "N1")           N1 = stoi(VALUE);
@@ -81,6 +81,9 @@ Param::Param(std::string WorkDir, std::string filename): Param(){
 	d_x = L / (N1 - 1);
 	d_y = H / (N2 - 1);
 
+}
+Param::Param(std::string WorkDir) : Param() {
+	this->WorkDir = WorkDir;
 }
 
 

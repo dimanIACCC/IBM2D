@@ -169,24 +169,30 @@ void Output(Matrix p, Matrix u, Matrix v, Matrix Fx, Matrix Fy, int n, std::list
 }
 
 
-void MakeResultDir(fs::path dir_Result) {
-	//(L"\Result");
+void CreateDirectory(fs::path directory) {
+
 
 	try
 	{
-		if (exists(dir_Result)) {
+		if (exists(directory)) {
 			std::cout << "The folder is already exist! Remove all files inside? (Y/N)" << std::endl;
 			char answer = std::cin.get();
 			if ( (answer == 'Y') ||  (answer == 'y') ) {
-				fs::remove_all(dir_Result);
-				fs::create_directory(dir_Result);
+				fs::remove_all(directory);
+				fs::create_directory(directory);
 			}
 			else {
 				exit(0);
 			}
 		}
 		else {
-			fs::create_directory(dir_Result);
+			try {
+				fs::create_directory(directory);
+			}
+			catch(const fs::filesystem_error& ex) {
+				CreateDirectory(directory.parent_path());
+				fs::create_directory(directory);
+			}
 		}
 	}
 	catch (const fs::filesystem_error& ex)

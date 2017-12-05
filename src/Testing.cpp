@@ -12,7 +12,7 @@ void DoTesting() {
 	//first test
 	std::cout << "First test for small Re" << std::endl;
 	dir = L"TestsResult\\Overflow(Re=" + to_wstring(Re) + (wchar_t)')' + (wchar_t)'\\';
-	MakeResultDir(dir);
+	CreateDirectory(dir);
 	BodyOfProgram(dir.string(),Re,true);
 	std::cout << "=======================" << std::endl;
 
@@ -21,7 +21,7 @@ void DoTesting() {
 	std::cout << "Second test for large Re" << std::endl;
 	Re = 100;
 	dir = L"TestsResult\\Overflow(Re=" + to_wstring(Re) + (wchar_t)')' + (wchar_t)'\\';
-	MakeResultDir(dir);
+	CreateDirectory(dir);
 	BodyOfProgram(dir.string(), Re,true);
 
 	double minF = 0, maxF = 0;

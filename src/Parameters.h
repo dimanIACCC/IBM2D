@@ -38,7 +38,7 @@ public:
 	int SolidName_max;        // Maximal Name of Solids
 	std::string WorkDir;      // WorkDir
 	Param();
-
+	Param(std::string WorkDir);
 	Param(std::string WorkDir, std::string filename);
 
 };

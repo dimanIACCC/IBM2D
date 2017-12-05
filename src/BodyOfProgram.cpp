@@ -2,7 +2,7 @@
 #include "BodyOfProgram.h"
 
 void BodyOfProgram(std::string WorkDir, int Re, bool TEST) {
-	Param par;
+	Param par(WorkDir);
 	if (!TEST) {
 		Param par(WorkDir,"input.txt"); // Construct Parameters using file input.txt
 	}
