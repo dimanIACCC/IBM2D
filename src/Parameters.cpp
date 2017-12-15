@@ -8,8 +8,6 @@ Param::Param() {
 	N1 = 101;
 	N2 = 21;
 	d_t = 0.00125;
-	alpha_f = 0;
-	beta_f = -2000;
 	Nn = 50;
 	rho = 10;
 	r = 0.5;
@@ -47,8 +45,6 @@ Param::Param(std::string WorkDir, std::string filename): Param(){
 				else if (PAR == "N1")           N1 = stoi(VALUE);
 				else if (PAR == "N2")           N2 = stoi(VALUE);
 				else if (PAR == "d_t")          d_t = stod(VALUE);
-				else if (PAR == "alpha_f")      alpha_f = stod(VALUE);
-				else if (PAR == "beta_f")       beta_f = stod(VALUE);
 				else if (PAR == "Nn")           Nn = stoi(VALUE);
 				else if (PAR == "rho")          rho = stod(VALUE);
 				else if (PAR == "r")            r = stod(VALUE);
@@ -130,5 +126,15 @@ GeomVec x_v(int i, int j, Param par) {
 	result[3] = 0.0;
 	//if (i == 0) result[1] = 0.0;
 	//if (i == par.N1) result[1] = (i - 1) * par.d_x;
+	return result;
+}
+
+GeomVec x_c(int i, int j, Param par) {
+	GeomVec result;
+	result[0] = 0.0;
+	result[1] = i * par.d_x;
+	result[2] = j * par.d_y;
+	result[3] = 0.0;
+
 	return result;
 }

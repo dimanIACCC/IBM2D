@@ -34,6 +34,8 @@ Circle::Circle(double x, double y, double ux, double uy, double omega, double rh
 	for (int i = 0; i < Nn; ++i){
 		Nodes[i].x[1] = x + cos(i * 2.0 * M_PI / Nn) * r;
 		Nodes[i].x[2] = y + sin(i * 2.0 * M_PI / Nn) * r;
+		Nodes[i].n[1] =     cos(i * 2.0 * M_PI / Nn);
+		Nodes[i].n[2] =     sin(i * 2.0 * M_PI / Nn);
 	}
 	V = M_PI * r * r;
 	I =  V * r * r / 2.0; // angular momentum for unit density
@@ -53,7 +55,7 @@ void SolidBody::velocities() {
 	for (int i = 0; i < Nn; ++i) {
 		GeomVec r;
 		r = Nodes[i].x - xc;
-		Nodes[i].us = uc + x_product(omega, r);
+		Nodes[i].us = uc_n + x_product(omega_n, r);
 	}
 }
 
@@ -63,7 +65,7 @@ void SolidBody::move(double d_t) {
 		for (size_t k = 0; k < Nn; ++k) {
 			//rotate
 			GeomVec r = Nodes[k].x - xc;
-			GeomVec x_temp = rotate_Vector_around_vector(r, omega  * length(r) * d_t); //
+			GeomVec x_temp = rotate_Vector_around_vector(r, omega * d_t); //
 			Nodes[k].x = xc + x_temp; // rotate solid by angle $omega$ * $dt$
 			Nodes[k].x += uc * d_t; // move
 		}
@@ -281,6 +283,9 @@ void Solids_velocity_new(std::list<Circle>& Solids, Param par) {
 		if (it.moving) {
 			it.uc    = it.uc_n    - it.f   * par.d_t * 1 / (it.rho - 1) / it.V;  // fluid density equals 1
 			it.omega = it.omega_n - it.tau * par.d_t * 1 / (it.rho - 1) / it.I;  // angular moment I is normalized with density
+
+			//it.uc    = it.uc_n    + it.F_hd   / it.rho / it.V * par.d_t;  // fluid density equals 1
+			//it.omega = it.omega_n + it.tau_hd / it.rho / it.I * par.d_t;  // angular moment I is normalized with density
 		}
 	}
 }
