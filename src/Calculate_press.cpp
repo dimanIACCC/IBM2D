@@ -44,8 +44,8 @@ double Calculate_Press_correction(Matrix &delta_p, Matrix &b_p, Param par){
 
 					// fixed pressure and zero pressure gradient in corners
 					if (i == n1 - 2)
-					if (j == 1 || j == 2 || j == n2 - 3 || j == n2 - 2)
-							help = 0.0; // corners
+					if (j == 1)
+						help = 0.0; // corners
 				}
 
 

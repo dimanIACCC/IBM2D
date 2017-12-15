@@ -18,12 +18,16 @@ void Calculate_u_p(Matrix &U_n  , Matrix &V_n,
 	CreateMatrix(P_Right, par.N1 + 1, par.N2 + 1);
 	CreateMatrix(Delta_P, par.N1 + 1, par.N2 + 1);
 
+	CreateMatrix(Exx, par.N1 + 1, par.N2 + 1);
+	CreateMatrix(Eyy, par.N1 + 1, par.N2 + 1);
+	CreateMatrix(Exy, par.N1, par.N2);
+
 	U_s = U_n;
 	V_s = V_n;
 
 	int f_max = 20;
 	for (int f = 0; f <= f_max; ++f) {
-		CalculateForce(Fx_tmp, Fy_tmp, solidList, U_n, V_n, par);
+		CalculateForce(Fx_tmp, Fy_tmp, Exx, Eyy, Exy, P, solidList, U_n, V_n, par);
 		U_n += Fx_tmp * (par.d_t);
 		V_n += Fy_tmp * (par.d_t);
 	}
@@ -62,7 +66,10 @@ void Calculate_u_p(Matrix &U_n  , Matrix &V_n,
 					it.S = 0.;
 				}
 
-				CalculateForce(Fx_tmp, Fy_tmp, solidList, U_new, V_new, par);
+				deformation_velocity(U_new, V_new, Exx, Eyy, Exy, par);
+				//Output_c(Exy, s, par);
+
+				CalculateForce(Fx_tmp, Fy_tmp, Exx, Eyy, Exy, P, solidList, U_new, V_new, par);
 				U_new += Fx_tmp * (par.d_t);
 				V_new += Fy_tmp * (par.d_t);
 				Fx += Fx_tmp;
@@ -73,6 +80,8 @@ void Calculate_u_p(Matrix &U_n  , Matrix &V_n,
 			}
 
 			Solids_velocity_new(solidList, par);
+
+			Solids_Force(solidList, par.Re);
 
 		#pragma endregion Velocity
 
@@ -105,6 +114,7 @@ void Calculate_u_p(Matrix &U_n  , Matrix &V_n,
 		if (s % par.output_step == 0) {
 			//Output_dp(Delta_P, s, par);
 			//Output(P, U_new, V_new, Fx, Fy, s, solidList, par);
+			//OutputVelocity_V(V_new, s, solidList, par);
 		}
 
 		double eps_P = 1.e-3;

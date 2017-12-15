@@ -10,7 +10,9 @@ public:
 	GeomVec uf;       // velocity of the fluid in the Node
 	GeomVec us;       // velocity of the SolidBody in the Node
 	GeomVec f, f_tmp; // force and temporary force in iterations
-	GeomVec Integral; // value of integral when calculating force
+	GeomVec n;        // norm
+	GeomMat Eps;      // deformation velocity
+	double p;         // pressure
 };
 
 class SolidBody
@@ -22,6 +24,8 @@ public:
 	GeomVec omega, omega_n;  // angular velocity
 	GeomVec f;      // force applied to the whole SolidBody
 	double Fr, Fr_all;      // average radial Force applied to SolidBody
+	GeomVec F_hd;   // Force calculated from hydrodynamics
+	GeomVec tau_hd; // torque, moment of force calculated from hydrodynamics
 	double S;       // length of contour for radial Force averaging
 	GeomVec tau;    // torque, moment of force applied to the whole SolidBody
 	double I;       // angular momentum

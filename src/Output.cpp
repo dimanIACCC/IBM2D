@@ -140,14 +140,14 @@ void Output(Matrix p, Matrix u, Matrix v, Matrix Fx, Matrix Fy, int n, std::list
 			       << 0                    << " "
 			       << solid.uc[1]          << " "
 			       << solid.uc[2]          << " "
-			       << solid.f [1]          << " "
-			       << solid.f [2]          << " "
+			       << solid.F_hd[1]        << " "
+			       << solid.F_hd[2]        << " "
 			       << std::endl;
 		for (int i = 0; i < solid.Nn; ++i) {
 
 			output << solid.Nodes[i].x[1]  << " "
 			       << solid.Nodes[i].x[2]  << " "
-			       << 0                    << " "
+			       << solid.Nodes[i].p     << " "
 			       << solid.Nodes[i].uf[1] << " "
 			       << solid.Nodes[i].uf[2] << " "
 			       << solid.Nodes[i].f [1] << " "
@@ -157,7 +157,7 @@ void Output(Matrix p, Matrix u, Matrix v, Matrix Fx, Matrix Fy, int n, std::list
 		}
 			output << solid.Nodes[0].x[1]  << " "
 			       << solid.Nodes[0].x[2]  << " "
-			       << 0                    << " "
+			       << solid.Nodes[0].p     << " "
 			       << solid.Nodes[0].uf[1] << " "
 			       << solid.Nodes[0].uf[2] << " "
 			       << solid.Nodes[0].f [1] << " "
@@ -252,6 +252,28 @@ void Output_dp(Matrix dp, int n, Param par) {
 		for (int i = 0; i <= par.N1; ++i) {
 			GeomVec xp = x_p(i, j, par);
 			output << xp[1] << " " << xp[2] << " " << dp[i][j] << std::endl;
+		}
+	}
+
+	output.close();
+}
+
+void Output_c(Matrix c, int n, Param par) {
+
+	std::ofstream output;
+	std::string filename = par.WorkDir + "c" + std::to_string(n) + ".plt";
+
+	output.open(filename);
+
+	output << "title = " << '"' << "sample mesh" << '"' << std::endl;
+	output << "Variables = x y c" << std::endl;
+	output << "zone T=" << '"' << n << '"' << ",  i=" << c.size() << ", j=" << c[0].size() << ", f=point" << std::endl;
+	output << "SolutionTime = " << n << std::endl;
+
+	for (int j = 0; j < par.N2; ++j) {
+		for (int i = 0; i < par.N1; ++i) {
+			GeomVec xc = x_c(i, j, par);
+			output << xc[1] << " " << xc[2] << " " << c[i][j] << std::endl;
 		}
 	}
 

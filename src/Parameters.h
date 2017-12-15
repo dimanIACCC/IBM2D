@@ -20,8 +20,6 @@ public:
 	double d_x;               // mesh step in x-direction
 	double d_y;               // mesh step in y-direction
 	double d_t;               // time step
-	double alpha_f;           // Force parameter
-	double beta_f;            // Force parameter
 	int Nn;                   // number of nodes of Solid
 	double rho;               // default density of Solid
 	double r;                 // default radius of Circle
@@ -49,3 +47,4 @@ double dpdx_Poiseuille(double H, double Re);
 GeomVec x_p(int i, int j, Param par); // coordinates of (i,j)-th node for pressure p mesh
 GeomVec x_u(int i, int j, Param par); // coordinates of (i,j)-th node for velocity u mesh
 GeomVec x_v(int i, int j, Param par); // coordinates of (i,j)-th node for velocity v mesh
+GeomVec x_c(int i, int j, Param par); // coordinates of (i,j)-th node for corners    mesh
