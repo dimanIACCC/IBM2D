@@ -17,7 +17,7 @@
 
 int main(int argc, char *argv[]) {
 
-	fs::path WorkDir = "";
+	fs::path WorkDir = L"\Result\\";
 	for (int i = 1; i < argc; i++) {
 		std::string line, PAR, VALUE;
 		line = (std::string)argv[i];
@@ -31,13 +31,14 @@ int main(int argc, char *argv[]) {
 		}
 		else if (PAR == "-dir") if (VALUE.size() > 0) WorkDir = VALUE + '/';
 	}
-	if (WorkDir == "") {
-		WorkDir = L"\Result\\";
-		CreateDirectory(WorkDir);
-	}
 
+	CreateDirectory(WorkDir);
 
-	BodyOfProgram(WorkDir.string());
+	Param par(WorkDir.string(), "input.txt");
+	std::list<Circle> solidList; // list of immersed solids
+	Read_Solids(par.WorkDir + "Solids.txt", solidList, par); // read Solids from file
+
+	BodyOfProgram(par, solidList);
 	
 
 	std::cout << "The End" << std::endl;

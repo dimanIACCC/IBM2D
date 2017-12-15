@@ -6,4 +6,4 @@
 #include "PredictVel.h"
 
 
-void BodyOfProgram(std::string WorkDir, int Re = 20, bool TEST = false);
+void BodyOfProgram(Param par, std::list<Circle> solidList, bool TEST = false);

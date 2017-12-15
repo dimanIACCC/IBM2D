@@ -1,19 +1,7 @@
 #include "stdafx.h"
 #include "BodyOfProgram.h"
 
-void BodyOfProgram(std::string WorkDir, int Re, bool TEST) {
-	Param par(WorkDir);
-	if (!TEST) {
-		Param par(WorkDir,"input.txt"); // Construct Parameters using file input.txt
-	}
-	else
-	{
-		par.BC = u_infinity;
-		par.Re = Re;
-		par.alpha_f = -8e-5;
-		par.beta_f = -2e3;
-		if (Re > 43) par.N_max = 200e3;
-	}
+void BodyOfProgram(Param par, std::list<Circle> solidList, bool TEST) {
 
 #pragma region SetMatrices
 	CreateMatrix(U_n, par.N1, par.N2 + 1);
@@ -31,31 +19,18 @@ void BodyOfProgram(std::string WorkDir, int Re, bool TEST) {
 #pragma endregion SetMatrices
 
 	std::ofstream log;
-	log.open(WorkDir + "log.txt", std::ios::out);
+	log.open(par.WorkDir + "log.txt", std::ios::out);
 	SetLog(log, par);
 
 	std::ofstream force;
-	force.open(WorkDir + "force.plt", std::ios::out);
+	force.open(par.WorkDir + "force.plt", std::ios::out);
 	force << "Variables = n, Fx, Fy" << std::endl;
 
 	ApplyInitialData(U_n, P, par); // Applying initial data to velocity
 
-	std::list<Circle> solidList; // list of immersed solids
-	if (!TEST) {
-		Read_Solids(WorkDir + "Solids.txt", solidList, par); // read Solids from file
-	}
-	else
-	{
-		Circle c(10.0, 3.5, 0.0, 0.0, 0.0, par.rho, par.Nn, false,0, 1.0);
-		solidList.push_back(c);
-	}
 	Output(P, U_n, V_n, Fx, Fy, -1, solidList, par);
 
 	for (int n = 0; n <= par.N_max; ++n) {
-		if(!TEST) Add_Solids(solidList, n, par);
-
-		/*CalculateForce(Fx, Fy, solidList, U_n, V_n, par);
-		force << n << " " << Summ(Fx) << " " << Summ(Fy) << std::endl;*/
 		Calculate_u_p(U_n, V_n, U_new, V_new, P, Fx, Fy, A_u, A_v, solidList, par);
 
 		double eps_u = diff(U_n, U_new);
@@ -80,7 +55,7 @@ void BodyOfProgram(std::string WorkDir, int Re, bool TEST) {
 
 			Output(P, U_new, V_new, Fx, Fy, n, solidList, par);
 
-			if (TEST&& Re < 43) {
+			if (TEST&& par.Re < 43) {
 				 
 					//the line is drawn with two points (Cd1,Nx1) & (Cd2,Nx2)
 					double Cd1 = -3.15387;

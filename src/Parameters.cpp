@@ -36,7 +36,7 @@ Param::Param() {
 Param::Param(std::string WorkDir, std::string filename) : Param() {
 	std::ifstream input;
 	std::string line;
-
+	WorkDir = WorkDir;
 
 	input.open(WorkDir + filename);
 	if (input.is_open()) {
