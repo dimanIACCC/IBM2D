@@ -36,7 +36,9 @@ int main(int argc, char *argv[]) {
 
 	Param par(WorkDir.string(), "input.txt");
 	std::list<Circle> solidList; // list of immersed solids
+
 	Read_Solids(par.WorkDir + "Solids.txt", solidList, par); // read Solids from file
+
 
 	BodyOfProgram(par, solidList);
 	

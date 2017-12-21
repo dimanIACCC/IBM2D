@@ -101,6 +101,11 @@ double dpdx_Poiseuille(double H, double Re) {
 	return 8.0 / H / H / Re;
 }
 
+double dux_dy_Poiseuille(double y, double H) {
+	double dux_dy = - 2.0 * (y - H / 2.0) / pow(H / 2.0, 2);
+	return dux_dy;
+}
+
 GeomVec x_p(int i, int j, Param par) {
 	GeomVec result;
 	result[0] = 0.0;

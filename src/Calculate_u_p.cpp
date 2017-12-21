@@ -25,16 +25,13 @@ void Calculate_u_p(Matrix &U_n  , Matrix &V_n,
 	U_s = U_n;
 	V_s = V_n;
 
-	int f_max = 20;
-	for (int f = 0; f <= f_max; ++f) {
-		CalculateForce(Fx_tmp, Fy_tmp, Exx, Eyy, Exy, P, solidList, U_n, V_n, par);
-		U_n += Fx_tmp * (par.d_t);
-		V_n += Fy_tmp * (par.d_t);
-	}
+	std::clock_t begin, end;
 
+	int f_max = 20;
 	int s_max = 1000;
 	for (int s = 0; s <= s_max; ++s) {
 
+		begin = std::clock();
 		#pragma region Velocity
 			CreateMatrix(B_u, par.N1, par.N2 + 1);
 			CreateMatrix(B_v, par.N1 + 1, par.N2);
@@ -56,6 +53,13 @@ void Calculate_u_p(Matrix &U_n  , Matrix &V_n,
 				}
 			}
 
+			end = std::clock();
+			//std::cout << "time of Velocity     : " << end - begin << " " << std::endl;
+		#pragma endregion Velocity
+
+		#pragma region Force
+			begin = std::clock();
+
 			Solids_zero_force(solidList);
 			Fx = Fx * 0.;
 			Fy = Fy * 0.;
@@ -66,10 +70,10 @@ void Calculate_u_p(Matrix &U_n  , Matrix &V_n,
 					it.S = 0.;
 				}
 
-				deformation_velocity(U_new, V_new, Exx, Eyy, Exy, par);
+				//deformation_velocity(U_new, V_new, Exx, Eyy, Exy, par);
 				//Output_c(Exy, s, par);
 
-				CalculateForce(Fx_tmp, Fy_tmp, Exx, Eyy, Exy, P, solidList, U_new, V_new, par);
+				CalculateForce(Fx_tmp, Fy_tmp, solidList, U_new, V_new, par);
 				U_new += Fx_tmp * (par.d_t);
 				V_new += Fy_tmp * (par.d_t);
 				Fx += Fx_tmp;
@@ -83,15 +87,22 @@ void Calculate_u_p(Matrix &U_n  , Matrix &V_n,
 
 			Solids_Force(solidList, par.Re);
 
-		#pragma endregion Velocity
+			end = std::clock();
+			//std::cout << "time of Force        : " << end - begin << " " << std::endl;
+		#pragma endregion Force
 
 		#pragma region Pressure
+			begin = std::clock();
+
 			P_Right = Calculate_Press_Right(U_new, V_new, par);
 			double Delta_P_max = Calculate_Press_correction(Delta_P, P_Right, par);
 			double P_max = std::max(max(P), 1.e-4);
 			double relax = 0.02 * std::max(pow(P_max / Delta_P_max, 0.5), 1.);
 
 			std::cout << "s = " << s << ", delta_P / P = " << Delta_P_max / P_max << std::endl;
+
+			end = std::clock();
+			//std::cout << "time of Pressure     : " << end - begin << " " << std::endl;
 		#pragma endregion Pressure
 
 		#pragma region New P and U
