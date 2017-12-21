@@ -7,8 +7,8 @@ void DoTesting() {
 	std::cout << "=======================" << std::endl;
 	Param par;
 	par.BC = u_infinity;
-	par.alpha_f = -8e-5;
-	par.beta_f = -2e3;
+	/*par.alpha_f = -8e-5;
+	par.beta_f = -2e3;*/
 	par.AddSolids_N = 0;
 	fs::path dir;
 	std::list<Circle> solidList; // list of immersed solids

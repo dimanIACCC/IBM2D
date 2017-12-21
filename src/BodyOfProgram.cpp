@@ -86,7 +86,7 @@ void BodyOfProgram(Param par, std::list<Circle> solidList, bool TEST) {
 						}
 					}
 				}
-				else {
+				else if(TEST) {
 					std::cout << "That`s strange" << "Re =" << par.Re << std::endl;
 					log << "That`s strange" << "Re =" << std::endl;
 				} 
