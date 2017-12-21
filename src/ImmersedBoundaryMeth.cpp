@@ -53,6 +53,13 @@ int main(int argc, char *argv[]) {
 	std::list<Circle> solidList; // list of immersed solids
 	Read_Solids(WorkDir + "Solids.txt", solidList, par); // read Solids from file
 
+	int f_max = 20;
+	for (int f = 0; f <= f_max; ++f) {
+		CalculateForce(Fx, Fy, solidList, U_n, V_n, par);
+		U_n += Fx * (par.d_t);
+		V_n += Fy * (par.d_t);
+	}
+
 	Output(P, U_n, V_n, Fx, Fy, -1, solidList, par);
 
 	for (int n = 0; n <= par.N_max; ++n) {

@@ -38,6 +38,7 @@ public:
 
 Boundary_Conditions string_to_BC(std::string s);
 double ux_Poiseuille(double y, double H);
+double dux_dy_Poiseuille(double y, double H);
 double dpdx_Poiseuille(double H, double Re);
 GeomVec x_p(int i, int j, Param par); // coordinates of (i,j)-th node for pressure p mesh
 GeomVec x_u(int i, int j, Param par); // coordinates of (i,j)-th node for velocity u mesh

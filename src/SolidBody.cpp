@@ -45,6 +45,9 @@ Circle::Circle(double x, double y, Param &par):
 	    Circle(       x,        y, 0.0, 0.0, 0.0, par.rho, par.Nn, true, par.SolidName_max, par.r) {
 	par.SolidName_max++;
 	this->uc[1] = ux_Poiseuille(y, par.H);
+	this->omega[3] = -dux_dy_Poiseuille(y, par.H);
+	this->omega_n = this->omega;
+	this->uc_n    = this->uc;
 }
  
 Circle::~Circle()
@@ -119,13 +122,14 @@ void Read_Solids(std::string filename, std::list<Circle>& Solids, Param &par) {
 			if (line == "circle{") {
 				double x = par.L*0.1;
 				double y = par.H*0.5;
-				double ux = ux_Poiseuille(y, par.H);
+				double ux = 0;
 				double uy = 0;
 				double omega = 0;
 				double rho = par.rho;
 				int Nn = par.Nn;
 				bool moving = true;
 				double r = par.r;
+				bool Poiseuille;   //key for initial ux, uy and omega corresponding to Poiseuille flow
 
 				while (line != "}") {
 					getline(input, line);
@@ -141,12 +145,18 @@ void Read_Solids(std::string filename, std::list<Circle>& Solids, Param &par) {
 						else if (PAR == "rho")        rho          = stod(VALUE);
 						else if (PAR == "Nn")         Nn           = stoi(VALUE);
 						else if (PAR == "moving")     moving       = bool(stoi(VALUE));
+						else if (PAR == "Poiseuille") Poiseuille   = bool(stoi(VALUE));
 						else if (PAR == "r")          r            = stod(VALUE);
 						else    std::cout << "Read_Solids: unknown parameter " << PAR << std::endl;
 					}
 					else {
 						std::cout << "Read_Solids: no value inputed" << std::endl;
 					}
+				}
+				if (Poiseuille) {
+					ux = ux_Poiseuille(y, par.H);
+					uy = 0;
+					omega = - dux_dy_Poiseuille(y, par.H);
 				}
 				if (moving == false) {
 					ux = 0;
@@ -170,8 +180,8 @@ void Add_Solids(std::list<Circle>& Solids, int n, Param &par) {
 		for (int i = 0; i < par.AddSolids_N; i++) { // add $AddSolids_N$ solids
 			GeomVec x;
 			x[0] = 0;
-			x[1] =              par.r + par.L / 10 * (0.5 + 0.9 * (double(rand()) - RAND_MAX / 2) / RAND_MAX);
-			x[2] = (par.H)                         * (0.5 + 0.9 * (double(rand()) - RAND_MAX / 2) / RAND_MAX);
+			x[1] = (par.L - 2 *par.r)  * (0.5 + 0.9 * (double(rand()) - RAND_MAX / 2) / RAND_MAX);
+			x[2] = (par.H -    par.r)  * (0.5 + 0.9 * (double(rand()) - RAND_MAX / 2) / RAND_MAX);
 			x[3] = 0;
 			Circle c(x[1], x[2], par);
 			// check if new Solid does not cross other Solids
