@@ -1,15 +1,12 @@
 #include "stdafx.h"
 #include "BodyOfProgram.h"
 
-void BodyOfProgram(Param par, std::list<Circle> solidList, bool TEST) {
+void BodyOfProgram(Param par, std::list<Circle> solidList, Matrix U_n, Matrix V_n, Matrix P, bool TEST, int n0) {
 
 #pragma region SetMatrices
-	CreateMatrix(U_n, par.N1, par.N2 + 1);
 	CreateMatrix(U_new, par.N1, par.N2 + 1);
-	CreateMatrix(V_n, par.N1 + 1, par.N2);
 	CreateMatrix(V_new, par.N1 + 1, par.N2);
 	CreateMatrix(B_v, par.N1 + 1, par.N2);
-	CreateMatrix(P, par.N1 + 1, par.N2 + 1);
 	CreateMatrix(Fx, par.N1, par.N2 + 1);
 	CreateMatrix(Fy, par.N1 + 1, par.N2);
 	ublas::matrix<Template> A_u(par.N1, par.N2 + 1);
@@ -26,11 +23,12 @@ void BodyOfProgram(Param par, std::list<Circle> solidList, bool TEST) {
 	force.open(par.WorkDir + "force.plt", std::ios::out);
 	force << "Variables = n, Fx, Fy" << std::endl;
 
-	ApplyInitialData(U_n, P, par); // Applying initial data to velocity
+	
 
 	Output(P, U_n, V_n, Fx, Fy, -1, solidList, par);
 
-	for (int n = 0; n <= par.N_max; ++n) {
+	for (int n = n0; n <= par.N_max; ++n) {
+		MakeHibernationFile(n-1, par, solidList, U_n, V_n, P);
 		Calculate_u_p(U_n, V_n, U_new, V_new, P, Fx, Fy, A_u, A_v, solidList, par);
 
 		double eps_u = diff(U_n, U_new);

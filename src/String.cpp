@@ -6,7 +6,7 @@ void GetParValue(std::string line, std::string& PAR, std::string& VALUE) {
 	size_t i = line.find('=');
 	std::string par_tmp(line, 0, i);
 	PAR = boost::trim_copy(par_tmp);
-	if (i > 0) {
+	if (i > 0 && i != std::string::npos) {
 		std::string value_tmp(line, i + 1);
 		VALUE = boost::trim_copy(value_tmp);
 	}

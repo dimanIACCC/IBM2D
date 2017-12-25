@@ -7,15 +7,15 @@ void DoTesting() {
 	std::cout << "=======================" << std::endl;
 	Param par;
 	par.BC = u_infinity;
-	/*par.alpha_f = -8e-5;
-	par.beta_f = -2e3;*/
 	par.AddSolids_N = 0;
 	fs::path dir;
 	std::list<Circle> solidList; // list of immersed solids
 	Circle c(10.0, 3.5, 0.0, 0.0, 0.0, par.rho, par.Nn, false, 0, 1.0);
 	solidList.push_back(c);
-
-
+	CreateMatrix(U_n, par.N1, par.N2 + 1);
+	CreateMatrix(V_n, par.N1 + 1, par.N2);
+	CreateMatrix(P, par.N1 + 1, par.N2 + 1);
+	ApplyInitialData(U_n, P, par); // Applying initial data
 
 
 	//1.
@@ -25,18 +25,21 @@ void DoTesting() {
 	CreateDirectory(dir);
 	par.Re = 20;
 	par.WorkDir = dir.string();
-	BodyOfProgram(par,solidList,true);
+	BodyOfProgram(par, solidList, U_n, V_n, P,true);
 	std::cout << "=======================" << std::endl;
 
 	//2.
 	//second test
+	for(int i=0;i<V_n.size();i++)
+	std::fill(V_n[i].begin(), V_n[i].end(), 0);
+	ApplyInitialData(U_n, P, par); // Applying initial data
 	std::cout << "Second test for large Re" << std::endl;
 	par.Re = 100;
 	dir = L"TestsResult\\Overflow(Re=" + to_wstring(par.Re) + (wchar_t)')' + (wchar_t)'\\';
 	CreateDirectory(dir);
 	par.WorkDir = dir.string();
 	par.N_max = 200e3;	
-	BodyOfProgram(par, solidList,true);
+	BodyOfProgram(par, solidList, U_n, V_n, P,true);
 
 
 	double minF = 0, maxF = 0;

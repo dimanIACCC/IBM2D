@@ -1,6 +1,12 @@
 ﻿#include "stdafx.h"
 #include "GeomVec.h"
 
+
+
+
+
+
+
 double length(GeomVec x) {
 	double result = 0.0;
 	for (int i = 1; i <= 3; i++) {
