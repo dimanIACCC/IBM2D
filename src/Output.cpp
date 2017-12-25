@@ -357,19 +357,19 @@ void MakeHibernationFile(int n, Param& par, std::list<Circle>& solidList, Matrix
 		output << "Nn = " << one->Nn << std::endl;
 		output << "name = " << one->name << std::endl;
 		output << "r = " << one->r << std::endl;
-		/*output << "<Nodes> " << std::endl;
+		output << "<Nodes>" << std::endl;
 		for (int j = 0; j < par.Nn; j++) {
-			output << "Node{ " << std::endl;
-			output << "x = " << one->Nodes[j].x << std::endl;
-			output << "uf = " << one->Nodes[j].uf << std::endl;
-			output << "f = " << one->Nodes[j].f << std::endl;
-			output << "f_tmp = " << one->Nodes[j].f_tmp << std::endl;
-			output << "n = " << one->Nodes[j].n << std::endl;
-			output << "Eps = " << one->Nodes[j].Eps << std::endl;
+			output << "Node{" << std::endl;
+			output << "x = " << std::endl << one->Nodes[j].x << std::endl;
+			output << "uf = " << std::endl << one->Nodes[j].uf << std::endl;
+			output << "f = " << std::endl << one->Nodes[j].f << std::endl;
+			output << "f_tmp = " << std::endl << one->Nodes[j].f_tmp << std::endl;
+			output << "n = " << std::endl << one->Nodes[j].n << std::endl;
+			output << "Eps = " << std::endl << one->Nodes[j].Eps << std::endl;
 			output << "p = " << one->Nodes[j].p << std::endl;
 			output << "} " << std::endl;
 		}
-		output << "<\Nodes>" << std::endl;*/
+		output << "<\\Nodes>" << std::endl;
 		output << "<\\Solid>" << std::endl;
 	}
 	output << "<\\Solidlist>" << std::endl;

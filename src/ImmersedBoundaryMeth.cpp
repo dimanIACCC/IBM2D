@@ -70,12 +70,12 @@ int main(int argc, char *argv[]) {
 void Awake(std::string WorkDir, int& n0, Param& par, std::list<Circle>& solidList, Matrix& U_n, Matrix& V_n, Matrix& P) {
 	std::ifstream hibernation_source;
 	std::string line;
+	std::string PAR, VALUE;
 	char ch;
 
 	hibernation_source.open(WorkDir+"hibernation.txt");
 	if (hibernation_source.is_open()) {
 		while (getline(hibernation_source, line)) { // read line from file to string $line$
-			std::string PAR, VALUE;
 			GetParValue(line, PAR, VALUE);
 			if (PAR == "n")				n0 = stoi(VALUE);
 			else if (line == "par{") {
@@ -162,11 +162,11 @@ void Awake(std::string WorkDir, int& n0, Param& par, std::list<Circle>& solidLis
 							int Nn = par.Nn;
 							bool moving = true;
 							double r = par.r;
-							std::string PAR, VALUE;
+
 							GetParValue(line, PAR, VALUE);
 							
 								if (PAR == "moving")			 c.moving = bool(stoi(VALUE));
-								else if (PAR == "xc")			 hibernation_source >> c.xc ;//
+								else if (PAR == "xc")			 hibernation_source >> c.xc;//
 								else if (PAR == "uc")			 hibernation_source >> c.uc;//
 								else if (PAR == "uc_n")			 hibernation_source >> c.uc_n;//
 								else if (PAR == "omega")		 hibernation_source >> c.omega;//
@@ -184,7 +184,27 @@ void Awake(std::string WorkDir, int& n0, Param& par, std::list<Circle>& solidLis
 								else if (PAR == "Nn")			 c.Nn = stoi(VALUE);
 								else if (PAR == "name")			 c.name = stoi(VALUE);
 								else if (PAR == "r")			 c.r = stod(VALUE);
-
+								else if (PAR == "<Nodes>") {
+									while (line != "<\\Nodes>") {
+										getline(hibernation_source, line);
+										for (int j = 0; j < par.Nn; j++) {
+											if (line == "Node{") {
+												while (line != "}") {
+													getline(hibernation_source, line);
+													if (line == "}") break;
+													GetParValue(line, PAR, VALUE);
+													if (PAR == "x")					hibernation_source >> c.Nodes[j].x;
+													else if (PAR == "uf")			hibernation_source >> c.Nodes[j].uf;
+													else if (PAR == "f")			hibernation_source >> c.Nodes[j].f;
+													else if (PAR == "f_tmp")		hibernation_source >> c.Nodes[j].f_tmp;
+													else if (PAR == "n")			hibernation_source >> c.Nodes[j].n;
+													else if (PAR == "Eps")			hibernation_source >> c.Nodes[j].Eps;
+													else if (PAR == "p")			c.Nodes[j].p = stod(VALUE);
+												}
+											}
+										}
+									}
+								}
 								else    std::cout << "Read_Solids: unknown parameter " << PAR << std::endl;
 							
 						}
