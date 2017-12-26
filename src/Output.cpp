@@ -367,7 +367,7 @@ void MakeHibernationFile(int n, Param& par, std::list<Circle>& solidList, Matrix
 			output << "n = " << std::endl << one->Nodes[j].n << std::endl;
 			output << "Eps = " << std::endl << one->Nodes[j].Eps << std::endl;
 			output << "p = " << one->Nodes[j].p << std::endl;
-			output << "} " << std::endl;
+			output << "}" << std::endl;
 		}
 		output << "<\\Nodes>" << std::endl;
 		output << "<\\Solid>" << std::endl;

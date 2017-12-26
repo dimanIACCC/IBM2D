@@ -187,11 +187,15 @@ void Awake(std::string WorkDir, int& n0, Param& par, std::list<Circle>& solidLis
 								else if (PAR == "<Nodes>") {
 									while (line != "<\\Nodes>") {
 										getline(hibernation_source, line);
+										if (line == "<\\Nodes>") break;
 										for (int j = 0; j < par.Nn; j++) {
 											if (line == "Node{") {
 												while (line != "}") {
 													getline(hibernation_source, line);
-													if (line == "}") break;
+													if (line == "}") { 
+														getline(hibernation_source, line);
+														break; 
+													}
 													GetParValue(line, PAR, VALUE);
 													if (PAR == "x")					hibernation_source >> c.Nodes[j].x;
 													else if (PAR == "uf")			hibernation_source >> c.Nodes[j].uf;
@@ -205,15 +209,13 @@ void Awake(std::string WorkDir, int& n0, Param& par, std::list<Circle>& solidLis
 										}
 									}
 								}
-								else    std::cout << "Read_Solids: unknown parameter " << PAR << std::endl;
-							
 						}
 					}
 				}
 			}
 		}
 	else std::cout << "Hibernation file is not found" << std::endl;
-
+	std::cout << "End of awaking" << std::endl;
 
 	
 }
