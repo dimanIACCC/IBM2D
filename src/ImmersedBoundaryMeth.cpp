@@ -13,7 +13,7 @@
 #pragma warning(disable : 4996)//for using <chrono>
 #pragma warning(disable : 4244)//for GetInfluenceArea
 
-void Awake(std::string WorkDir, int& n0, Param& par, std::list<Circle>& solidList, Matrix& U_n, Matrix& V_n, Matrix& P);
+void Awake(int& n0, Param& par, std::list<Circle>& solidList, Matrix& U_n, Matrix& V_n, Matrix& P);
 
 int main(int argc, char *argv[]) {
 
@@ -32,12 +32,13 @@ int main(int argc, char *argv[]) {
 
 		}
 		else if (PAR == "-hibernation"|| PAR == "-h") {
-			if (VALUE.size() > 0) WorkDir = VALUE + '/';
+			if (VALUE.size() > 0) WorkDir = VALUE + '\\';
 			Matrix U_n, V_n, P;
 			Param par;
 			int n;
-			Awake(WorkDir.string(), n, par, solidList, U_n, V_n, P);
-			BodyOfProgram(par, solidList, U_n, V_n, P, n+1);
+			par.WorkDir = WorkDir.string();
+			Awake(n, par, solidList, U_n, V_n, P);
+			BodyOfProgram(par, solidList, U_n, V_n, P, n+1,false,false);
 			return 0;
 		}
 		else if (PAR == "-dir") if (VALUE.size() > 0) WorkDir = VALUE + '/';
@@ -67,13 +68,13 @@ int main(int argc, char *argv[]) {
 	return 0;
 }
 
-void Awake(std::string WorkDir, int& n0, Param& par, std::list<Circle>& solidList, Matrix& U_n, Matrix& V_n, Matrix& P) {
+void Awake(int& n0, Param& par, std::list<Circle>& solidList, Matrix& U_n, Matrix& V_n, Matrix& P) {
 	std::ifstream hibernation_source;
 	std::string line;
 	std::string PAR, VALUE;
 	char ch;
-
-	hibernation_source.open(WorkDir+"hibernation.txt");
+	
+	hibernation_source.open(par.WorkDir+"hibernation.txt");
 	if (hibernation_source.is_open()) {
 		while (getline(hibernation_source, line)) { // read line from file to string $line$
 			GetParValue(line, PAR, VALUE);
@@ -105,11 +106,10 @@ void Awake(std::string WorkDir, int& n0, Param& par, std::list<Circle>& solidLis
 						else if (PAR == "AddSolids_interval")   par.AddSolids_interval = stoi(VALUE);
 						else if (PAR == "BC")                   par.BC = string_to_BC(VALUE);
 						else if (PAR == "output_step")          par.output_step = stod(VALUE);
-						else if (PAR == "WorkDir")              par.WorkDir = VALUE;
 						else if (PAR == "SolidName_max")        par.SolidName_max = stoi(VALUE);
 						else if (PAR == "d_x")                  par.d_x = stod(VALUE);
 						else if (PAR == "d_y")                  par.d_y = stod(VALUE);
-						else    std::cout << "unknown parameter " << PAR << std::endl;
+						else    std::cout << "unknown parameter into par" << PAR << std::endl;
 					}
 					else {
 						std::cout << "par: no value inputed" << std::endl;
@@ -214,7 +214,7 @@ void Awake(std::string WorkDir, int& n0, Param& par, std::list<Circle>& solidLis
 				}
 			}
 		}
-	else std::cout << "Hibernation file is not found" << std::endl;
+	else std::cout << "Hibernation file is not found. Please check the path\n The correct command is like -h=ResultFolder" << std::endl;
 	std::cout << "End of awaking" << std::endl;
 
 	
