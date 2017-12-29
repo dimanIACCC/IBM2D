@@ -308,7 +308,7 @@ void MakeHibernationFile(int n, Param& par, std::list<Circle>& solidList, Matrix
 	output << "AddSolids_interval = " << par.AddSolids_interval << std::endl;
 	output << "BC = " << par.BC << std::endl;
 	output << "output_step = " << par.output_step << std::endl;
-	output << "WorkDir = " << par.WorkDir << std::endl;
+	//output << "WorkDir = " << par.WorkDir << std::endl;
 	output << "SolidName_max = " << par.SolidName_max << std::endl;
 	output << "d_x = " << par.d_x << std::endl;
 	output << "d_y = " << par.d_y << std::endl;

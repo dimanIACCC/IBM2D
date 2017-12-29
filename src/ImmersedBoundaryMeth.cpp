@@ -109,7 +109,7 @@ void Awake(int& n0, Param& par, std::list<Circle>& solidList, Matrix& U_n, Matri
 						else if (PAR == "SolidName_max")        par.SolidName_max = stoi(VALUE);
 						else if (PAR == "d_x")                  par.d_x = stod(VALUE);
 						else if (PAR == "d_y")                  par.d_y = stod(VALUE);
-						else    std::cout << "unknown parameter into par" << PAR << std::endl;
+						else    std::cout << "unknown parameter into par." << PAR << std::endl;
 					}
 					else {
 						std::cout << "par: no value inputed" << std::endl;
