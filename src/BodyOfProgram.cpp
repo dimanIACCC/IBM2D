@@ -1,7 +1,7 @@
 #include "stdafx.h"
 #include "BodyOfProgram.h"
 
-void BodyOfProgram(Param par, std::list<Circle> solidList, Matrix U_n, Matrix V_n, Matrix P, bool TEST, int n0) {
+void BodyOfProgram(Param par, std::list<Circle> solidList, Matrix U_n, Matrix V_n, Matrix P, int n0, bool TEST, bool NeedNewLog) {
 
 #pragma region SetMatrices
 	CreateMatrix(U_new, par.N1, par.N2 + 1);
@@ -16,12 +16,16 @@ void BodyOfProgram(Param par, std::list<Circle> solidList, Matrix U_n, Matrix V_
 #pragma endregion SetMatrices
 
 	std::ofstream log;
-	log.open(par.WorkDir + "log.txt", std::ios::out);
-	SetLog(log, par);
+	if (NeedNewLog) {
+		log.open(par.WorkDir + "log.txt", std::ios::out);
+		SetLog(log, par);
+	}else
+		log.open(par.WorkDir + "log.txt", std::ios::app);
+	
 
-	std::ofstream force;
-	force.open(par.WorkDir + "force.plt", std::ios::out);
-	force << "Variables = n, Fx, Fy" << std::endl;
+	//std::ofstream force;
+	//force.open(par.WorkDir + "force.plt", std::ios::out);
+	//force << "Variables = n, Fx, Fy" << std::endl;
 
 	
 
@@ -42,7 +46,7 @@ void BodyOfProgram(Param par, std::list<Circle> solidList, Matrix U_n, Matrix V_
 		PushLog(log, n, eps_u, eps_v);
 		log.flush();
 
-		if (n % par.output_step == 0) {
+		if (n % par.output_step == 0|| n<20) {
 
 			Output(P, U_new, V_new, Fx, Fy, n, solidList, par);
 		}

@@ -12,7 +12,7 @@
 
 #pragma warning(disable : 4244)//for GetInfluenceArea
 
-void Awake(std::string WorkDir, int& n0, Param& par, std::list<Circle>& solidList, Matrix& U_n, Matrix& V_n, Matrix& P);
+void Awake(int& n0, Param& par, std::list<Circle>& solidList, Matrix& U_n, Matrix& V_n, Matrix& P);
 
 int main(int argc, char *argv[]) {
 
@@ -31,12 +31,13 @@ int main(int argc, char *argv[]) {
 
 		}
 		else if (PAR == "-hibernation"|| PAR == "-h") {
-			if (VALUE.size() > 0) WorkDir = VALUE + '/';
+			if (VALUE.size() > 0) WorkDir = VALUE + '\\';
 			Matrix U_n, V_n, P;
 			Param par;
 			int n;
-			Awake(WorkDir.string(), n, par, solidList, U_n, V_n, P);
-			BodyOfProgram(par, solidList, U_n, V_n, P, n+1);
+			par.WorkDir = WorkDir.string();
+			Awake(n, par, solidList, U_n, V_n, P);
+			BodyOfProgram(par, solidList, U_n, V_n, P, n+1,false,false);
 			return 0;
 		}
 		else if (PAR == "-dir") if (VALUE.size() > 0) WorkDir = VALUE + '/';
@@ -66,15 +67,15 @@ int main(int argc, char *argv[]) {
 	return 0;
 }
 
-void Awake(std::string WorkDir, int& n0, Param& par, std::list<Circle>& solidList, Matrix& U_n, Matrix& V_n, Matrix& P) {
+void Awake(int& n0, Param& par, std::list<Circle>& solidList, Matrix& U_n, Matrix& V_n, Matrix& P) {
 	std::ifstream hibernation_source;
 	std::string line;
+	std::string PAR, VALUE;
 	char ch;
-
-	hibernation_source.open(WorkDir+"hibernation.txt");
+	
+	hibernation_source.open(par.WorkDir+"hibernation.txt");
 	if (hibernation_source.is_open()) {
 		while (getline(hibernation_source, line)) { // read line from file to string $line$
-			std::string PAR, VALUE;
 			GetParValue(line, PAR, VALUE);
 			if (PAR == "n")				n0 = stoi(VALUE);
 			else if (line == "par{") {
@@ -104,11 +105,10 @@ void Awake(std::string WorkDir, int& n0, Param& par, std::list<Circle>& solidLis
 						else if (PAR == "AddSolids_interval")   par.AddSolids_interval = stoi(VALUE);
 						else if (PAR == "BC")                   par.BC = string_to_BC(VALUE);
 						else if (PAR == "output_step")          par.output_step = stod(VALUE);
-						else if (PAR == "WorkDir")              par.WorkDir = VALUE;
 						else if (PAR == "SolidName_max")        par.SolidName_max = stoi(VALUE);
 						else if (PAR == "d_x")                  par.d_x = stod(VALUE);
 						else if (PAR == "d_y")                  par.d_y = stod(VALUE);
-						else    std::cout << "unknown parameter " << PAR << std::endl;
+						else    std::cout << "unknown parameter into par." << PAR << std::endl;
 					}
 					else {
 						std::cout << "par: no value inputed" << std::endl;
@@ -161,11 +161,11 @@ void Awake(std::string WorkDir, int& n0, Param& par, std::list<Circle>& solidLis
 							int Nn = par.Nn;
 							bool moving = true;
 							double r = par.r;
-							std::string PAR, VALUE;
+
 							GetParValue(line, PAR, VALUE);
 							
 								if (PAR == "moving")			 c.moving = bool(stoi(VALUE));
-								else if (PAR == "xc")			 hibernation_source >> c.xc ;//
+								else if (PAR == "xc")			 hibernation_source >> c.xc;//
 								else if (PAR == "uc")			 hibernation_source >> c.uc;//
 								else if (PAR == "uc_n")			 hibernation_source >> c.uc_n;//
 								else if (PAR == "omega")		 hibernation_source >> c.omega;//
@@ -183,16 +183,38 @@ void Awake(std::string WorkDir, int& n0, Param& par, std::list<Circle>& solidLis
 								else if (PAR == "Nn")			 c.Nn = stoi(VALUE);
 								else if (PAR == "name")			 c.name = stoi(VALUE);
 								else if (PAR == "r")			 c.r = stod(VALUE);
-
-								else    std::cout << "Read_Solids: unknown parameter " << PAR << std::endl;
-							
+								else if (PAR == "<Nodes>") {
+									while (line != "<\\Nodes>") {
+										getline(hibernation_source, line);
+										if (line == "<\\Nodes>") break;
+										for (int j = 0; j < par.Nn; j++) {
+											if (line == "Node{") {
+												while (line != "}") {
+													getline(hibernation_source, line);
+													if (line == "}") { 
+														getline(hibernation_source, line);
+														break; 
+													}
+													GetParValue(line, PAR, VALUE);
+													if (PAR == "x")					hibernation_source >> c.Nodes[j].x;
+													else if (PAR == "uf")			hibernation_source >> c.Nodes[j].uf;
+													else if (PAR == "f")			hibernation_source >> c.Nodes[j].f;
+													else if (PAR == "f_tmp")		hibernation_source >> c.Nodes[j].f_tmp;
+													else if (PAR == "n")			hibernation_source >> c.Nodes[j].n;
+													else if (PAR == "Eps")			hibernation_source >> c.Nodes[j].Eps;
+													else if (PAR == "p")			c.Nodes[j].p = stod(VALUE);
+												}
+											}
+										}
+									}
+								}
 						}
 					}
 				}
 			}
 		}
-	else std::cout << "Hibernation file is not found" << std::endl;
-
+	else std::cout << "Hibernation file is not found. Please check the path\n The correct command is like -h=ResultFolder" << std::endl;
+	std::cout << "End of awaking" << std::endl;
 
 	
 }

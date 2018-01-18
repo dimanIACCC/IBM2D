@@ -6,4 +6,4 @@
 #include "PredictVel.h"
 
 
-void BodyOfProgram(Param par, std::list<Circle> solidList, Matrix U_n, Matrix V_n, Matrix P, bool TEST = false, int n0 = 0);
+void BodyOfProgram(Param par, std::list<Circle> solidList, Matrix U_n, Matrix V_n, Matrix P, int n0 = 0, bool TEST = false, bool NeedNewLog = true);
