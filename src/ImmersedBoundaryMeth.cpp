@@ -10,7 +10,6 @@
 
 
 
-#pragma warning(disable : 4996)//for using <chrono>
 #pragma warning(disable : 4244)//for GetInfluenceArea
 
 void Awake(std::string WorkDir, int& n0, Param& par, std::list<Circle>& solidList, Matrix& U_n, Matrix& V_n, Matrix& P);

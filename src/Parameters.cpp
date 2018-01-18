@@ -18,6 +18,7 @@ Param::Param() {
 	N_max = 5000000;
 	N_Zeidel = 500000;
 	Zeidel_eps = 1e-5;
+	eps_P = 1.e-3;
 	InelasticCollision = false;
 	k_dist = 1.1;
 	AddSolids_N = 0;
@@ -42,7 +43,7 @@ Param::Param(std::string WorkDir, std::string filename) : Param() {
 			std::string PAR, VALUE;
 			GetParValue(line, PAR, VALUE);
 			if (VALUE.size() > 0) {
-				if (PAR == "Re")           Re = stod(VALUE);
+				if      (PAR == "Re")           Re = stod(VALUE);
 				else if (PAR == "L")            L = stod(VALUE);
 				else if (PAR == "H")            H = stod(VALUE);
 				else if (PAR == "N1")           N1 = stoi(VALUE);
@@ -55,8 +56,9 @@ Param::Param(std::string WorkDir, std::string filename) : Param() {
 				else if (PAR == "N_max")        N_max = stoi(VALUE);
 				else if (PAR == "N_Zeidel")     N_Zeidel = stoi(VALUE);
 				else if (PAR == "Zeidel_eps")   Zeidel_eps = stod(VALUE);
+				else if (PAR == "eps_P")        eps_P = stod(VALUE);
 				else if (PAR == "InelasticCollision")   InelasticCollision = bool(stoi(VALUE));
-				else if (PAR == "k_dist")       k_dist = (stod(VALUE));
+				else if (PAR == "k_dist")               k_dist = (stod(VALUE));
 				else if (PAR == "AddSolids_N")          AddSolids_N = stoi(VALUE);
 				else if (PAR == "AddSolids_start")      AddSolids_start = stoi(VALUE);
 				else if (PAR == "AddSolids_interval")   AddSolids_interval = stoi(VALUE);
@@ -101,8 +103,8 @@ double dpdx_Poiseuille(double H, double Re) {
 	return 8.0 / H / H / Re;
 }
 
-double dux_dy_Poiseuille(double y, double H) {
-	double dux_dy = - 2.0 * (y - H / 2.0) / pow(H / 2.0, 2);
+double dux_dy_Poiseuille(double y, double H) {           //    dux/dy for Poiseuille flow, divided by 2, that equals angular velocity omega for non-disturbed flow
+	double dux_dy = - (y - H / 2.0) / pow(H / 2.0, 2);
 	return dux_dy;
 }
 

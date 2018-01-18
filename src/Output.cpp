@@ -1,6 +1,8 @@
 #include "stdafx.h"
 #include "Output.h"
 
+#pragma warning(disable : 4996)//for using <chrono>
+
 void OutputPressure(Matrix p, int n, std::list<Circle> iList, Param par) {
 
 	std::ofstream output;

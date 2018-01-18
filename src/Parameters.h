@@ -27,6 +27,7 @@ public:
 	int N_max;                // number of total iterations
 	int N_Zeidel;             // number of iterations in Zeidel method
 	double Zeidel_eps;        // tolerance for Zeidel method
+	double eps_P;             // tolerance for Pressure correction
 	bool InelasticCollision;  // Inelastic - true, elastic - false
 	double k_dist;            // coefficient for minimal distance between Solids
 	int AddSolids_N;          // number of added Solids

@@ -241,7 +241,8 @@ void Solids_move(std::list<Circle> &solidList, Param par, int n) {
 	for (auto one = solidList.begin(); one != solidList.end(); one++) {
 		double DistUpper = par.H - one->xc[2];//<----distance to upper wall
 		double DistLower = one->xc[2];//<-------distance to lower wall
-		if (DistUpper < par.k_dist * one->r || DistLower < par.k_dist * one->r) {
+		if ((DistUpper < par.k_dist * one->r && one->uc[2] > 0) ||
+		    (DistLower < par.k_dist * one->r && one->uc[2] < 0)) {
 			if (Debug) std::cout << "Collision with wall detected" << std::endl;
 			one->uc[2] = -one->uc[2];
 		}
