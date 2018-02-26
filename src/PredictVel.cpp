@@ -147,8 +147,8 @@ Matrix CalculateB(Matrix &u_n, Matrix &v_n, Matrix &u_s, Matrix &v_s, Matrix &p,
 	// Up-Down BC
 	for (size_t i = 0; i < Nx; ++i) {
 		if      (Dir == Du) {
-			result[i][0] = -u_n[i][1];
-			result[i][Ny - 1] = -u_n[i][Ny - 2];
+			result[i][0]      = 2 * par.u_wall - u_n[i][1];
+			result[i][Ny - 1] = 2 * par.u_wall - u_n[i][Ny - 2];
 			if (par.BC == u_infinity) {
 				result[i][0] = 0;
 				result[i][Ny - 1] = 0;

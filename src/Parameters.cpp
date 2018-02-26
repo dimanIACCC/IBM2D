@@ -25,6 +25,7 @@ Param::Param() {
 	AddSolids_start = 0;
 	AddSolids_interval = 200;
 	BC = u_inflow;
+	u_wall = 0;
 	SolidName_max = 0;
 	WorkDir = "";
 
@@ -150,5 +151,70 @@ GeomVec x_c(int i, int j, Param par) {
 	result[2] = j * par.d_y;
 	result[3] = 0.0;
 
+	return result;
+}
+
+double DeltaFunction(double x, double y, Param par) {
+	return FunctionD(x / par.d_x) * FunctionD(y / par.d_y) / (par.d_x*par.d_y);
+}
+
+double FunctionD(double r) {
+	if ((0.0 <= fabs(r)) && (fabs(r) < 1.0)) {
+		return 1.0 / 8.0*(3.0 - 2.0 * fabs(r) + sqrt(1.0 + 4.0 * fabs(r) - 4.0 * r * r));
+	}
+	if ((1.0 <= fabs(r)) && (fabs(r) < 2.0)) {
+		return 1.0 / 8.0*(5.0 - 2.0 * fabs(r) - sqrt(-7.0 + 12.0 * fabs(r) - 4.0 * r * r));
+	}
+	if (2.0 <= fabs(r)) {
+		return 0.0;
+	}
+	return 0;
+}
+
+void GetInfluenceArea(int &i_min, int &i_max, int &j_min, int &j_max, size_t Ni, size_t Nj, GeomVec x, int size, Param par) {
+	i_max = (int)(x[1] / par.d_x) + size;
+	i_min = (int)(x[1] / par.d_x) - size;
+
+	j_max = (int)(x[2] / par.d_y) + size;
+	j_min = (int)(x[2] / par.d_y) - size;
+
+	if (i_min < 0 && par.BC != periodical) {
+		i_min = 0;
+	}
+	if (j_min < 0) {
+		j_min = 0;
+	}
+	if (i_max > Ni && par.BC != periodical) {
+		i_max = Ni;
+	}
+	if (j_max > Nj) {
+		j_max = Nj;
+	}
+}
+
+double Volume_Frac(GeomVec xc, double r, GeomVec x, double dx, double dy) {
+	GeomVec x_i[5];
+	for (int i = 1; i <= 4; ++i) {
+		x_i[i] = x;
+	}
+	x_i[1][1] += dx;	x_i[1][2] += dy;
+	x_i[2][1] += dx;	x_i[2][2] -= dy;
+	x_i[3][1] -= dx;	x_i[3][2] -= dy;
+	x_i[4][1] -= dx;	x_i[4][2] += dy;
+
+	double result = 0;
+	double sum_phi = 0;
+	for (int i = 1; i <= 4; ++i) {
+		double phi = length(x_i[i] - xc) - r;
+		result -= phi * Heaviside(-phi);
+		sum_phi += std::abs(phi);
+	}
+	result /= sum_phi;
+	return result;
+}
+
+double Heaviside(double x) {
+	double result;
+	result = (x >= 0) ? 1 : 0;
 	return result;
 }

@@ -114,7 +114,7 @@ void Output(Matrix p, Matrix u, Matrix v, Matrix Fx, Matrix Fy, int n, std::list
 	output.open(filename);
 
 	output << "title = " << '"' << "sample mesh" << '"' << std::endl;
-	output << "Variables = x y p u v fx fy" << std::endl;
+	output << "Variables = x y p u v fx fy tx ty" << std::endl;
 	output << "zone T=" << '"' << n << '"' << ",  i=" << par.N1 + 1 << ", j=" << par.N2 + 1 << ", f=point" << std::endl;
 	output << "SolutionTime = " << n << std::endl;
 
@@ -129,7 +129,7 @@ void Output(Matrix p, Matrix u, Matrix v, Matrix Fx, Matrix Fy, int n, std::list
 			if (j == 0) { v_ = v[i][0];	Fy_ = Fy[i][0]; }
 			else if (j == par.N2) { v_ = v[i][par.N2 - 1]; ;	Fy_ = Fy[i][par.N2 - 1]; }
 			else { v_ = (v[i][j - 1] + v[i][j]) * 0.5;	Fy_ = (Fy[i][j - 1] + Fy[i][j]) * 0.5; }
-			output << xp[1] << " " << xp[2] << " " << p[i][j] << " " << u_ << " " << v_ << " " << Fx_ << " " << Fy_ << std::endl;
+			output << xp[1] << " " << xp[2] << " " << p[i][j] << " " << u_ << " " << v_ << " " << Fx_ << " " << Fy_ << " " << 0 << " " << 0 << std::endl;
 		}
 	}
 
@@ -138,33 +138,39 @@ void Output(Matrix p, Matrix u, Matrix v, Matrix Fx, Matrix Fy, int n, std::list
 		output << "SolutionTime = " << n << std::endl;
 
 		output << solid.xc[1] << " "
-			<< solid.xc[2] << " "
-			<< 0 << " "
-			<< solid.uc[1] << " "
-			<< solid.uc[2] << " "
-			<< solid.F_hd[1] << " "
-			<< solid.F_hd[2] << " "
-			<< std::endl;
+		       << solid.xc[2] << " "
+		       << 0 << " "
+		       << solid.uc[1] << " "
+		       << solid.uc[2] << " "
+		       << solid.f[1] << " "
+		       << solid.f[2] << " "
+		       << solid.F_hd[1] << " "
+		       << solid.F_hd[2] << " "
+		       << std::endl;
 		for (int i = 0; i < solid.Nn; ++i) {
 
 			output << solid.Nodes[i].x[1] << " "
-				<< solid.Nodes[i].x[2] << " "
-				<< solid.Nodes[i].p << " "
-				<< solid.Nodes[i].uf[1] << " "
-				<< solid.Nodes[i].uf[2] << " "
-				<< solid.Nodes[i].f[1] << " "
-				<< solid.Nodes[i].f[2] << " "
-				<< std::endl;
+			       << solid.Nodes[i].x[2] << " "
+			       << solid.Nodes[i].p << " "
+			       << solid.Nodes[i].uf[1] << " "
+			       << solid.Nodes[i].uf[2] << " "
+			       << solid.Nodes[i].f[1] << " "
+			       << solid.Nodes[i].f[2] << " "
+			       << solid.Nodes[i].t[1] << " "
+			       << solid.Nodes[i].t[2] << " "
+			       << std::endl;
 
 		}
 		output << solid.Nodes[0].x[1] << " "
-			<< solid.Nodes[0].x[2] << " "
-			<< solid.Nodes[0].p << " "
-			<< solid.Nodes[0].uf[1] << " "
-			<< solid.Nodes[0].uf[2] << " "
-			<< solid.Nodes[0].f[1] << " "
-			<< solid.Nodes[0].f[2] << " "
-			<< std::endl;
+		       << solid.Nodes[0].x[2] << " "
+		       << solid.Nodes[0].p << " "
+		       << solid.Nodes[0].uf[1] << " "
+		       << solid.Nodes[0].uf[2] << " "
+		       << solid.Nodes[0].f[1] << " "
+		       << solid.Nodes[0].f[2] << " "
+		       << solid.Nodes[0].t[1] << " "
+		       << solid.Nodes[0].t[2] << " "
+		       << std::endl;
 	}
 
 	output.close();

@@ -2,43 +2,6 @@
 #include "CalculateForce.h"
 #include "Output.h"
 
-double DeltaFunction(double x, double y, Param par) {
-	return FunctionD(x / par.d_x) * FunctionD(y / par.d_y) / (par.d_x*par.d_y);
-}
-
-double FunctionD(double r) {
-	if ((0.0 <= fabs(r)) && (fabs(r) < 1.0)) {
-		return 1.0 / 8.0*(3.0 - 2.0 * fabs(r) + sqrt(1.0 + 4.0 * fabs(r) - 4.0 * r * r));
-	}
-	if ((1.0 <= fabs(r)) && (fabs(r) < 2.0)) {
-		return 1.0 / 8.0*(5.0 - 2.0 * fabs(r) - sqrt(-7.0 + 12.0 * fabs(r) - 4.0 * r * r));
-	}
-	if (2.0 <= fabs(r)) {
-		return 0.0;
-	}
-	return 0;
-}
-
-void GetInfluenceArea(int &i_min, int &i_max, int &j_min, int &j_max, size_t Ni, size_t Nj, GeomVec x, int size, Param par){
-	i_max = (int)(x[1] / par.d_x) + size;
-	i_min = (int)(x[1] / par.d_x) - size;
-
-	j_max = (int)(x[2] / par.d_y) + size;
-	j_min = (int)(x[2] / par.d_y) - size;
-
-	if (i_min < 0 && par.BC != periodical) {
-		i_min = 0;
-	}
-	if (j_min < 0) {
-		j_min = 0;
-	}
-	if (i_max > Ni && par.BC != periodical) {
-		i_max = Ni;
-	}
-	if (j_max > Nj) {
-		j_max = Nj;
-	}
-}
 
 
 void CalculateForce(Matrix& force_x, Matrix& force_y, std::list<Circle> &iList, Matrix& u, Matrix& v, Param par) {
@@ -230,51 +193,13 @@ void CalculateForce(Matrix& force_x, Matrix& force_y, std::list<Circle> &iList, 
 			}
 		}
 
-		int ix_max = 0 - nx1;
-		int ix_min = 2 * nx1;
-		int jx_max = 0 - nx2;
-		int jx_min = 2 * nx2;
+		int ix_max, ix_min;
+		int jx_max, jx_min;
+		int iy_max, iy_min;
+		int jy_max, jy_min;
 
-		int iy_max = 0 - ny1;
-		int iy_min = 2 * ny1;
-		int jy_max = 0 - ny2;
-		int jy_min = 2 * ny2;
-
-		for (size_t k = 0; k < solid.Nn; ++k) {
-
-			int ix_max_temp, ix_min_temp;
-			int jx_max_temp, jx_min_temp;
-			int iy_max_temp, iy_min_temp;
-			int jy_max_temp, jy_min_temp;
-
-			GetInfluenceArea(ix_min_temp, ix_max_temp, jx_min_temp, jx_max_temp, nx1 - 1, nx2 - 1, solid.Nodes[k].x, 4, par);
-			GetInfluenceArea(iy_min_temp, iy_max_temp, jy_min_temp, jy_max_temp, ny1 - 1, ny2 - 1, solid.Nodes[k].x, 4, par);
-
-			if (ix_max_temp > ix_max) {
-				ix_max = ix_max_temp;
-			}
-			if (ix_min_temp < ix_min) {
-				ix_min = ix_min_temp;
-			}
-			if (jx_max_temp > jx_max) {
-				jx_max = jx_max_temp;
-			}
-			if (jx_min_temp < jx_min) {
-				jx_min = jx_min_temp;
-			}
-			if (iy_max_temp > iy_max) {
-				iy_max = iy_max_temp;
-			}
-			if (iy_min_temp < iy_min) {
-				iy_min = iy_min_temp;
-			}
-			if (jy_max_temp > jy_max) {
-				jy_max = jy_max_temp;
-			}
-			if (jy_min_temp < jy_min) {
-				jy_min = jy_min_temp;
-			}
-		}
+		GetInfluenceArea(ix_min, ix_max, jx_min, jx_max, nx1 - 1, nx2 - 1, solid.xc, int(solid.r / par.d_x) + 4, par);
+		GetInfluenceArea(iy_min, iy_max, jy_min, jy_max, ny1 - 1, ny2 - 1, solid.xc, int(solid.r / par.d_x) + 4, par);
 
 		// summarizing force for Euler nodes and for solids
 		for (int i = ix_min; i <= ix_max; ++i) {
@@ -429,10 +354,10 @@ void Solids_Force(std::list<Circle> &Solids, double Re) {
 		std::fill(solid.tau_hd.begin(), solid.tau_hd.end(), 0.0);
 		for (size_t k = 0; k < solid.Nn; ++k) {
 			double ds = solid.ds(k);
-			GeomVec f = ublas::prod(solid.Nodes[k].Eps, solid.Nodes[k].n) * Re    // * rho (rho = 1)
-			                      - solid.Nodes[k].p  * solid.Nodes[k].n;
-			solid.F_hd   += f * ds;
-			solid.tau_hd += x_product(solid.Nodes[k].x - solid.xc, f) * ds;
+			solid.Nodes[k].t =  ublas::prod(solid.Nodes[k].Eps, solid.Nodes[k].n) / Re    // * rho (rho = 1)
+			                  - solid.Nodes[k].p  * solid.Nodes[k].n;
+			solid.F_hd   += solid.Nodes[k].t * ds;
+			solid.tau_hd += x_product(solid.Nodes[k].x - solid.xc, solid.Nodes[k].t) * ds;
 		}
 	}
 }

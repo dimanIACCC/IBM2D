@@ -33,6 +33,7 @@ void BodyOfProgram(Param par, std::list<Circle> solidList, Matrix U_n, Matrix V_
 
 	for (int n = n0; n <= par.N_max; ++n) {
 		MakeHibernationFile(n-1, par, solidList, U_n, V_n, P);
+		Add_Solids(solidList, n, par);
 		Calculate_u_p(U_n, V_n, U_new, V_new, P, Fx, Fy, A_u, A_v, solidList, par);
 
 		double eps_u = diff(U_n, U_new);
@@ -41,12 +42,22 @@ void BodyOfProgram(Param par, std::list<Circle> solidList, Matrix U_n, Matrix V_
 		U_n = U_new;
 		V_n = V_new;
 
+		//workaround for moving walls
+		/*for (auto& solid : solidList) {
+			GeomVec integral = solid.integralV_u(U_new, V_new, par);
+			for (size_t i = 0; i < U_n.size(); i++)
+				for (size_t j = 0; j < U_n[0].size(); j++)
+					U_n[i][j] = U_n[i][j] - solid.uc[1];
+			par.u_wall -= solid.uc[1];
+			solid.uc[1] = 0;
+		}*/
+
 		Solids_move(solidList, par,n);
 
 		PushLog(log, n, eps_u, eps_v);
 		log.flush();
 
-		if (n % par.output_step == 0|| n<20) {
+		if (n % par.output_step == 0|| n<1000) {
 
 			Output(P, U_new, V_new, Fx, Fy, n, solidList, par);
 		}

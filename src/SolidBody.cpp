@@ -28,6 +28,13 @@ SolidBody::~SolidBody()
 
 }
 
+GeomVec Circle_Equation(GeomVec xc, double r, double theta) {
+	GeomVec xy;
+	xy[1] = xc[1] + cos(theta) * r;
+	xy[2] = xc[2] + sin(theta) * r;
+	xy[3] = 0;
+}
+
 Circle::Circle(double x, double y, double ux, double uy, double omega, double rho, int Nn, bool moving, int name, double r) :
      SolidBody(       x,        y,        ux,        uy,        omega,        rho,     Nn,      moving,      name) {
 	this->r = r;
@@ -70,7 +77,7 @@ void SolidBody::move(double d_t) {
 			//rotate
 			GeomVec r = Nodes[k].x - xc;
 			GeomVec x_temp = rotate_Vector_around_vector(r, omega * d_t); //
-			Nodes[k].x = xc + x_temp; // rotate solid by angle $omega$ * $dt$
+			Nodes[k].x = xc + x_temp; // rotate solid by angle $omega$ * $dt$ // workaround
 			Nodes[k].x += uc * d_t; // move
 		}
 		xc += uc * d_t;
@@ -93,7 +100,7 @@ void SolidBody::log_init(std::string WorkDir) {
 	output.open(filename);
 
 	output << "title = " << '"' << "Solid" << name << '"' << std::endl;
-	output << "Variables = x y u v fx fy omega tau n" << std::endl;
+	output << "Variables = x y u v fx fy omega tau n Fx_hd Fy_hd tau_hd" << std::endl;
 }
 
 void SolidBody::log(std::string WorkDir, int n) {
@@ -110,6 +117,9 @@ void SolidBody::log(std::string WorkDir, int n) {
 	       <<  omega[3] << "   "
 	       <<  tau[3]   << "   "
 	       <<  n        << "   "
+	       << F_hd[1] << "   "
+	       << F_hd[2] << "   "
+	       << tau_hd[3] << "   "
 	       << std::endl;
 }
 
@@ -181,8 +191,8 @@ void Add_Solids(std::list<Circle>& Solids, int n, Param &par) {
 		for (int i = 0; i < par.AddSolids_N; i++) { // add $AddSolids_N$ solids
 			GeomVec x;
 			x[0] = 0;
-			x[1] = (par.L - 2 *par.r)  * (0.5 + 0.9 * (double(rand()) - RAND_MAX / 2) / RAND_MAX);
-			x[2] = (par.H -    par.r)  * (0.5 + 0.9 * (double(rand()) - RAND_MAX / 2) / RAND_MAX);
+			x[1] = (par.L)  * (0.5 + (1 - 4 * par.r / par.L) * (double(rand()) - RAND_MAX / 2) / RAND_MAX);
+			x[2] = (par.H)  * (0.5 + (1 - 4 * par.r / par.L) * (double(rand()) - RAND_MAX / 2) / RAND_MAX);
 			x[3] = 0;
 			Circle c(x[1], x[2], par);
 			// check if new Solid does not cross other Solids
@@ -206,6 +216,14 @@ bool Collide(Circle& s1, Circle& s2, Param par) {
 	bool result = false;
 	GeomVec r = s1.xc - s2.xc;
 	double distance = length(r); //<----distance between two particles
+	if (par.BC == periodical) {
+		GeomVec r_plus  = r;
+		GeomVec r_minus = r;
+		r_plus[1]  += par.L;
+		r_minus[1] -= par.L;
+		if (length(r_plus ) < distance) { r = r_plus ; distance = length(r_plus ); };
+		if (length(r_minus) < distance) { r = r_minus; distance = length(r_minus); };
+	}
 	if (distance <= par.k_dist*(s1.r + s2.r)) {
 		result = true;
 		if (par.InelasticCollision) { //Perfectly inelastic collision
@@ -293,8 +311,11 @@ void Solids_zero_force(std::list<Circle>& Solids) {
 void Solids_velocity_new(std::list<Circle>& Solids, Param par) {
 	for (auto& it : Solids) {
 		if (it.moving) {
-			it.uc    = it.uc_n    - it.f   * par.d_t * 1 / (it.rho - 1) / it.V;  // fluid density equals 1
-			it.omega = it.omega_n - it.tau * par.d_t * 1 / (it.rho - 1) / it.I;  // angular moment I is normalized with density
+			it.uc    = it.uc_n    + par.d_t * (it.integralV_du_dt  - it.f  ) / it.V / it.rho * 1;  // fluid density equals 1
+			it.omega = it.omega_n + par.d_t * (it.integralV_dur_dt - it.tau) / it.I / it.rho * 1;  // angular moment I is normalized with density
+
+			//it.uc    = it.uc_n    - it.f   * par.d_t * 1 / (it.rho - 1) / it.V;  // fluid density equals 1
+			//it.omega = it.omega_n - it.tau * par.d_t * 1 / (it.rho - 1) / it.I;  // angular moment I is normalized with density
 
 			//it.uc    = it.uc_n    + it.F_hd   / it.rho / it.V * par.d_t;  // fluid density equals 1
 			//it.omega = it.omega_n + it.tau_hd / it.rho / it.I * par.d_t;  // angular moment I is normalized with density
@@ -302,4 +323,51 @@ void Solids_velocity_new(std::list<Circle>& Solids, Param par) {
 	}
 }
 
+void Circle::integrals(Matrix U_n, Matrix V_n, Matrix U_new, Matrix V_new, Param par) {
+	GeomVec integralV_un, integralV_unew, integralV_un_r, integralV_unew_r;
+
+	int nx1 = U_n.size();
+	int nx2 = U_n[0].size();
+	int ny1 = V_n.size();
+	int ny2 = V_n[1].size();
+	int i_max, i_min;
+	int j_max, j_min;
+
+	GetInfluenceArea(i_min, i_max, j_min, j_max, nx1 - 1, nx2 - 1, xc, int(r / par.d_x) + 4, par);
+	for (int i = i_min; i <= i_max; ++i) {
+		for (int j = j_min; j <= j_max; ++j) {
+			int i_real = i;
+			if (i_real <  0      ) i_real += nx1 - 1;
+			if (i_real >  nx1 - 1) i_real -= nx1 - 1;
+			if (i_real == nx1 - 1) i_real = 0;
+			GeomVec xu = x_u(i_real, j, par);
+			double Frac = par.d_x * par.d_y * Volume_Frac(xc, r, xu, par.d_x, par.d_y);
+			integralV_un    [1] += Frac * U_n  [i_real][j]    ;
+			integralV_unew  [1] += Frac * U_new[i_real][j]    ;
+			integralV_un_r  [1] += Frac * U_n  [i_real][j] * r;
+			integralV_unew_r[1] += Frac * U_new[i_real][j] * r;
+
+		}
+	}
+
+	GetInfluenceArea(i_min, i_max, j_min, j_max, ny1 - 1, ny2 - 1, xc, int(r / par.d_x) + 4, par);
+	for (int i = i_min; i <= i_max; ++i) {
+		for (int j = j_min; j <= j_max; ++j) {
+			int i_real = i;
+			if (i_real <  0      ) i_real += nx1 - 1;
+			if (i_real >  nx1 - 1) i_real -= nx1 - 1;
+			if (i_real == nx1 - 1) i_real = 0;
+			GeomVec xv = x_v(i_real, j, par);
+			double Frac = par.d_x * par.d_y * Volume_Frac(xc, r, xv, par.d_x, par.d_y);
+			integralV_un    [2] += Frac * V_n  [i_real][j]    ;
+			integralV_unew  [2] += Frac * V_new[i_real][j]    ;
+			integralV_un_r  [2] += Frac * V_n  [i_real][j] * r;
+			integralV_unew_r[2] += Frac * V_new[i_real][j] * r;
+		}
+	}
+
+	integralV_du_dt  = (integralV_unew   - integralV_un  ) / par.d_t;
+	integralV_dur_dt = (integralV_unew_r - integralV_un_r) / par.d_t;
+
+}
 

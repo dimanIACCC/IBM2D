@@ -34,6 +34,7 @@ public:
 	int AddSolids_start;      // step when Solids start to add
 	int AddSolids_interval;   // interval for Solids adding
 	Boundary_Conditions BC;   // Boundary Conditions
+	double u_wall;            // velocity of the channel walls
 	int SolidName_max;        // Maximal Name of Solids
 	std::string WorkDir;      // WorkDir
 	Param();
@@ -50,3 +51,9 @@ GeomVec x_p(int i, int j, Param par); // coordinates of (i,j)-th node for pressu
 GeomVec x_u(int i, int j, Param par); // coordinates of (i,j)-th node for velocity u mesh
 GeomVec x_v(int i, int j, Param par); // coordinates of (i,j)-th node for velocity v mesh
 GeomVec x_c(int i, int j, Param par); // coordinates of (i,j)-th node for corners    mesh
+
+double DeltaFunction(double x, double y, Param par);
+double FunctionD(double r);
+void GetInfluenceArea(int &i_min, int &i_max, int &j_min, int &j_max, size_t Ni, size_t Nj, GeomVec x, int size, Param par);
+double Volume_Frac(GeomVec xc, double r, GeomVec x, double dx, double dy);
+double Heaviside(double x);

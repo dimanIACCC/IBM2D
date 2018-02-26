@@ -27,7 +27,7 @@ void Calculate_u_p(Matrix &U_n  , Matrix &V_n,
 
 	std::clock_t begin, end;
 
-	int f_max = 20;
+	int f_max = 2;
 	int s_max = 1000;
 	for (int s = 0; s <= s_max; ++s) {
 
@@ -70,9 +70,6 @@ void Calculate_u_p(Matrix &U_n  , Matrix &V_n,
 					it.S = 0.;
 				}
 
-				//deformation_velocity(U_new, V_new, Exx, Eyy, Exy, par);
-				//Output_c(Exy, s, par);
-
 				CalculateForce(Fx_tmp, Fy_tmp, solidList, U_new, V_new, par);
 				U_new += Fx_tmp * (par.d_t);
 				V_new += Fy_tmp * (par.d_t);
@@ -84,8 +81,6 @@ void Calculate_u_p(Matrix &U_n  , Matrix &V_n,
 			}
 
 			Solids_velocity_new(solidList, par);
-
-			Solids_Force(solidList, par.Re);
 
 			end = std::clock();
 			//std::cout << "time of Force        : " << end - begin << " " << std::endl;
@@ -137,6 +132,11 @@ void Calculate_u_p(Matrix &U_n  , Matrix &V_n,
 		U_s = U_new;
 		V_s = V_new;
 	}
+
+	deformation_velocity(U_new, V_new, Exx, Eyy, Exy, par);
+	Output_c(Exy, -444, par);
+	Solids_deformation_velocity_pressure(solidList, Exx, Eyy, Exy, P, par);
+	Solids_Force(solidList, par.Re);
 
 }
 
