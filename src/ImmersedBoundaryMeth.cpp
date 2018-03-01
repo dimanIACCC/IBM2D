@@ -165,7 +165,7 @@ void Awake(int& n0, Param& par, std::list<Circle>& solidList, Matrix& U_n, Matri
 							GetParValue(line, PAR, VALUE);
 							
 								if (PAR == "moving")			 c.moving = bool(stoi(VALUE));
-								else if (PAR == "xc")			 hibernation_source >> c.xc;//
+								else if (PAR == "xc_n")			 hibernation_source >> c.xc_n;//
 								else if (PAR == "uc")			 hibernation_source >> c.uc;//
 								else if (PAR == "uc_n")			 hibernation_source >> c.uc_n;//
 								else if (PAR == "omega")		 hibernation_source >> c.omega;//
@@ -196,7 +196,7 @@ void Awake(int& n0, Param& par, std::list<Circle>& solidList, Matrix& U_n, Matri
 														break; 
 													}
 													GetParValue(line, PAR, VALUE);
-													if (PAR == "x")					hibernation_source >> c.Nodes[j].x;
+													if (PAR == "xn")				hibernation_source >> c.Nodes[j].xn;
 													else if (PAR == "uf")			hibernation_source >> c.Nodes[j].uf;
 													else if (PAR == "f")			hibernation_source >> c.Nodes[j].f;
 													else if (PAR == "f_tmp")		hibernation_source >> c.Nodes[j].f_tmp;

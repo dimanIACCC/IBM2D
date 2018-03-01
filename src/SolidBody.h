@@ -7,7 +7,7 @@
 class Node
 {
 public:
-	GeomVec x;        // coordinates
+	GeomVec xn;    // coordinates
 	GeomVec uf;       // velocity of the fluid in the Node
 	GeomVec us;       // velocity of the SolidBody in the Node
 	GeomVec f, f_tmp; // force and temporary force in iterations
@@ -21,7 +21,7 @@ class SolidBody
 {
 public:
 	bool moving;
-	GeomVec xc;     // coordinates of the mass center
+	GeomVec xc, xc_n;        // coordinates of the mass center
 	GeomVec uc, uc_n;        // velocity of the mass center
 	GeomVec omega, omega_n;  // angular velocity
 	GeomVec f;      // force applied to the whole SolidBody

@@ -4,21 +4,22 @@
 
 SolidBody::SolidBody(double x, double y, double ux, double uy, double omega, double rho, int Nn, bool moving, int &name)
 {
-	std::fill(this->xc.begin()   , this->xc.end(),    0.0); // fill vector xc    with zeros
-	std::fill(this->uc.begin()   , this->uc.end()   , 0.0); // fill vector uc    with zeros
-	std::fill(this->omega.begin(), this->omega.end(), 0.0); // fill vector omega with zeros
-	this->xc[1] = x;
-	this->xc[2] = y;
-	this->uc[1] = ux;
-	this->uc[2] = uy;
-	this->omega[3] = omega;
+	std::fill(this->xc_n.begin()   , this->xc_n.end(),    0.0); // fill vector xc_n    with zeros
+	std::fill(this->uc_n.begin()   , this->uc_n.end()   , 0.0); // fill vector uc_n    with zeros
+	std::fill(this->omega_n.begin(), this->omega_n.end(), 0.0); // fill vector omega_n with zeros
+	this->xc_n[1] = x;
+	this->xc_n[2] = y;
+	this->uc_n[1] = ux;
+	this->uc_n[2] = uy;
+	this->omega_n[3] = omega;
 	this->rho = rho;
 	this->Nn = Nn;
 	Nodes.resize(Nn);
 	this->moving = moving;
 	this->name = name;
-	this->omega_n = this->omega;
-	this->uc_n    = this->uc;
+	this->omega = this->omega_n;
+	this->uc    = this->uc_n;
+	this->xc    = this->xc_n;
 	this->Fr = 0.;
 }
 
@@ -40,8 +41,8 @@ Circle::Circle(double x, double y, double ux, double uy, double omega, double rh
 	this->r = r;
 
 	for (int i = 0; i < Nn; ++i){
-		Nodes[i].x[1] = x + cos(i * 2.0 * M_PI / Nn) * r;
-		Nodes[i].x[2] = y + sin(i * 2.0 * M_PI / Nn) * r;
+		Nodes[i].xn[1] = cos(i * 2.0 * M_PI / Nn) * r;
+		Nodes[i].xn[2] = sin(i * 2.0 * M_PI / Nn) * r;
 		Nodes[i].n[1] =     cos(i * 2.0 * M_PI / Nn);
 		Nodes[i].n[2] =     sin(i * 2.0 * M_PI / Nn);
 	}
@@ -52,10 +53,10 @@ Circle::Circle(double x, double y, double ux, double uy, double omega, double rh
 Circle::Circle(double x, double y, Param &par):
 	    Circle(       x,        y, 0.0, 0.0, 0.0, par.rho, par.Nn, true, par.SolidName_max, par.r) {
 	par.SolidName_max++;
-	this->uc[1] = ux_Poiseuille(y, par.H);
-	this->omega[3] = -dux_dy_Poiseuille(y, par.H);
-	this->omega_n = this->omega;
-	this->uc_n    = this->uc;
+	this->uc_n[1]    =  ux_Poiseuille(y, par.H);
+	this->omega_n[3] = -dux_dy_Poiseuille(y, par.H);
+	this->omega = this->omega_n;
+	this->uc    = this->uc_n;
 }
  
 Circle::~Circle()
@@ -64,9 +65,7 @@ Circle::~Circle()
 
 void SolidBody::velocities() {
 	for (int i = 0; i < Nn; ++i) {
-		GeomVec r;
-		r = Nodes[i].x - xc;
-		Nodes[i].us = uc_n + x_product(omega_n, r);
+		Nodes[i].us = uc_n + x_product(omega, Nodes[i].xn);
 	}
 }
 
@@ -75,21 +74,19 @@ void SolidBody::move(double d_t) {
 		//update position
 		for (size_t k = 0; k < Nn; ++k) {
 			//rotate
-			GeomVec r = Nodes[k].x - xc;
-			GeomVec x_temp = rotate_Vector_around_vector(r, omega * d_t); //
-			Nodes[k].x = xc + x_temp; // rotate solid by angle $omega$ * $dt$ // workaround
-			Nodes[k].x += uc * d_t; // move
+			GeomVec r = Nodes[k].xn;
+			Nodes[k].xn = rotate_Vector_around_vector(r, omega * d_t); // workaround
 		}
-		xc += uc * d_t;
+		xc_n += uc * d_t;
 	}
 }
 
 double SolidBody::ds(size_t i) {
 	GeomVec xL, xR;
-	if (i > 0)    xL = Nodes[i-1].x;
-	else          xL = Nodes[Nn-1].x;
-	if (i < Nn-1) xR = Nodes[i+1].x;
-	else          xR = Nodes[0].x;
+	if (i > 0)    xL = Nodes[i-1].xn;
+	else          xL = Nodes[Nn-1].xn;
+	if (i < Nn-1) xR = Nodes[i+1].xn;
+	else          xR = Nodes[0].xn;
 	double result = length(xL - xR) / 2;
 	return result;
 }
@@ -108,8 +105,8 @@ void SolidBody::log(std::string WorkDir, int n) {
 	std::string filename = WorkDir + "Solids/" + std::to_string(name) + ".plt";
 	output.open(filename, std::ios::app);
 
-	output << xc[1] << "   "
-	       << xc[2] << "   "
+	output << xc_n[1] << "   "
+	       << xc_n[2] << "   "
 	       << uc[1] << "   "
 	       << uc[2] << "   "
 	       <<  f[1] << "   "
@@ -192,13 +189,13 @@ void Add_Solids(std::list<Circle>& Solids, int n, Param &par) {
 			GeomVec x;
 			x[0] = 0;
 			x[1] = (par.L)  * (0.5 + (1 - 4 * par.r / par.L) * (double(rand()) - RAND_MAX / 2) / RAND_MAX);
-			x[2] = (par.H)  * (0.5 + (1 - 4 * par.r / par.L) * (double(rand()) - RAND_MAX / 2) / RAND_MAX);
+			x[2] = (par.H)  * (0.5 + (1 - 3 * par.r / par.H) * (double(rand()) - RAND_MAX / 2) / RAND_MAX);
 			x[3] = 0;
 			Circle c(x[1], x[2], par);
 			// check if new Solid does not cross other Solids
 			bool add = true;
 			for (auto solid = Solids.begin(); solid != Solids.end(); solid++) {
-				if (length(x - solid->xc) < par.k_dist * (par.r + solid->r)) {
+				if (length(x - solid->xc_n) < par.k_dist * (par.r + solid->r)) {
 					add = false;
 					break;
 				}
@@ -214,7 +211,7 @@ void Add_Solids(std::list<Circle>& Solids, int n, Param &par) {
 
 bool Collide(Circle& s1, Circle& s2, Param par) {
 	bool result = false;
-	GeomVec r = s1.xc - s2.xc;
+	GeomVec r = s1.xc_n - s2.xc_n;
 	double distance = length(r); //<----distance between two particles
 	if (par.BC == periodical) {
 		GeomVec r_plus  = r;
@@ -257,8 +254,8 @@ void Solids_move(std::list<Circle> &solidList, Param par, int n) {
 	}
 	///-------------collision with walls--------------------------
 	for (auto one = solidList.begin(); one != solidList.end(); one++) {
-		double DistUpper = par.H - one->xc[2];//<----distance to upper wall
-		double DistLower = one->xc[2];//<-------distance to lower wall
+		double DistUpper = par.H - one->xc_n[2];//<----distance to upper wall
+		double DistLower = one->xc_n[2];//<-------distance to lower wall
 		if ((DistUpper < par.k_dist * one->r && one->uc[2] > 0) ||
 		    (DistLower < par.k_dist * one->r && one->uc[2] < 0)) {
 			if (Debug) std::cout << "Collision with wall detected" << std::endl;
@@ -280,13 +277,12 @@ void Solids_move(std::list<Circle> &solidList, Param par, int n) {
 		it->log(par.WorkDir, n);
 
 		//Right boundary conditions for Solids
-		if (it->xc[1] < par.L) {
+		if (it->xc_n[1] < par.L) {
 			it++;
 		}
 		else {
 			if (par.BC == periodical) {
-				it->xc[1] -= par.L;
-				for (size_t k = 0; k < it->Nn; ++k)  it->Nodes[k].x[1] -= par.L;
+				it->xc_n[1] -= par.L;
 				it++;
 			}
 			else
@@ -333,7 +329,7 @@ void Circle::integrals(Matrix U_n, Matrix V_n, Matrix U_new, Matrix V_new, Param
 	int i_max, i_min;
 	int j_max, j_min;
 
-	GetInfluenceArea(i_min, i_max, j_min, j_max, nx1 - 1, nx2 - 1, xc, int(r / par.d_x) + 4, par);
+	GetInfluenceArea(i_min, i_max, j_min, j_max, nx1 - 1, nx2 - 1, xc_n, int(r / par.d_x) + 4, par);
 	for (int i = i_min; i <= i_max; ++i) {
 		for (int j = j_min; j <= j_max; ++j) {
 			int i_real = i;
@@ -341,7 +337,7 @@ void Circle::integrals(Matrix U_n, Matrix V_n, Matrix U_new, Matrix V_new, Param
 			if (i_real >  nx1 - 1) i_real -= nx1 - 1;
 			if (i_real == nx1 - 1) i_real = 0;
 			GeomVec xu = x_u(i_real, j, par);
-			double Frac = par.d_x * par.d_y * Volume_Frac(xc, r, xu, par.d_x, par.d_y);
+			double Frac = par.d_x * par.d_y * Volume_Frac(xc_n, r, xu, par.d_x, par.d_y);
 			integralV_un    [1] += Frac * U_n  [i_real][j]    ;
 			integralV_unew  [1] += Frac * U_new[i_real][j]    ;
 			integralV_un_r  [1] += Frac * U_n  [i_real][j] * r;
@@ -350,7 +346,7 @@ void Circle::integrals(Matrix U_n, Matrix V_n, Matrix U_new, Matrix V_new, Param
 		}
 	}
 
-	GetInfluenceArea(i_min, i_max, j_min, j_max, ny1 - 1, ny2 - 1, xc, int(r / par.d_x) + 4, par);
+	GetInfluenceArea(i_min, i_max, j_min, j_max, ny1 - 1, ny2 - 1, xc_n, int(r / par.d_x) + 4, par);
 	for (int i = i_min; i <= i_max; ++i) {
 		for (int j = j_min; j <= j_max; ++j) {
 			int i_real = i;
@@ -358,7 +354,7 @@ void Circle::integrals(Matrix U_n, Matrix V_n, Matrix U_new, Matrix V_new, Param
 			if (i_real >  nx1 - 1) i_real -= nx1 - 1;
 			if (i_real == nx1 - 1) i_real = 0;
 			GeomVec xv = x_v(i_real, j, par);
-			double Frac = par.d_x * par.d_y * Volume_Frac(xc, r, xv, par.d_x, par.d_y);
+			double Frac = par.d_x * par.d_y * Volume_Frac(xc_n, r, xv, par.d_x, par.d_y);
 			integralV_un    [2] += Frac * V_n  [i_real][j]    ;
 			integralV_unew  [2] += Frac * V_new[i_real][j]    ;
 			integralV_un_r  [2] += Frac * V_n  [i_real][j] * r;
