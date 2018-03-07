@@ -52,7 +52,7 @@ void BodyOfProgram(Param par, std::list<Circle> solidList, Matrix U_n, Matrix V_
 			solid.uc[1] = 0;
 		}*/
 
-		Solids_move(solidList, par,n);
+		
 
 		PushLog(log, n, eps_u, eps_v);
 		log.flush();

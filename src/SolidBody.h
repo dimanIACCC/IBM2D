@@ -7,7 +7,7 @@
 class Node
 {
 public:
-	GeomVec xn;    // coordinates
+	GeomVec x, xn;    // coordinates
 	GeomVec uf;       // velocity of the fluid in the Node
 	GeomVec us;       // velocity of the SolidBody in the Node
 	GeomVec f, f_tmp; // force and temporary force in iterations
@@ -60,7 +60,7 @@ public:
 void Read_Solids(std::string filename, std::list<Circle>& Solids, Param &par);
 void Add_Solids(std::list<Circle>& Solids, int n, Param &par);
 bool Collide(Circle& s1, Circle& s2, Param par);
-void Solids_move(std::list<Circle> &solidList, Param par, int n);
+void Solids_move(std::list<Circle> &solidList, Param par);
 void Solids_zero_force(std::list<Circle>& Solids);
 void Solids_velocity_new(std::list<Circle>& Solids, Param par);
 GeomVec Circle_Equation(GeomVec xc, double r, double theta);

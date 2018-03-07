@@ -60,6 +60,10 @@ void Calculate_u_p(Matrix &U_n  , Matrix &V_n,
 		#pragma region Force
 			begin = std::clock();
 
+			for (auto& it : solidList) {
+				it.integrals(U_n, V_n, U_s, V_s, par);
+			}
+
 			Solids_zero_force(solidList);
 			Fx = Fx * 0.;
 			Fy = Fy * 0.;
@@ -123,11 +127,13 @@ void Calculate_u_p(Matrix &U_n  , Matrix &V_n,
 			//OutputVelocity_V(V_new, s, solidList, par);
 		}
 
-		if (Delta_P_max / P_max < par.eps_P) {
+		if (Delta_P_max / P_max < par.eps_P && s > 3) {
 
 			std::cout << "s iterations: " << s << std::endl;
 			break;
 		}
+
+		Solids_move(solidList, par);
 
 		U_s = U_new;
 		V_s = V_new;

@@ -26,8 +26,8 @@ void OutputPressure(Matrix p, int n, std::list<Circle> iList, Param par) {
 		output << "zone T = circle" << ",  i=" << solid.Nn << ", f=point" << std::endl;
 		output << "SolutionTime = " << n << std::endl;
 		for (int i = 0; i < solid.Nn; ++i) {
-			output << solid.xc_n[1] + solid.Nodes[i].xn[1] << " "
-			       << solid.xc_n[2] + solid.Nodes[i].xn[2] << " "
+			output << solid.xc[1] + solid.Nodes[i].x[1] << " "
+			       << solid.xc[2] + solid.Nodes[i].x[2] << " "
 				<< 0 << std::endl;
 		}
 	}
@@ -59,8 +59,8 @@ void OutputVelocity_U(Matrix u, int n, std::list<Circle> iList, Param par) {
 		output << "zone T = circle" << ",  i=" << solid.Nn << ", f=point" << std::endl;
 		output << "SolutionTime = " << n << std::endl;
 		for (int i = 0; i < solid.Nn; ++i) {
-			output << solid.xc_n[1] + solid.Nodes[i].xn[1] << " "
-			       << solid.xc_n[2] + solid.Nodes[i].xn[2] << " "
+			output << solid.xc[1] + solid.Nodes[i].x[1] << " "
+			       << solid.xc[2] + solid.Nodes[i].x[2] << " "
 				<< solid.Nodes[i].f[1] << " "
 				<< solid.Nodes[i].f[2] << " " << std::endl;
 		}
@@ -96,8 +96,8 @@ void OutputVelocity_V(Matrix v, int n, std::list<Circle> iList, Param par) {
 		output << "zone T = circle" << ",  i=" << solid.Nn << ", f=point" << std::endl;
 		output << "SolutionTime = " << n << std::endl;
 		for (int i = 0; i < solid.Nn; ++i) {
-			output << solid.xc_n[1] + solid.Nodes[i].xn[1] << " "
-			       << solid.xc_n[2] + solid.Nodes[i].xn[2] << " "
+			output << solid.xc[1] + solid.Nodes[i].x[1] << " "
+			       << solid.xc[2] + solid.Nodes[i].x[2] << " "
 				<< solid.Nodes[i].f[1] << " "
 				<< solid.Nodes[i].f[2] << " " << std::endl;
 		}
@@ -137,8 +137,8 @@ void Output(Matrix p, Matrix u, Matrix v, Matrix Fx, Matrix Fy, int n, std::list
 		output << "zone T = circle" << ",  i=" << solid.Nn + 2 << ", f=point" << std::endl;
 		output << "SolutionTime = " << n << std::endl;
 
-		output << solid.xc_n[1] << " "
-		       << solid.xc_n[2] << " "
+		output << solid.xc[1] << " "
+		       << solid.xc[2] << " "
 		       << 0 << " "
 		       << solid.uc[1] << " "
 		       << solid.uc[2] << " "
@@ -149,8 +149,8 @@ void Output(Matrix p, Matrix u, Matrix v, Matrix Fx, Matrix Fy, int n, std::list
 		       << std::endl;
 		for (int i = 0; i < solid.Nn; ++i) {
 
-			output << solid.Nodes[i].xn[1] + solid.xc_n[1] << " "
-			       << solid.Nodes[i].xn[2] + solid.xc_n[2] << " "
+			output << solid.Nodes[i].x[1] + solid.xc[1] << " "
+			       << solid.Nodes[i].x[2] + solid.xc[2] << " "
 			       << solid.Nodes[i].p << " "
 			       << solid.Nodes[i].uf[1] << " "
 			       << solid.Nodes[i].uf[2] << " "
@@ -161,8 +161,8 @@ void Output(Matrix p, Matrix u, Matrix v, Matrix Fx, Matrix Fy, int n, std::list
 			       << std::endl;
 
 		}
-		output << solid.Nodes[0].xn[1] + solid.xc_n[1] << " "
-		       << solid.Nodes[0].xn[2] + solid.xc_n[2] << " "
+		output << solid.Nodes[0].x[1] + solid.xc[1] << " "
+		       << solid.Nodes[0].x[2] + solid.xc[2] << " "
 		       << solid.Nodes[0].p << " "
 		       << solid.Nodes[0].uf[1] << " "
 		       << solid.Nodes[0].uf[2] << " "
