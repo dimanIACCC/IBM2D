@@ -128,7 +128,7 @@ void Calculate_u_p(Matrix &U_n  , Matrix &V_n,
 			//OutputVelocity_V(V_new, s, solidList, par);
 		}
 
-		double eps_P = 1.e-3;
+		double eps_P = 1.e-1;
 		if (Delta_P_max / P_max < eps_P) {
 
 			std::cout << "s iterations: " << s << std::endl;
