@@ -87,7 +87,7 @@ void CalculateForce(Matrix& force_x, Matrix& force_y, std::list<Circle> &iList, 
 	for (auto& solid : iList) {
 		solid.Fr /= solid.S;
 		for (size_t k = 0; k < solid.Nn; ++k) {
-			GeomVec r = solid.Nodes[k].x / length(solid.Nodes[k].x);
+			GeomVec r = (solid.Nodes[k].x) / length(solid.Nodes[k].x);
 			solid.Nodes[k].f_tmp -= solid.Fr * r;
 		}
 

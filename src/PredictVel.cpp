@@ -120,7 +120,7 @@ Matrix CalculateB(Matrix &u_n, Matrix &v_n, Matrix &u_s, Matrix &v_s, Matrix &p,
 
 	if (par.BC == periodical) {
 		if (Dir == Du) {
-			for (size_t j = 1; j < Ny; ++j) {
+			for (size_t j = 1; j < Ny - 1; ++j) {
 				size_t i = 0;
 				double advective_term_n = advective_term(u_n, v_n, i, j, d_u, d_v, Dir, par.N1, par.N2);
 				double advective_term_s = advective_term(u_s, v_s, i, j, d_u, d_v, Dir, par.N1, par.N2);
@@ -136,7 +136,7 @@ Matrix CalculateB(Matrix &u_n, Matrix &v_n, Matrix &u_s, Matrix &v_s, Matrix &p,
 			}
 		}
 		else if (Dir == Dv) {
-			for (size_t j = 0; j < Ny; ++j) {
+			for (size_t j = 0; j < Ny - 1; ++j) {
 				result[0]     [j] = result[Nx - 2][j];
 				result[Nx - 1][j] = result[1][j];
 			}

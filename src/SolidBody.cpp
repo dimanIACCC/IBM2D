@@ -159,10 +159,7 @@ void Read_Solids(std::string filename, std::list<Circle>& Solids, Param &par) {
 					uy = 0;
 					omega = - dux_dy_Poiseuille(y, par.H);
 				}
-				if (moving == false) {
-					ux = 0;
-					uy = 0;
-				}
+				
 				Circle c(x, y, ux, uy, omega, rho, Nn, moving, par.SolidName_max, r);
 				par.SolidName_max++;
 				Solids.push_back(c);
@@ -237,7 +234,7 @@ bool Collide(Circle& s1, Circle& s2, Param par) {
 	return result;
 }
 
-void Solids_move(std::list<Circle> &solidList, Param par) {
+void Solids_move(std::list<Circle> &solidList, Param par, int n) {
 
 	///--------------collisions between particles-----------------
 	for (auto one = solidList.begin(); one != solidList.end(); one++) {
@@ -269,7 +266,7 @@ void Solids_move(std::list<Circle> &solidList, Param par) {
 			}
 		}
 
-		//it->log(par.WorkDir, n);
+		it->log(par.WorkDir, n);
 
 		//Right boundary conditions for Solids
 		if (it->xc_n[1] < par.L) {
@@ -302,12 +299,19 @@ void Solids_zero_force(std::list<Circle>& Solids) {
 void Solids_velocity_new(std::list<Circle>& Solids, Param par) {
 	for (auto& it : Solids) {
 		if (it.moving) {
-			it.uc    = it.uc_n    + par.d_t * (it.integralV_du_dt  - it.f  ) / it.V / it.rho * 1;  // fluid density equals 1
-			it.omega = it.omega_n + par.d_t * (it.integralV_dur_dt - it.tau) / it.I / it.rho * 1;  // angular moment I is normalized with density
+			it.uc_s    = it.uc;
+			it.omega_s = it.omega;
 
-			it.xc = it.xc_n + 0.5 * (it.uc_n + it.uc) * par.d_t;
+			GeomVec d_uc    = par.d_t * (it.integralV_du_dt  - it.f  ) / it.V / it.rho * 1;  // fluid density equals 1
+			GeomVec d_omega = par.d_t * (it.integralV_dur_dt - it.tau) / it.I / it.rho * 1;  // angular moment I is normalized with density
+
+			double alpha = 0.1;
+			it.uc    = (1 - alpha) * it.uc_s    + alpha * (it.uc_n    + d_uc);
+			it.omega = (1 - alpha) * it.omega_s + alpha * (it.omega_n + d_omega);
+
+			it.xc = it.xc_n + 0.5 * (it.uc_n + it.uc_n) * par.d_t;
 			for (size_t k = 0; k < it.Nn; ++k) {
-				it.Nodes[k].x = rotate_Vector_around_vector(it.Nodes[k].xn, 0.5 * (it.omega_n + it.omega) * par.d_t); //rotate
+				it.Nodes[k].x = rotate_Vector_around_vector(it.Nodes[k].xn, 0.5 * (it.omega_n + it.omega_n) * par.d_t); //rotate
 			}
 
 			//it.uc    = it.uc_n    - it.f   * par.d_t * 1 / (it.rho - 1) / it.V;  // fluid density equals 1
@@ -333,7 +337,7 @@ void Circle::integrals(Matrix U_n, Matrix V_n, Matrix U_new, Matrix V_new, Param
 	int i_max, i_min;
 	int j_max, j_min;
 
-	GetInfluenceArea(i_min, i_max, j_min, j_max, nx1 - 1, nx2 - 1, xc, int(r / par.d_x) + 4, par);
+	GetInfluenceArea(i_min, i_max, j_min, j_max, nx1 - 1, nx2 - 1, xc_n, int(r / par.d_x) + 4, par);
 	for (int i = i_min; i <= i_max; ++i) {
 		for (int j = j_min; j <= j_max; ++j) {
 			int i_real = i;
@@ -342,22 +346,34 @@ void Circle::integrals(Matrix U_n, Matrix V_n, Matrix U_new, Matrix V_new, Param
 			if (i_real == nx1 - 1) i_real = 0;
 			GeomVec xu = x_u(i, j, par);
 			double Frac_n = par.d_x * par.d_y * Volume_Frac(xc_n, r, xu, par.d_x, par.d_y);
-			double Frac   = par.d_x * par.d_y * Volume_Frac(xc  , r, xu, par.d_x, par.d_y);
 			integralV_un    [1] += Frac_n * U_n  [i_real][j]    ;
-			integralV_unew  [1] += Frac   * U_new[i_real][j]    ;
-			GeomVec un, unew;
+			GeomVec un;
 			un[1] = U_n[i_real][j];
 			un[2] = 0.0;
 			un[3] = 0.0;
-			unew[1] = U_new[i_real][j];
-			unew[2] = 0.0;
-			unew[3] = 0.0;
-			integralV_un_r   += Frac_n * x_product(r, un);
-			integralV_unew_r += Frac   * x_product(r, unew);
+			integralV_un_r   += Frac_n * x_product(xu-xc, un);
 		}
 	}
 
-	GetInfluenceArea(i_min, i_max, j_min, j_max, ny1 - 1, ny2 - 1, xc, int(r / par.d_x) + 4, par);
+	GetInfluenceArea(i_min, i_max, j_min, j_max, nx1 - 1, nx2 - 1, xc, int(r / par.d_x) + 4, par);
+	for (int i = i_min; i <= i_max; ++i) {
+		for (int j = j_min; j <= j_max; ++j) {
+			int i_real = i;
+			if (i_real <  0) i_real += nx1 - 1;
+			if (i_real >  nx1 - 1) i_real -= nx1 - 1;
+			if (i_real == nx1 - 1) i_real = 0;
+			GeomVec xu = x_u(i, j, par);
+			double Frac = par.d_x * par.d_y * Volume_Frac(xc, r, xu, par.d_x, par.d_y);
+			integralV_unew[1] += Frac * U_new[i_real][j];
+			GeomVec unew;
+			unew[1] = U_new[i_real][j];
+			unew[2] = 0.0;
+			unew[3] = 0.0;
+			integralV_unew_r += Frac * x_product(xu - xc, unew);
+		}
+	}
+
+	GetInfluenceArea(i_min, i_max, j_min, j_max, ny1 - 1, ny2 - 1, xc_n, int(r / par.d_y) + 4, par);
 	for (int i = i_min; i <= i_max; ++i) {
 		for (int j = j_min; j <= j_max; ++j) {
 			int i_real = i;
@@ -366,18 +382,30 @@ void Circle::integrals(Matrix U_n, Matrix V_n, Matrix U_new, Matrix V_new, Param
 			if (i_real == nx1 - 1) i_real = 0;
 			GeomVec xv = x_v(i, j, par);
 			double Frac_n = par.d_x * par.d_y * Volume_Frac(xc_n, r, xv, par.d_x, par.d_y);
-			double Frac   = par.d_x * par.d_y * Volume_Frac(xc  , r, xv, par.d_x, par.d_y);
-			integralV_un    [2] += Frac_n * V_n  [i_real][j]    ;
-			integralV_unew  [2] += Frac   * V_new[i_real][j]    ;
-			GeomVec vn, vnew;
+			integralV_un[2] += Frac_n * V_n  [i_real][j];
+			GeomVec vn;
 			vn[1] = 0.0;
 			vn[2] = V_n[i_real][j];
 			vn[3] = 0.0;
+			integralV_un_r   += Frac_n * x_product(xv-xc, vn);
+		}
+	}
+
+	GetInfluenceArea(i_min, i_max, j_min, j_max, ny1 - 1, ny2 - 1, xc, int(r / par.d_y) + 4, par);
+	for (int i = i_min; i <= i_max; ++i) {
+		for (int j = j_min; j <= j_max; ++j) {
+			int i_real = i;
+			if (i_real <  0) i_real += nx1 - 1;
+			if (i_real >  nx1 - 1) i_real -= nx1 - 1;
+			if (i_real == nx1 - 1) i_real = 0;
+			GeomVec xv = x_v(i, j, par);
+			double Frac = par.d_x * par.d_y * Volume_Frac(xc, r, xv, par.d_x, par.d_y);
+			integralV_unew[2] += Frac * V_new[i_real][j];
+			GeomVec vnew;
 			vnew[1] = 0.0;
 			vnew[2] = V_new[i_real][j];
 			vnew[3] = 0.0;
-			integralV_un_r   += Frac_n * x_product(r, vn);
-			integralV_unew_r += Frac   * x_product(r, vnew);
+			integralV_unew_r += Frac   * x_product(xv - xc, vnew);
 		}
 	}
 

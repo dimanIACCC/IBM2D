@@ -27,7 +27,19 @@ void BodyOfProgram(Param par, std::list<Circle> solidList, Matrix U_n, Matrix V_
 	//force.open(par.WorkDir + "force.plt", std::ios::out);
 	//force << "Variables = n, Fx, Fy" << std::endl;
 
-	
+	int f_max = 10;
+	Solids_zero_force(solidList);
+	for (int f = 0; f <= f_max; ++f) {
+
+		for (auto& it : solidList) {
+			it.Fr = 0.;
+			it.S = 0.;
+		}
+
+		CalculateForce(Fx, Fy, solidList, U_n, V_n, par);
+		U_n += Fx * (par.d_t);
+		V_n += Fy * (par.d_t);
+	}
 
 	Output(P, U_n, V_n, Fx, Fy, -1, solidList, par);
 
@@ -43,16 +55,15 @@ void BodyOfProgram(Param par, std::list<Circle> solidList, Matrix U_n, Matrix V_
 		V_n = V_new;
 
 		//workaround for moving walls
-		/*for (auto& solid : solidList) {
-			GeomVec integral = solid.integralV_u(U_new, V_new, par);
-			for (size_t i = 0; i < U_n.size(); i++)
-				for (size_t j = 0; j < U_n[0].size(); j++)
-					U_n[i][j] = U_n[i][j] - solid.uc[1];
-			par.u_wall -= solid.uc[1];
-			solid.uc[1] = 0;
-		}*/
+		//for (auto& solid : solidList) {
+		//	for (size_t i = 0; i < U_n.size(); i++)
+		//		for (size_t j = 0; j < U_n[0].size(); j++)
+		//			U_n[i][j] = U_n[i][j] - solid.uc[1];
+		//	par.u_wall -= solid.uc[1];
+		//	solid.uc[1] = 0;
+		//}
 
-		
+		Solids_move(solidList, par,n);
 
 		PushLog(log, n, eps_u, eps_v);
 		log.flush();

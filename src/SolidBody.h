@@ -22,8 +22,8 @@ class SolidBody
 public:
 	bool moving;
 	GeomVec xc, xc_n;        // coordinates of the mass center
-	GeomVec uc, uc_n;        // velocity of the mass center
-	GeomVec omega, omega_n;  // angular velocity
+	GeomVec uc, uc_n, uc_s;  // velocity of the mass center
+	GeomVec omega, omega_n, omega_s;  // angular velocity
 	GeomVec f;      // force applied to the whole SolidBody
 	double Fr, Fr_all;      // average radial Force applied to SolidBody
 	GeomVec F_hd;   // Force calculated from hydrodynamics
@@ -42,7 +42,6 @@ public:
 	SolidBody(double x, double y, double ux, double uy, double omega, double rho, int Nn, bool moving, int &name);
 	~SolidBody();
 	void velocities();      // calculates the velocities in all Nodes of the SolidBody
-	void move(double d_t); // move Solid using $uc$ and $omega$
 	double ds(size_t i);
 	void log_init(std::string WorkDir);
 	void log(std::string WorkDir, int n);
@@ -60,7 +59,7 @@ public:
 void Read_Solids(std::string filename, std::list<Circle>& Solids, Param &par);
 void Add_Solids(std::list<Circle>& Solids, int n, Param &par);
 bool Collide(Circle& s1, Circle& s2, Param par);
-void Solids_move(std::list<Circle> &solidList, Param par);
+void Solids_move(std::list<Circle> &solidList, Param par, int n);
 void Solids_zero_force(std::list<Circle>& Solids);
 void Solids_velocity_new(std::list<Circle>& Solids, Param par);
 GeomVec Circle_Equation(GeomVec xc, double r, double theta);

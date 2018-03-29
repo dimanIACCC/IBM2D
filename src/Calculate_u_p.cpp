@@ -27,8 +27,15 @@ void Calculate_u_p(Matrix &U_n  , Matrix &V_n,
 
 	std::clock_t begin, end;
 
-	int f_max = 2;
-	int s_max = 1000;
+	std::ofstream output;
+	std::string filename = par.WorkDir + "/U_omega_iterations.plt";
+	output.open(filename);
+
+	output << "title = iterations" << std::endl;
+	output << "Variables = s ux uy omega f IntU tau IntUr" << std::endl;
+
+	int f_max = 10;
+	int s_max = 10000;
 	for (int s = 0; s <= s_max; ++s) {
 
 		begin = std::clock();
@@ -57,12 +64,10 @@ void Calculate_u_p(Matrix &U_n  , Matrix &V_n,
 			//std::cout << "time of Velocity     : " << end - begin << " " << std::endl;
 		#pragma endregion Velocity
 
+			//Output(P, U_new, V_new, Fx, Fy, s, solidList, par);
+
 		#pragma region Force
 			begin = std::clock();
-
-			for (auto& it : solidList) {
-				it.integrals(U_n, V_n, U_s, V_s, par);
-			}
 
 			Solids_zero_force(solidList);
 			Fx = Fx * 0.;
@@ -84,11 +89,14 @@ void Calculate_u_p(Matrix &U_n  , Matrix &V_n,
 
 			}
 
-			Solids_velocity_new(solidList, par);
-
 			end = std::clock();
 			//std::cout << "time of Force        : " << end - begin << " " << std::endl;
 		#pragma endregion Force
+
+			for (auto& it : solidList) {
+				it.integrals(U_n, V_n, U_new, V_new, par);
+			}
+
 
 		#pragma region Pressure
 			begin = std::clock();
@@ -121,19 +129,29 @@ void Calculate_u_p(Matrix &U_n  , Matrix &V_n,
 
 		#pragma endregion New P and U
 
-		if (s % par.output_step == 0) {
-			//Output_dp(Delta_P, s, par);
-			//Output(P, U_new, V_new, Fx, Fy, s, solidList, par);
-			//OutputVelocity_V(V_new, s, solidList, par);
+		//Output_dp(Delta_P, s, par);
+		//Output(P, U_new, V_new, Fx, Fy, s, solidList, par);
+		
+
+		bool key_solid = false;
+		for (auto& it : solidList) {
+
+			double eps_uc = length(it.uc - it.uc_s) / (length(it.uc) + 1e-4);
+			double eps_omega = length(it.omega - it.omega_s) / std::max( length(it.omega), length(it.uc)/it.r );
+
+			double eps_max = 5e-6;
+			if (eps_uc < eps_max && eps_omega < eps_max) key_solid = true;
+
+			output << s << "   " << it.uc[1] << "   " << it.uc[2] << "   " << it.omega[3] << "   " << it.f[1] << "   " << it.integralV_du_dt[1] << "   " << it.tau[3] << "   " << it.integralV_dur_dt[3] << "   " << std::endl;
 		}
 
-		if (Delta_P_max / P_max < par.eps_P && s > 3) {
+		// key_solid = true; // workaround
 
+		if (Delta_P_max / P_max < par.eps_P) {
+			Solids_velocity_new(solidList, par);
 			std::cout << "s iterations: " << s << std::endl;
-			break;
+			if (key_solid == true) break;
 		}
-
-		Solids_move(solidList, par);
 
 		U_s = U_new;
 		V_s = V_new;
