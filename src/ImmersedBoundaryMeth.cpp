@@ -184,6 +184,7 @@ void Awake(int& n0, Param& par, std::list<Circle>& solidList, Matrix& U_n, Matri
 								else if (PAR == "Nn")			 c.Nn = stoi(VALUE);
 								else if (PAR == "name")			 c.name = stoi(VALUE);
 								else if (PAR == "r")			 c.r = stod(VALUE);
+								else if (PAR == "n_moving")			 c.n_moving = stoi(VALUE);
 								else if (PAR == "<Nodes>") {
 									while (line != "<\\Nodes>") {
 										getline(hibernation_source, line);

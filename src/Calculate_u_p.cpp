@@ -149,6 +149,39 @@ void ApplyInitialData(Matrix &u, Matrix &p, Param par) {
 		for (size_t j = 0; j < u[0].size(); ++j) {
 			GeomVec xu = x_u(i, j, par);
 			switch (par.BC) {
+			case u_infinity: u[i][j] = 1.0; break;
+			case u_inflow:   u[i][j] = 1.0 * ux_Poiseuille(xu[2], par.H); break;
+			case periodical: u[i][j] = 1.0 * ux_Poiseuille(xu[2], par.H); break;
+			default: std::cout << "ApplyInitialData: unknown BC" << std::endl;
+			}
+		}
+	}
+
+	for (size_t i = 0; i < p.size(); ++i) {
+		for (size_t j = 0; j < p[0].size(); ++j) {
+			GeomVec xp = x_p(i, j, par);
+			p[i][j] = (par.L - xp[1]) * dpdx_Poiseuille(par.H, par.Re);
+		}
+	}
+
+
+		size_t Nx = p.size();
+		if (par.BC == periodical) {
+			for (size_t j = 0; j < p[0].size(); ++j) {
+				//p[0][j]      = par.L * dpdx_Poiseuille(par.H, par.Re);
+				//p[1][j]      = par.L * dpdx_Poiseuille(par.H, par.Re);
+				//p[Nx-2][j]   = 0;
+				//p[Nx-1][j]   = 0;
+			}
+		}
+
+	}
+void ApplyInitialData(Matrix &u, Matrix &p, Param par, std::list<Circle> iList) {
+
+	for (size_t i = 0; i < u.size(); ++i) {
+		for (size_t j = 0; j < u[0].size(); ++j) {
+			GeomVec xu = x_u(i, j, par);
+			switch (par.BC) {
 				case u_infinity: u[i][j] = 1.0; break;
 				case u_inflow:   u[i][j] = 1.0 * ux_Poiseuille(xu[2], par.H); break;
 				case periodical: u[i][j] = 1.0 * ux_Poiseuille(xu[2], par.H); break;
@@ -162,6 +195,14 @@ void ApplyInitialData(Matrix &u, Matrix &p, Param par) {
 			GeomVec xp = x_p(i, j, par);
 			p[i][j] = (par.L - xp[1]) * dpdx_Poiseuille(par.H, par.Re);
 		}
+	}
+	for (auto solid : iList) {
+		for (int i = ((solid.xc[1] - solid.r) / par.d_x + 1); i < (solid.xc[1] + solid.r) / par.d_x + 1; i++)
+			for (int j = (solid.xc[2] - solid.r) / par.d_y + 1; j < (solid.xc[2] + solid.r) / par.d_y + 1; j++) {
+				double distance = sqrt(pow(par.d_x*i - solid.xc[1], 2) + pow(par.d_y*j - solid.xc[2], 2));
+				if (distance <= solid.r) u[i][j] = 0;
+				//p[i][j] /= solid.GetSweetness(i, j, par);
+			}
 	}
 
 	size_t Nx = p.size();

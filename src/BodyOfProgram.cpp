@@ -40,7 +40,7 @@ void BodyOfProgram(Param par, std::list<Circle> solidList, Matrix U_n, Matrix V_
 
 		U_n = U_new;
 		V_n = V_new;
-
+		
 		Solids_move(solidList, par,n);
 
 		PushLog(log, n, eps_u, eps_v);
@@ -53,7 +53,7 @@ void BodyOfProgram(Param par, std::list<Circle> solidList, Matrix U_n, Matrix V_
 
 
 		const double epsilon = 1e-7;
-		if (eps_u < epsilon && eps_v < epsilon) {
+		if (eps_u < epsilon && eps_v < epsilon && n>20) {
 
 			Output(P, U_new, V_new, Fx, Fy, n, solidList, par);
 

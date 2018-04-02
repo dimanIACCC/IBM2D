@@ -20,6 +20,7 @@ SolidBody::SolidBody(double x, double y, double ux, double uy, double omega, dou
 	this->omega_n = this->omega;
 	this->uc_n    = this->uc;
 	this->Fr = 0.;
+	this->n_moving = 0;
 }
 
 
@@ -130,6 +131,7 @@ void Read_Solids(std::string filename, std::list<Circle>& Solids, Param &par) {
 				int Nn = par.Nn;
 				bool moving = true;
 				double r = par.r;
+				int n_moving = 0;
 				bool Poiseuille;   //key for initial ux, uy and omega corresponding to Poiseuille flow
 
 				while (line != "}") {
@@ -148,6 +150,7 @@ void Read_Solids(std::string filename, std::list<Circle>& Solids, Param &par) {
 						else if (PAR == "moving")     moving       = bool(stoi(VALUE));
 						else if (PAR == "Poiseuille") Poiseuille   = bool(stoi(VALUE));
 						else if (PAR == "r")          r            = stod(VALUE);
+						else if (PAR == "n_moving")	  n_moving	   = stoi(VALUE);
 						else    std::cout << "Read_Solids: unknown parameter " << PAR << std::endl;
 					}
 					else {
@@ -250,14 +253,14 @@ void Solids_move(std::list<Circle> &solidList, Param par, int n) {
 	///
 	for (auto it = solidList.begin(); it != solidList.end();) {
 
+		if (it->n_moving <= n) {
+			if (it->moving) {
+				it->uc_n = it->uc;
+				it->omega_n = it->omega;
+			}
 
-		if (it->moving) {
-			it->uc_n    = it->uc;
-			it->omega_n = it->omega;
+			it->move(par.d_t);
 		}
-
-		it->move(par.d_t);
-
 		it->log(par.WorkDir, n);
 
 		//Right boundary conditions for Solids

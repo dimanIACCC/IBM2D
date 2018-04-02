@@ -357,6 +357,7 @@ void MakeHibernationFile(int n, Param& par, std::list<Circle>& solidList, Matrix
 		output << "Nn = " << one->Nn << std::endl;
 		output << "name = " << one->name << std::endl;
 		output << "r = " << one->r << std::endl;
+		output << "n_moving" << one->n_moving << std::endl;
 		output << "<Nodes>" << std::endl;
 		for (int j = 0; j < par.Nn; j++) {
 			output << "Node{" << std::endl;
