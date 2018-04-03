@@ -57,7 +57,7 @@ int main(int argc, char *argv[]) {
 	CreateMatrix(U_n, par.N1, par.N2 + 1);
 	CreateMatrix(V_n, par.N1 + 1, par.N2);
 	CreateMatrix(P, par.N1 + 1, par.N2 + 1);
-	ApplyInitialData(U_n, P, par); // Applying initial data 
+	ApplyInitialData(U_n, P, par,solidList); // Applying initial data 
 
 	BodyOfProgram(par, solidList, U_n, V_n, P);
 

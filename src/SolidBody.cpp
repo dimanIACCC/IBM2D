@@ -102,7 +102,8 @@ void SolidBody::log(std::string WorkDir, int n) {
 	std::string filename = WorkDir + "Solids/" + std::to_string(name) + ".plt";
 	output.open(filename, std::ios::app);
 
-	output << xc[1] << "   "
+	output << n << "   "
+		   << xc[1] << "   "
 	       << xc[2] << "   "
 	       << uc[1] << "   "
 	       << uc[2] << "   "
@@ -110,7 +111,6 @@ void SolidBody::log(std::string WorkDir, int n) {
 	       <<  f[2] << "   "
 	       <<  omega[3] << "   "
 	       <<  tau[3]   << "   "
-	       <<  n        << "   "
 	       << std::endl;
 }
 
@@ -132,7 +132,7 @@ void Read_Solids(std::string filename, std::list<Circle>& Solids, Param &par) {
 				bool moving = true;
 				double r = par.r;
 				int n_moving = 0;
-				bool Poiseuille;   //key for initial ux, uy and omega corresponding to Poiseuille flow
+				bool Poiseuille = false;   //key for initial ux, uy and omega corresponding to Poiseuille flow
 
 				while (line != "}") {
 					getline(input, line);

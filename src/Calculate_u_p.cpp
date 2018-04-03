@@ -176,6 +176,7 @@ void ApplyInitialData(Matrix &u, Matrix &p, Param par) {
 		}
 
 	}
+
 void ApplyInitialData(Matrix &u, Matrix &p, Param par, std::list<Circle> iList) {
 
 	for (size_t i = 0; i < u.size(); ++i) {
