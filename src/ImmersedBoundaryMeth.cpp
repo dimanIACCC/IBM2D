@@ -16,7 +16,7 @@ void Awake(int& n0, Param& par, std::list<Circle>& solidList, Matrix& U_n, Matri
 
 int main(int argc, char *argv[]) {
 
-	fs::path WorkDir = L"\Result\\";
+	fs::path WorkDir = L"Result/";
 	std::list<Circle> solidList; // list of immersed solids
 
 	for (int i = 1; i < argc; i++) {

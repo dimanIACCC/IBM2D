@@ -30,7 +30,7 @@ public:
 	GeomVec tau_hd; // torque, moment of force calculated from hydrodynamics
 	double S;       // length of contour for radial Force averaging
 	GeomVec tau;    // torque, moment of force applied to the whole SolidBody
-	double I;       // angular momentum
+	double I;       // moment of inertia
 	double rho;     // density
 	double V;       // volume
 	GeomVec integralV_du_dt;      // integral of the du/dt       over the Volume of the Solid

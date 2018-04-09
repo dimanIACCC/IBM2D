@@ -318,8 +318,8 @@ void Solids_deformation_velocity_pressure(std::list<Circle> &Solids, Matrix &Exx
 						solid.Nodes[k].Eps(1, 1) += Exx[i_real][j] * DeltaFunction(xp[1] - xs[1] + par.L, xp[2] - xs[2], par) * par.d_x * par.d_y;
 						solid.Nodes[k].Eps(2, 2) += Eyy[i_real][j] * DeltaFunction(xp[1] - xs[1] - par.L, xp[2] - xs[2], par) * par.d_x * par.d_y;
 						solid.Nodes[k].Eps(2, 2) += Eyy[i_real][j] * DeltaFunction(xp[1] - xs[1] + par.L, xp[2] - xs[2], par) * par.d_x * par.d_y;
-						solid.Nodes[k].p         +=   p[i_real][j] * DeltaFunction(xp[1] - xs[1] - par.L, xp[2] - xs[2], par) * par.d_x * par.d_y;
-						solid.Nodes[k].p         +=   p[i_real][j] * DeltaFunction(xp[1] - xs[1] + par.L, xp[2] - xs[2], par) * par.d_x * par.d_y;
+						solid.Nodes[k].p         +=   (p[i_real][j] + dpdx_Poiseuille(par.H, par.Re)*par.L) * DeltaFunction(xp[1] - xs[1] - par.L, xp[2] - xs[2], par) * par.d_x * par.d_y;
+						solid.Nodes[k].p         +=   (p[i_real][j] - dpdx_Poiseuille(par.H, par.Re)*par.L) * DeltaFunction(xp[1] - xs[1] + par.L, xp[2] - xs[2], par) * par.d_x * par.d_y;
 					}
 				}
 			}

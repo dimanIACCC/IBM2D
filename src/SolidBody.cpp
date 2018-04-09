@@ -302,23 +302,24 @@ void Solids_velocity_new(std::list<Circle>& Solids, Param par) {
 			it.uc_s    = it.uc;
 			it.omega_s = it.omega;
 
-			GeomVec d_uc    = par.d_t * (it.integralV_du_dt  - it.f  ) / it.V / it.rho * 1;  // fluid density equals 1
-			GeomVec d_omega = par.d_t * (it.integralV_dur_dt - it.tau) / it.I / it.rho * 1;  // angular moment I is normalized with density
+			//GeomVec d_uc    = par.d_t * (it.integralV_du_dt  - it.f  ) / it.V / it.rho * 1;  // fluid density equals 1
+			//GeomVec d_omega = par.d_t * (it.integralV_dur_dt - it.tau) / it.I / it.rho * 1;  // angular moment I is normalized with density
 
-			double alpha = 0.1;
-			it.uc    = (1 - alpha) * it.uc_s    + alpha * (it.uc_n    + d_uc);
-			it.omega = (1 - alpha) * it.omega_s + alpha * (it.omega_n + d_omega);
+			//double alpha = 0.1;
+			//it.uc    = (1 - alpha) * it.uc_s    + alpha * (it.uc_n    + d_uc);
+			//it.omega = (1 - alpha) * it.omega_s + alpha * (it.omega_n + d_omega);
 
-			it.xc = it.xc_n + 0.5 * (it.uc_n + it.uc_n) * par.d_t;
-			for (size_t k = 0; k < it.Nn; ++k) {
-				it.Nodes[k].x = rotate_Vector_around_vector(it.Nodes[k].xn, 0.5 * (it.omega_n + it.omega_n) * par.d_t); //rotate
-			}
-
-			//it.uc    = it.uc_n    - it.f   * par.d_t * 1 / (it.rho - 1) / it.V;  // fluid density equals 1
-			//it.omega = it.omega_n - it.tau * par.d_t * 1 / (it.rho - 1) / it.I;  // angular moment I is normalized with density
+			it.uc    = it.uc_n    - it.f   * par.d_t * 1 / (it.rho - 1) / it.V;  // fluid density equals 1
+			it.omega = it.omega_n - it.tau * par.d_t * 1 / (it.rho - 1) / it.I;  // angular moment I is normalized with density
 
 			//it.uc    = it.uc_n    + it.F_hd   / it.rho / it.V * par.d_t;  // fluid density equals 1
 			//it.omega = it.omega_n + it.tau_hd / it.rho / it.I * par.d_t;  // angular moment I is normalized with density
+
+			it.xc = it.xc_n + 0.5 * (it.uc + it.uc) * par.d_t;
+			for (size_t k = 0; k < it.Nn; ++k) {
+				it.Nodes[k].x = rotate_Vector_around_vector(it.Nodes[k].xn, 0.5 * (it.omega + it.omega) * par.d_t); //rotate
+			}
+
 		}
 	}
 }
@@ -333,7 +334,7 @@ void Circle::integrals(Matrix U_n, Matrix V_n, Matrix U_new, Matrix V_new, Param
 	int nx1 = U_n.size();
 	int nx2 = U_n[0].size();
 	int ny1 = V_n.size();
-	int ny2 = V_n[1].size();
+	int ny2 = V_n[0].size();
 	int i_max, i_min;
 	int j_max, j_min;
 
@@ -346,12 +347,12 @@ void Circle::integrals(Matrix U_n, Matrix V_n, Matrix U_new, Matrix V_new, Param
 			if (i_real == nx1 - 1) i_real = 0;
 			GeomVec xu = x_u(i, j, par);
 			double Frac_n = par.d_x * par.d_y * Volume_Frac(xc_n, r, xu, par.d_x, par.d_y);
-			integralV_un    [1] += Frac_n * U_n  [i_real][j]    ;
+			integralV_un[1] += Frac_n * U_n[i_real][j];
 			GeomVec un;
 			un[1] = U_n[i_real][j];
 			un[2] = 0.0;
 			un[3] = 0.0;
-			integralV_un_r   += Frac_n * x_product(xu-xc, un);
+			integralV_un_r   += Frac_n * x_product(xu-xc_n, un);
 		}
 	}
 
@@ -359,7 +360,7 @@ void Circle::integrals(Matrix U_n, Matrix V_n, Matrix U_new, Matrix V_new, Param
 	for (int i = i_min; i <= i_max; ++i) {
 		for (int j = j_min; j <= j_max; ++j) {
 			int i_real = i;
-			if (i_real <  0) i_real += nx1 - 1;
+			if (i_real <  0      ) i_real += nx1 - 1;
 			if (i_real >  nx1 - 1) i_real -= nx1 - 1;
 			if (i_real == nx1 - 1) i_real = 0;
 			GeomVec xu = x_u(i, j, par);
@@ -377,17 +378,18 @@ void Circle::integrals(Matrix U_n, Matrix V_n, Matrix U_new, Matrix V_new, Param
 	for (int i = i_min; i <= i_max; ++i) {
 		for (int j = j_min; j <= j_max; ++j) {
 			int i_real = i;
-			if (i_real <  0      ) i_real += nx1 - 1;
-			if (i_real >  nx1 - 1) i_real -= nx1 - 1;
-			if (i_real == nx1 - 1) i_real = 0;
+			if (i_real <  0      ) i_real += ny1 - 2;
+			if (i_real >  ny1 - 1) i_real -= ny1 - 2;
+			if (i_real == 0      ) i_real  = ny1 - 2;
+			if (i_real == ny1 - 1) i_real  = 1;
 			GeomVec xv = x_v(i, j, par);
 			double Frac_n = par.d_x * par.d_y * Volume_Frac(xc_n, r, xv, par.d_x, par.d_y);
-			integralV_un[2] += Frac_n * V_n  [i_real][j];
+			integralV_un[2] += Frac_n * V_n[i_real][j];
 			GeomVec vn;
 			vn[1] = 0.0;
 			vn[2] = V_n[i_real][j];
 			vn[3] = 0.0;
-			integralV_un_r   += Frac_n * x_product(xv-xc, vn);
+			integralV_un_r   += Frac_n * x_product(xv - xc_n, vn);
 		}
 	}
 
@@ -395,9 +397,10 @@ void Circle::integrals(Matrix U_n, Matrix V_n, Matrix U_new, Matrix V_new, Param
 	for (int i = i_min; i <= i_max; ++i) {
 		for (int j = j_min; j <= j_max; ++j) {
 			int i_real = i;
-			if (i_real <  0) i_real += nx1 - 1;
-			if (i_real >  nx1 - 1) i_real -= nx1 - 1;
-			if (i_real == nx1 - 1) i_real = 0;
+			if (i_real <  0      ) i_real += ny1 - 2;
+			if (i_real >  ny1 - 1) i_real -= ny1 - 2;
+			if (i_real == 0      ) i_real  = ny1 - 2;
+			if (i_real == ny1 - 1) i_real  = 1;
 			GeomVec xv = x_v(i, j, par);
 			double Frac = par.d_x * par.d_y * Volume_Frac(xc, r, xv, par.d_x, par.d_y);
 			integralV_unew[2] += Frac * V_new[i_real][j];
@@ -405,9 +408,11 @@ void Circle::integrals(Matrix U_n, Matrix V_n, Matrix U_new, Matrix V_new, Param
 			vnew[1] = 0.0;
 			vnew[2] = V_new[i_real][j];
 			vnew[3] = 0.0;
-			integralV_unew_r += Frac   * x_product(xv - xc, vnew);
+			integralV_unew_r += Frac * x_product(xv - xc, vnew);
 		}
 	}
+
+	//std::cout << integralV_unew_r[3] << "   " << integralV_un_r[3] << std::endl;
 
 	integralV_du_dt  = (integralV_unew   - integralV_un  ) / par.d_t;
 	integralV_dur_dt = (integralV_unew_r - integralV_un_r) / par.d_t;
