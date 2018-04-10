@@ -10,17 +10,16 @@ void Calculate_u_p(Matrix &U_n  , Matrix &V_n,
                    Matrix &Fx   , Matrix &Fy,
                    ublas::matrix<Template> A_u,
                    ublas::matrix<Template> A_v, std::list<Circle> &solidList, Param par) {
-
-	CreateMatrix(U_s, par.N1, par.N2 + 1);
-	CreateMatrix(V_s, par.N1 + 1, par.N2);
-	CreateMatrix(Fx_tmp, par.N1, par.N2 + 1);
-	CreateMatrix(Fy_tmp, par.N1 + 1, par.N2);
-	CreateMatrix(P_Right, par.N1 + 1, par.N2 + 1);
-	CreateMatrix(Delta_P, par.N1 + 1, par.N2 + 1);
-
-	CreateMatrix(Exx, par.N1 + 1, par.N2 + 1);
-	CreateMatrix(Eyy, par.N1 + 1, par.N2 + 1);
-	CreateMatrix(Exy, par.N1, par.N2);
+																						//###############################
+	CreateMatrix(U_s, par.N1, par.N2 + 1);												// creating matrices
+	CreateMatrix(V_s, par.N1 + 1, par.N2);												// necessary for calculations
+	CreateMatrix(Fx_tmp, par.N1, par.N2 + 1);											//
+	CreateMatrix(Fy_tmp, par.N1 + 1, par.N2);											//
+	CreateMatrix(P_Right, par.N1 + 1, par.N2 + 1);										//
+	CreateMatrix(Delta_P, par.N1 + 1, par.N2 + 1);										//
+	CreateMatrix(Exx, par.N1 + 1, par.N2 + 1);											//
+	CreateMatrix(Eyy, par.N1 + 1, par.N2 + 1);											//
+	CreateMatrix(Exy, par.N1, par.N2);													//##############################
 
 	U_s = U_n;
 	V_s = V_n;
@@ -29,15 +28,15 @@ void Calculate_u_p(Matrix &U_n  , Matrix &V_n,
 
 	int f_max = 20;
 	int s_max = 1000;
-	for (int s = 0; s <= s_max; ++s) {
-
+	for (int s = 0; s <= s_max; ++s) {													// cycle while (delta_P / P > eps_P)
+																						// it means both equations are applyed
 		begin = std::clock();
 		#pragma region Velocity
-			CreateMatrix(B_u, par.N1, par.N2 + 1);
-			CreateMatrix(B_v, par.N1 + 1, par.N2);
+			CreateMatrix(B_u, par.N1, par.N2 + 1);										// create matrix filled by 0
+			CreateMatrix(B_v, par.N1 + 1, par.N2);										//
 
-			B_u = CalculateB(U_n, V_n, U_s, V_s, P, Fx, par, Du);
-			B_v = CalculateB(V_n, U_n, V_s, U_s, P, Fy, par, Dv);
+			B_u = CalculateB(U_n, V_n, U_s, V_s, P, Fx, par, Du);						// matrix b for system of non-linear equations
+			B_v = CalculateB(V_n, U_n, V_s, U_s, P, Fy, par, Dv);						// Au=b, b obtained from conservation of momentum eq
 
 			U_new = U_s;
 			V_new = V_s;
@@ -45,7 +44,7 @@ void Calculate_u_p(Matrix &U_n  , Matrix &V_n,
 			{
 				#pragma omp section
 				{
-					BiCGStab(U_new, A_u, B_u, par, Du);
+					BiCGStab(U_new, A_u, B_u, par, Du);									// method for solving Au=b
 				}
 				#pragma omp section
 				{
@@ -70,16 +69,11 @@ void Calculate_u_p(Matrix &U_n  , Matrix &V_n,
 					it.S = 0.;
 				}
 
-				//deformation_velocity(U_new, V_new, Exx, Eyy, Exy, par);
-				//Output_c(Exy, s, par);
-
 				CalculateForce(Fx_tmp, Fy_tmp, solidList, U_new, V_new, par);
 				U_new += Fx_tmp * (par.d_t);
 				V_new += Fy_tmp * (par.d_t);
 				Fx += Fx_tmp;
 				Fy += Fy_tmp;
-
-				//Output(P, U_new, V_new, Fx, Fy, f, solidList, par);
 
 			}
 
@@ -94,10 +88,13 @@ void Calculate_u_p(Matrix &U_n  , Matrix &V_n,
 		#pragma region Pressure
 			begin = std::clock();
 
-			P_Right = Calculate_Press_Right(U_new, V_new, par);
-			double Delta_P_max = Calculate_Press_correction(Delta_P, P_Right, par);
+			P_Right = Calculate_Press_Right(U_new, V_new, par);										// calculating p_right = 1/dt ( {U_i,j - U_i-1,j}/{h_x} + {V_i,j - V_i,j-1}/{h_x} )
+			double Delta_P_max = Calculate_Press_correction(Delta_P, P_Right, par);					// Zeidel method for solving Poisson equation
+
+
 			double P_max = std::max(max(P), 1.e-4);
-			double relax = 0.02 * std::max(pow(P_max / Delta_P_max, 0.5), 1.);
+			double relax = 0.02 * std::max(pow(P_max / Delta_P_max, 0.5), 1.);						// coefficient of relaxation
+
 
 			std::cout << "s = " << s << ", delta_P / P = " << Delta_P_max / P_max << std::endl;
 
@@ -105,28 +102,24 @@ void Calculate_u_p(Matrix &U_n  , Matrix &V_n,
 			//std::cout << "time of Pressure     : " << end - begin << " " << std::endl;
 		#pragma endregion Pressure
 
-		#pragma region New P and U
-			P += Delta_P * relax;
-
-			for (size_t i = 0; i < U_new.size(); ++i) {
-				for (size_t j = 0; j < U_new[0].size(); ++j) {
-					U_new[i][j] -= relax * par.d_t * (Delta_P[i + 1][j] - Delta_P[i][j]) / par.d_x;
-				}
-			}
-
-			for (size_t i = 0; i < V_new.size(); ++i) {
-				for (size_t j = 0; j < V_new[0].size(); ++j) {
-					V_new[i][j] -= relax * par.d_t * (Delta_P[i][j + 1] - Delta_P[i][j]) / par.d_y;
-				}
-			}
+		#pragma region New P and U																
+																										// area of correction pressure and velocity fields
+			P += Delta_P * relax;																		// correction of pressure
+																										//
+			for (size_t i = 0; i < U_new.size(); ++i) {													//
+				for (size_t j = 0; j < U_new[0].size(); ++j) {											//
+					U_new[i][j] -= relax * par.d_t * (Delta_P[i + 1][j] - Delta_P[i][j]) / par.d_x;		// correction of velocity
+				}																						//
+			}																							//
+																										//
+			for (size_t i = 0; i < V_new.size(); ++i) {													//
+				for (size_t j = 0; j < V_new[0].size(); ++j) {											//
+					V_new[i][j] -= relax * par.d_t * (Delta_P[i][j + 1] - Delta_P[i][j]) / par.d_y;		// correction of velocity
+				}																						//
+			}																							//
 
 		#pragma endregion New P and U
 
-		if (s % par.output_step == 0) {
-			//Output_dp(Delta_P, s, par);
-			//Output(P, U_new, V_new, Fx, Fy, s, solidList, par);
-			//OutputVelocity_V(V_new, s, solidList, par);
-		}
 
 		double eps_P = 1.e-1;
 		if (Delta_P_max / P_max < eps_P) {

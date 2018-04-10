@@ -49,17 +49,18 @@ int main(int argc, char *argv[]) {
 	CreateDirectory(WorkDir.string() + "/Solids");
 
 
-	Param par(WorkDir.string(), "input.txt");
+	Param par(WorkDir.string(), "input.txt");					// create the variable which contains parameters according to input data
+
+	Read_Solids(par.WorkDir + "Solids.txt", solidList, par);	// read Solids from file and write them into list of solids
+
+	CreateMatrix(U_n, par.N1, par.N2 + 1);						// creation matrices for velocity
+	CreateMatrix(V_n, par.N1 + 1, par.N2);						// and pressure
+	CreateMatrix(P, par.N1 + 1, par.N2 + 1);					//
+	ApplyInitialData(U_n, P, par,solidList);					// Applying initial conditions for velocity and pressure according to 
+																// boundary conditions
 
 
-	Read_Solids(par.WorkDir + "Solids.txt", solidList, par); // read Solids from file
-
-	CreateMatrix(U_n, par.N1, par.N2 + 1);
-	CreateMatrix(V_n, par.N1 + 1, par.N2);
-	CreateMatrix(P, par.N1 + 1, par.N2 + 1);
-	ApplyInitialData(U_n, P, par,solidList); // Applying initial data 
-
-	BodyOfProgram(par, solidList, U_n, V_n, P);
+	BodyOfProgram(par, solidList, U_n, V_n, P);					// start solver
 
 
 	std::cout << "The End" << std::endl;

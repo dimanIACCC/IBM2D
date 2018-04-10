@@ -13,20 +13,20 @@ L 					= 	length of the channel (integer value)
 H 					= 	height of the channel (integer value)
 N1					= 	number of nodes on X-axis (integer value)
 N2 					=	number of nodes on Y-axis (integer value)
-d_t 				= 	time step = double value
+d_t 				= 	time step (double value)
 Nn 					= 	number of nodes on each solid body (integer value)
-rho 				= 	density = double value
-r					= 	radius of solid body = double value
+rho 				= 	density (double value)
+r					= 	radius of solid body (double value)
 output_step 		=	frequency of writing output files (integer value)
 N_max 				=	maximum of time iterations (integer value)
 N_Zeidel			=	maximum of iterations in Zeidel method (integer value)
-Zeidel_eps 			=	 1e-5
-InelasticCollision 	=	 0
+Zeidel_eps 			=	level of discrepancy in Zeidel method (double value)
+InelasticCollision 	=	 (boolean)
 k_dist 				=	 1.1
-AddSolids_N 		=	 0
-AddSolids_start 	=	 0
-AddSolids_interval 	=	 200
-BC 					=	 u_infinity
+AddSolids_N 		=	how many solids will be added every [AddSolids_interval]
+AddSolids_start 	=	number of time-step when the solids addition will be started
+AddSolids_interval 	=	time interval of solid addition
+BC 					=	border conditions: {u_infinity, u_inflow, periodic}
 
 2)Create Solids.txt(if necessary)
 
