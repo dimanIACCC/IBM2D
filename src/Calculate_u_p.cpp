@@ -3,18 +3,22 @@
 #pragma warning(disable : 4996)//for using <chrono>
 #pragma warning(disable : 4244)//for GetInfluenceArea
 
-
+// calculate velocity $U_new, V_new$ and pressure $P$ at the new time step
+// Solve the Navier-Stokes equation
+// (U_new-U_n) / d_t + 0.5 * ( U_n \nabla U_n + U_s \nabla U_s ) = - nabla P + 1/Re * 0.5 * (\Delta U_n + \Delta U_new)
+// Move U_new to left side and the rest terms to right side
+// U_new / d_t - 1/Re * 0.5 \Delta U_new  = U_n / d_t - 0.5 * ( U_n \nabla U_n + U_s \nabla U_s ) + 1/Re * 0.5 \Delta U_n - nabla P
+// Left-hand side operator is calculated in Template A_u and A_v (subroutines Calculate_A(...) and Operator_Ax(...))
+// Right-hand side term is calculated in B_u and B_v (subroutine CalculateB() )
 void Calculate_u_p(Matrix &U_n  , Matrix &V_n,
                    Matrix &U_new, Matrix &V_new,
                    Matrix &P    ,
                    Matrix &Fx   , Matrix &Fy,
-                   ublas::matrix<Template> A_u,
-                   ublas::matrix<Template> A_v, std::list<Circle> &solidList, Param par) {
+                   Template A_u, Template A_v,
+                   std::list<Circle> &solidList, Param par, int N_step) {
 
 	CreateMatrix(U_s, par.N1, par.N2 + 1);
 	CreateMatrix(V_s, par.N1 + 1, par.N2);
-	CreateMatrix(Fx_tmp, par.N1, par.N2 + 1);
-	CreateMatrix(Fy_tmp, par.N1 + 1, par.N2);
 	CreateMatrix(P_Right, par.N1 + 1, par.N2 + 1);
 	CreateMatrix(Delta_P, par.N1 + 1, par.N2 + 1);
 
@@ -22,20 +26,23 @@ void Calculate_u_p(Matrix &U_n  , Matrix &V_n,
 	CreateMatrix(Eyy, par.N1 + 1, par.N2 + 1);
 	CreateMatrix(Exy, par.N1, par.N2);
 
+	int N_BiCGStab_u, N_BiCGStab_v, N_DeltaP;
+
 	U_s = U_n;
 	V_s = V_n;
 
 	std::clock_t begin, end;
 
 	std::ofstream output;
-	std::string filename = par.WorkDir + "/U_omega_iterations.plt";
+	std::string filename = par.WorkDir + "/iterations" + std::to_string(N_step) + ".plt";
 	output.open(filename);
 
-	output << "title = iterations" << std::endl;
-	output << "Variables = s ux uy omega f IntU tau IntUr" << std::endl;
+	output << "title = iterations_step" << N_step << std::endl;
+	// output << "Variables = s ux uy omega f IntU tau IntUr" << std::endl;
+	output << "Variables = s  N_BiCGStab_u  N_BiCGStab_v  N_DeltaP" << std::endl;
 
-	int f_max = 10;
 	int s_max = 10000;
+	// start iterations for pressure and velocity to fulfill the conituity equation
 	for (int s = 0; s <= s_max; ++s) {
 
 		begin = std::clock();
@@ -43,8 +50,8 @@ void Calculate_u_p(Matrix &U_n  , Matrix &V_n,
 			CreateMatrix(B_u, par.N1, par.N2 + 1);
 			CreateMatrix(B_v, par.N1 + 1, par.N2);
 
-			B_u = CalculateB(U_n, V_n, U_s, V_s, P, Fx, par, Du);
-			B_v = CalculateB(V_n, U_n, V_s, U_s, P, Fy, par, Dv);
+			B_u = CalculateB(U_n, V_n, U_s, V_s, P, par, Du);
+			B_v = CalculateB(V_n, U_n, V_s, U_s, P, par, Dv);
 
 			U_new = U_s;
 			V_new = V_s;
@@ -52,11 +59,11 @@ void Calculate_u_p(Matrix &U_n  , Matrix &V_n,
 			{
 				#pragma omp section
 				{
-					BiCGStab(U_new, A_u, B_u, par, Du);
+					BiCGStab(U_new, A_u, B_u, par, Du, N_BiCGStab_u);
 				}
 				#pragma omp section
 				{
-					BiCGStab(V_new, A_v, B_v, par, Dv);
+					BiCGStab(V_new, A_v, B_v, par, Dv, N_BiCGStab_v);
 				}
 			}
 
@@ -69,25 +76,8 @@ void Calculate_u_p(Matrix &U_n  , Matrix &V_n,
 		#pragma region Force
 			begin = std::clock();
 
-			Solids_zero_force(solidList);
-			Fx = Fx * 0.;
-			Fy = Fy * 0.;
-			for (int f = 0; f <= f_max; ++f) {
-
-				for (auto& it : solidList) {
-					it.Fr = 0.;
-					it.S = 0.;
-				}
-
-				CalculateForce(Fx_tmp, Fy_tmp, solidList, U_new, V_new, par);
-				U_new += Fx_tmp * (par.d_t);
-				V_new += Fy_tmp * (par.d_t);
-				Fx += Fx_tmp;
-				Fy += Fy_tmp;
-
-				//Output(P, U_new, V_new, Fx, Fy, f, solidList, par);
-
-			}
+			// apply force from immersed particles for several times to fulfill no-slip BC
+			Multidirect_Forcing_Method(Fx, Fy, U_new, V_new, solidList, par);
 
 			end = std::clock();
 			//std::cout << "time of Force        : " << end - begin << " " << std::endl;
@@ -102,7 +92,7 @@ void Calculate_u_p(Matrix &U_n  , Matrix &V_n,
 			begin = std::clock();
 
 			P_Right = Calculate_Press_Right(U_new, V_new, par);
-			double Delta_P_max = Calculate_Press_correction(Delta_P, P_Right, par);
+			double Delta_P_max = Calculate_Press_correction(Delta_P, P_Right, par, N_DeltaP);
 			double P_max = std::max(max(P), 1.e-4);
 			double relax = 0.02 * std::max(pow(P_max / Delta_P_max, 0.5), 1.);
 
@@ -142,10 +132,13 @@ void Calculate_u_p(Matrix &U_n  , Matrix &V_n,
 			double eps_max = 5e-6;
 			if (eps_uc < eps_max && eps_omega < eps_max) key_solid = true;
 
-			output << s << "   " << it.uc[1] << "   " << it.uc[2] << "   " << it.omega[3] << "   " << it.f[1] << "   " << it.integralV_du_dt[1] << "   " << it.tau[3] << "   " << it.integralV_dur_dt[3] << "   " << std::endl;
+			//output << s << "   " << it.uc[1] << "   " << it.uc[2] << "   " << it.omega[3] << "   " << it.f[1] << "   " << it.integralV_du_dt[1] << "   " << it.tau[3] << "   " << it.integralV_dur_dt[3] << "   " << std::endl;
 		}
 
-		// key_solid = true; // workaround
+		output << s << "   " << N_BiCGStab_u  << "   " << N_BiCGStab_v << "   " << N_DeltaP << std::endl;
+
+
+		key_solid = true; // workaround
 
 		if (Delta_P_max / P_max < par.eps_P) {
 			Solids_velocity_new(solidList, par);
@@ -158,7 +151,7 @@ void Calculate_u_p(Matrix &U_n  , Matrix &V_n,
 	}
 
 	deformation_velocity(U_new, V_new, Exx, Eyy, Exy, par);
-	Output_c(Exy, -444, par);
+	Output_c(Exy, -1, par);
 	Solids_deformation_velocity_pressure(solidList, Exx, Eyy, Exy, P, par);
 	Solids_Force(solidList, par.Re);
 

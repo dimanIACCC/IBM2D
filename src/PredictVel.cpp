@@ -1,51 +1,49 @@
 #include "stdafx.h"
 #include "PredictVel.h"
 
+// LHS of Navier-Stokes equation operator
+// LHS = (1 / d_t - 1/Re * 0.5 \Delta ) * U_new
+void Calculate_A(Template &A, Param par, double Re, Direction Dir) {
 
-void Calculate_A(ublas::matrix<Template> &A, Param par, double Re, Direction Dir) {
-
-	size_t n1 = A.size1();
-	size_t n2 = A.size2();
 	size_t N;
 
 	double d_u, d_v;
 
-	if      (Dir == Du) { d_u = par.d_x;	d_v = par.d_y;	N = n2; }
-	else if (Dir == Dv) { d_u = par.d_y;	d_v = par.d_x;	N = n1; }
+	if      (Dir == Du) { d_u = par.d_x;	d_v = par.d_y;	}
+	else if (Dir == Dv) { d_u = par.d_y;	d_v = par.d_x;	}
 
 	double d_uu = 1.0 / (d_u*d_u);
 	double d_vv = 1.0 / (d_v*d_v);
 
-	for (size_t j = 0; j < n2; ++j) {
-		for (size_t i = 0; i < n1; ++i) {
-
-			A(i, j).C =  1.0 /      Re *(d_uu + d_vv) + 1.0 / par.d_t;
-			A(i, j).U = -1.0 / (2.0*Re)* d_vv;
-			A(i, j).R = -1.0 / (2.0*Re)* d_uu;
-			A(i, j).D = -1.0 / (2.0*Re)* d_vv;
-			A(i, j).L = -1.0 / (2.0*Re)* d_uu;
-
-		}
-	}
+	A.C =  1.0 /      Re *(d_uu + d_vv) + 1.0 / par.d_t;
+	A.U = -1.0 / (2.0*Re)* d_vv;
+	A.R = -1.0 / (2.0*Re)* d_uu;
+	A.D = -1.0 / (2.0*Re)* d_vv;
+	A.L = -1.0 / (2.0*Re)* d_uu;
 }
 
-Matrix Operator_Ax(ublas::matrix<Template> &A, Matrix &u, Param par, Direction Dir) {
+// LHS of Navier-Stokes equation
+Matrix Operator_Ax(Template &A, Matrix &u, Param par, Direction Dir) {
 
 	size_t Nx = u.size();
 	size_t Ny = u[0].size();
 
 	CreateMatrix(result, Nx, Ny);
 
+	// For direction Du  (U, R, D, L)  are  (up, right, down, left)  neighbour elements in matrix u[i][j]
+	// For direction Dv  (U, R, D, L)  are  (up, right, down, left)  neighbour elements in transpose matrix (v[i][j])^T
+	// In periodical problem near the boundary the neighbour element is taken from the other side of the domain
 	for (size_t j = 0; j < Ny; ++j) {
 		for (size_t i = 0; i < Nx; ++i) {
-			result[i][j] = A(i, j).C * u[i][j]
-			             + A(i, j).U * U(u, i, j, Dir, Nx, Ny)
-			             + A(i, j).R * R(u, i, j, Dir, Nx, Ny)
-			             + A(i, j).D * D(u, i, j, Dir, Nx, Ny)
-			             + A(i, j).L * L(u, i, j, Dir, Nx, Ny);
+			result[i][j] = A.C * u[i][j]
+			             + A.U * U(u, i, j, Dir, Nx, Ny)
+			             + A.R * R(u, i, j, Dir, Nx, Ny)
+			             + A.D * D(u, i, j, Dir, Nx, Ny)
+			             + A.L * L(u, i, j, Dir, Nx, Ny);
 		}
 	}
 
+	// Boundary Conditions
 	if (par.BC == periodical) {
 		if (Dir == Du) {
 			for (size_t j = 1; j < Ny; ++j) {
@@ -84,7 +82,8 @@ Matrix Operator_Ax(ublas::matrix<Template> &A, Matrix &u, Param par, Direction D
 
 }
 
-Matrix CalculateB(Matrix &u_n, Matrix &v_n, Matrix &u_s, Matrix &v_s, Matrix &p, Matrix &force, Param par, Direction Dir) {
+// RHS of Navier-Stokes equation
+Matrix CalculateB(Matrix &u_n, Matrix &v_n, Matrix &u_s, Matrix &v_s, Matrix &p, Param par, Direction Dir) {
 
 	size_t Nx = u_n.size();
 	size_t Ny = u_n[0].size();
@@ -101,7 +100,6 @@ Matrix CalculateB(Matrix &u_n, Matrix &v_n, Matrix &u_s, Matrix &v_s, Matrix &p,
 
 	CreateMatrix(result, Nx, Ny);
 
-
 	for (size_t i = 1; i < (Nx - 1); ++i) {
 		for (size_t j = 1; j < (Ny - 1); ++j) {
 			double advective_term_n    = advective_term(u_n, v_n, i, j, d_u, d_v, Dir, Nx, Ny);
@@ -114,7 +112,6 @@ Matrix CalculateB(Matrix &u_n, Matrix &v_n, Matrix &u_s, Matrix &v_s, Matrix &p,
 			                               - pressure_term
 			                               + diffusion_term_n / (2.0*par.Re)
 			                               + u_n[i][j] / par.d_t;
-			                               //+ force[i][j];
 		}
 	}
 
@@ -131,7 +128,6 @@ Matrix CalculateB(Matrix &u_n, Matrix &v_n, Matrix &u_s, Matrix &v_s, Matrix &p,
 				                       - pressure_term
 				                       + diffusion_term_n / (2.0*par.Re)
 				                       + u_n[i][j] / par.d_t;
-				                       //+ force[i][j];
 				result[Nx - 1][j] = result[0][j];
 			}
 		}

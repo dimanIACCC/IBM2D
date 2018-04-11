@@ -2,7 +2,32 @@
 #include "CalculateForce.h"
 #include "Output.h"
 
+void Multidirect_Forcing_Method(Matrix &Fx, Matrix &Fy, Matrix &u, Matrix &v, std::list<Circle> &solidList, Param par) {
 
+	CreateMatrix(Fx_tmp, par.N1, par.N2 + 1);
+	CreateMatrix(Fy_tmp, par.N1 + 1, par.N2);
+
+	Solids_zero_force(solidList);
+	Fx = Fx * 0.;
+	Fy = Fy * 0.;
+	int f_max = 10;
+	// correct force and velocity $f_max$ times
+	for (int f = 0; f <= f_max; ++f) {
+
+		for (auto& it : solidList) {
+			it.Fr = 0.;
+			it.S = 0.;
+		}
+
+		CalculateForce(Fx_tmp, Fy_tmp, solidList, u, v, par);
+		u += Fx_tmp * (par.d_t);
+		v += Fy_tmp * (par.d_t);
+		Fx += Fx_tmp;
+		Fy += Fy_tmp;
+
+		//Output(P, U_new, V_new, Fx, Fy, f, solidList, par);
+	}
+}
 
 void CalculateForce(Matrix& force_x, Matrix& force_y, std::list<Circle> &iList, Matrix& u, Matrix& v, Param par) {
 

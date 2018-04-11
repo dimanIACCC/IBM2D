@@ -1,7 +1,7 @@
 #include "stdafx.h"
 #include "BiCGStab.h"
 
-void BiCGStab(Matrix &x, ublas::matrix<Template> &A, Matrix &b, Param par, Direction Dir){
+void BiCGStab(Matrix &x, Template &A, Matrix &b, Param par, Direction Dir, int &N_out){
 
 	size_t n1 = x.size();
 	size_t n2 = x[0].size();
@@ -142,7 +142,7 @@ void BiCGStab(Matrix &x, ublas::matrix<Template> &A, Matrix &b, Param par, Direc
 
 
 		if (eps < 5e-10){
-
+			N_out = n;
 			//cout<<"vel ended at"<<n<<"  eps ="<<eps<<endl;
 			break;
 

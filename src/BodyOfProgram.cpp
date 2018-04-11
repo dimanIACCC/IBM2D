@@ -9,8 +9,8 @@ void BodyOfProgram(Param par, std::list<Circle> solidList, Matrix U_n, Matrix V_
 	CreateMatrix(B_v, par.N1 + 1, par.N2);
 	CreateMatrix(Fx, par.N1, par.N2 + 1);
 	CreateMatrix(Fy, par.N1 + 1, par.N2);
-	ublas::matrix<Template> A_u(par.N1, par.N2 + 1);
-	ublas::matrix<Template> A_v(par.N1 + 1, par.N2);
+	Template A_u;
+	Template A_v;
 	Calculate_A(A_u, par, par.Re, Du);
 	Calculate_A(A_v, par, par.Re, Dv);
 #pragma endregion SetMatrices
@@ -23,30 +23,14 @@ void BodyOfProgram(Param par, std::list<Circle> solidList, Matrix U_n, Matrix V_
 		log.open(par.WorkDir + "log.txt", std::ios::app);
 	
 
-	//std::ofstream force;
-	//force.open(par.WorkDir + "force.plt", std::ios::out);
-	//force << "Variables = n, Fx, Fy" << std::endl;
-
-	int f_max = 10;
-	Solids_zero_force(solidList);
-	for (int f = 0; f <= f_max; ++f) {
-
-		for (auto& it : solidList) {
-			it.Fr = 0.;
-			it.S = 0.;
-		}
-
-		CalculateForce(Fx, Fy, solidList, U_n, V_n, par);
-		U_n += Fx * (par.d_t);
-		V_n += Fy * (par.d_t);
-	}
+	Multidirect_Forcing_Method(Fx, Fy, U_n, V_n, solidList, par);
 
 	Output(P, U_n, V_n, Fx, Fy, -1, solidList, par);
 
 	for (int n = n0; n <= par.N_max; ++n) {
 		MakeHibernationFile(n-1, par, solidList, U_n, V_n, P);
-		Add_Solids(solidList, n, par);
-		Calculate_u_p(U_n, V_n, U_new, V_new, P, Fx, Fy, A_u, A_v, solidList, par);
+		Add_Solids(solidList, n, par); // add solids if the conditions are fulfilled
+		Calculate_u_p(U_n, V_n, U_new, V_new, P, Fx, Fy, A_u, A_v, solidList, par, n);  // calculate velocity and pressure at the new time step
 
 		double eps_u = diff(U_n, U_new);
 		double eps_v = diff(V_n, V_new);

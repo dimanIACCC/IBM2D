@@ -1,9 +1,9 @@
-#include "stdafx.h"
+﻿#include "stdafx.h"
 #include "Calculate_press.h"
 
 
 
-double Calculate_Press_correction(Matrix &delta_p, Matrix &b_p, Param par){
+double Calculate_Press_correction(Matrix &delta_p, Matrix &b_p, Param par, int &N_out){
 
 	double eps;
 	double delta_p_max;
@@ -50,8 +50,8 @@ double Calculate_Press_correction(Matrix &delta_p, Matrix &b_p, Param par){
 
 
 				// Output pressure for non-periodical BC
-				if (par.BC != periodical && i == n1 - 2 )
-						help = 0.0; // whole boundary
+				if (par.BC != periodical && i == n1 - 2)
+					help = 0.0; // whole boundary
 
 
 				if (fabs(help) > delta_p_max) {
@@ -66,8 +66,41 @@ double Calculate_Press_correction(Matrix &delta_p, Matrix &b_p, Param par){
 			}
 		}
 
+		// Up-Down BC
+		for (size_t i = 0; i < n1; ++i) {
+			delta_p[i][0]      = delta_p[i][1];            // D
+			delta_p[i][n2 - 1] = delta_p[i][n2 - 2];       // U
+		}
+
+		// Left-Right BC
+		for (size_t j = 0; j < n2; ++j) {
+			delta_p[0][j]      = delta_p[1][j];            // L
+			delta_p[n1 - 1][j] = delta_p[n1 - 2][j];       // R
+		}
+		// Corners
+			delta_p[0][0]           = delta_p[1][1];            // LD
+			delta_p[0][n2 - 1]      = delta_p[1][n2 - 2];       // LU
+			delta_p[n1 - 1][0]      = delta_p[n1 - 2][1];       // RD
+			delta_p[n1 - 1][n2 - 1] = delta_p[n1 - 2][n2 - 2];  // RU
+
+		// Left-Right BC
+		for (size_t j = 0; j < n2; ++j) {
+			if (par.BC == periodical) { // periodical pressure
+				delta_p[0][j] = delta_p[n1 - 2][j];   // L
+				delta_p[n1 - 1][j] = delta_p[1][j];        // R
+			}
+			else {  // Fixed output pressure for non-periodical BC
+				delta_p[n1 - 2][j] = 0.0;                  // R
+			}
+		}
+
+		// fixed pressure and zero pressure gradient in corners
+		if (par.BC == periodical) {
+			delta_p[n1 - 2][1] = 0.0; // corners
+		}
 
 		if (eps/delta_p_max < par.Zeidel_eps){
+			N_out = n;
 			break;
 		}
 
