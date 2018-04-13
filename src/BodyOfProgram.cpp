@@ -41,7 +41,7 @@ void BodyOfProgram(Param par, std::list<Circle> solidList, Matrix U_n, Matrix V_
 		Solids_move(solidList, par,n);												// moving solids if it necessary (checking it up inside) 
 																					// and detection of collisions 
 
-		PushLog(log, n, eps_u, eps_v);												// writting log
+		PushLog(log, n, eps_u, eps_v);												// writting log into log-file
 		log.flush();
 
 		if (n % par.output_step == 0|| n<20) {

@@ -1,3 +1,16 @@
+/*
+======================================================================================================
+That project is devoted to numerical simulation of disperse flows in the channels of various shapes.
+======================================================================================================
+
+#######################################################################################
+# If you have some problems with launch that program, please read README.md at first. #
+#######################################################################################
+*/
+
+
+
+
 #include "stdafx.h"
 #include "CalculateForce.h"
 #include "Calculate_u_p.h"
@@ -69,6 +82,7 @@ int main(int argc, char *argv[]) {
 	return 0;
 }
 
+//this method is restoring calculated values to continue calculations
 void Awake(int& n0, Param& par, std::list<Circle>& solidList, Matrix& U_n, Matrix& V_n, Matrix& P) {
 	std::ifstream hibernation_source;
 	std::string line;

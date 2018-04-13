@@ -7,7 +7,7 @@ How to compile:
 The project required the Boost library (version 1.65 recommended) https://www.boost.org/ 
 ============================================================================================
 How to start:
-1)Create the input file that may consist of :
+1)Create the input file (input.txt) that may consist of :
 Re 					= 	Reynolds number (integer value)
 L 					= 	length of the channel (integer value)
 H 					= 	height of the channel (integer value)
@@ -29,6 +29,12 @@ AddSolids_interval 	=	time interval of solid addition
 BC 					=	border conditions: {u_infinity, u_inflow, periodic}
 
 2)Create Solids.txt(if necessary)
+circle{
+   x = 3.0 -- initial position X-axis
+   y = 2.5 -- initial position Y-axis
+   moving = 0 -- is it moving object or fixed
+   r = 0.5  -- radius
+}
 
 3)Start:
 There are several key`s to start program:
@@ -36,7 +42,7 @@ There are several key`s to start program:
  -h=[path]   : run the program using a hibernation file, please check up the existence of {hibernation.txt} into [path]
 				so the program continues the calculation
 				
-here some examples of correct launch-lines:
+here some examples of correct launch-lines into console:
 ibm.exe -dir=MyResultFolder
 ibm.exe -h=D:\MyResultFolder			
 ==================================================================================================
