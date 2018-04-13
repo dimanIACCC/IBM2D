@@ -224,8 +224,6 @@ void SetLog(std::ostream& log, Param par) {
 	log << "Number of nodes on            : N2  = " << par.N2 << std::endl;
 	log << "Number of nodes for a particle: Nn  = " << par.Nn << std::endl;
 	log << "Time step                     : tau = " << par.d_t << std::endl;
-	/*log << "Force parameter alpha         : alpha = " << par.alpha_f << std::endl;
-	log << "Force parameter beta          : beta  = " << par.beta_f << std::endl;*/
 	log << "Tolerance for Zeidel method   : tol = " << par.Zeidel_eps << std::endl;
 	log << "Step number for start of Solids adding  : AddSolids_start    = " << par.AddSolids_start << std::endl;
 	log << "Step interval for Solids adding         : AddSolids_interval = " << par.AddSolids_interval << std::endl;

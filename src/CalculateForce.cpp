@@ -25,7 +25,7 @@ void Multidirect_Forcing_Method(Matrix &Fx, Matrix &Fy, Matrix &u, Matrix &v, st
 		Fx += Fx_tmp;
 		Fy += Fy_tmp;
 
-		//Output(P, U_new, V_new, Fx, Fy, f, solidList, par);
+		//Output(P, u, v, Fx, Fy, f, solidList, par);
 	}
 }
 

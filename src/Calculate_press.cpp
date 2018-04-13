@@ -20,39 +20,23 @@ double Calculate_Press_correction(Matrix &delta_p, Matrix &b_p, Param par, int &
 	for (int n = 0; n < par.N_Zeidel; n++) {
 		eps = 0.0;
 		delta_p_max = 0.0;
-		for (size_t i = 0; i < n1; ++i){
-			for (size_t j = 0; j < n2; ++j){
 
-				help = A * (dx2 * (R(delta_p, i, j, Du, n1, n2) + L(delta_p, i, j, Du, n1, n2))
-				          + dy2 * (U(delta_p, i, j, Du, n1, n2) + D(delta_p, i, j, Du, n1, n2)) - b_p[i][j]);
+		for (size_t i = 1; i < n1-1; ++i){
+			for (size_t j = 1; j < n2-1; ++j){
 
-				if (i == 0     )                 help = delta_p[i + 1][j];       // L
-				if (i == n1 - 1)                 help = delta_p[i - 1][j];       // R
+				help = A * (dx2 * (delta_p[i + 1][j] + delta_p[i - 1][j])
+				          + dy2 * (delta_p[i][j + 1] + delta_p[i][j - 1]) - b_p[i][j]);
 
-				if (j == 0     )                 help = delta_p[i][j + 1];       // D
-				if (j == n2 - 1)                 help = delta_p[i][j - 1];       // U
-
-				if (i == 0      && j == 0     )  help = delta_p[i + 1][j + 1];   // LD
-				if (i == 0      && j == n2 - 1)  help = delta_p[i + 1][j - 1];   // LU
-				if (i == n1 - 1 && j == 0     )  help = delta_p[i - 1][j + 1];   // RD
-				if (i == n1 - 1 && j == n2 - 1)  help = delta_p[i - 1][j - 1];   // RU
-
-				if (par.BC == periodical) {
-					//periodical pressure
-					if (i == 0     ) help = delta_p[n1 - 2][j];
-					if (i == n1 - 1) help = delta_p[1][j];
-
-					// fixed pressure and zero pressure gradient in corners
-					if (i == n1 - 2)
-					if (j == 1)
-						help = 0.0; // corners
+				// Fixed pressure
+				if (i == n1 - 2) { // Right boundary
+					if (par.BC == periodical) {
+						if (j == 1)
+							help = 0.0; // down corner
+					}
+					else {
+						help = 0.0;
+					}
 				}
-
-
-				// Output pressure for non-periodical BC
-				if (par.BC != periodical && i == n1 - 2)
-					help = 0.0; // whole boundary
-
 
 				if (fabs(help) > delta_p_max) {
 					delta_p_max = fabs(help);
@@ -84,20 +68,17 @@ double Calculate_Press_correction(Matrix &delta_p, Matrix &b_p, Param par, int &
 			delta_p[n1 - 1][n2 - 1] = delta_p[n1 - 2][n2 - 2];  // RU
 
 		// Left-Right BC
-		for (size_t j = 0; j < n2; ++j) {
-			if (par.BC == periodical) { // periodical pressure
-				delta_p[0][j] = delta_p[n1 - 2][j];   // L
+		if (par.BC == periodical) {  // periodical pressure
+			for (size_t j = 0; j < n2; ++j) {
+				delta_p[0][j] = delta_p[n1 - 2][j];        // L
 				delta_p[n1 - 1][j] = delta_p[1][j];        // R
-			}
-			else {  // Fixed output pressure for non-periodical BC
-				delta_p[n1 - 2][j] = 0.0;                  // R
 			}
 		}
 
-		// fixed pressure and zero pressure gradient in corners
-		if (par.BC == periodical) {
-			delta_p[n1 - 2][1] = 0.0; // corners
-		}
+		/*if (n % 100 == 0) {
+			std::cout << eps << "  " << delta_p_max << std::endl;
+			OutputPressure(delta_p, n, solidList, par);
+		}*/
 
 		if (eps/delta_p_max < par.Zeidel_eps){
 			N_out = n;

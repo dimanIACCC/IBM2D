@@ -33,13 +33,14 @@ void Calculate_u_p(Matrix &U_n  , Matrix &V_n,
 
 	std::clock_t begin, end;
 
-	std::ofstream output;
+	// output of iterations information
+	/*std::ofstream output;
 	std::string filename = par.WorkDir + "/iterations" + std::to_string(N_step) + ".plt";
 	output.open(filename);
 
 	output << "title = iterations_step" << N_step << std::endl;
-	// output << "Variables = s ux uy omega f IntU tau IntUr" << std::endl;
-	output << "Variables = s  N_BiCGStab_u  N_BiCGStab_v  N_DeltaP" << std::endl;
+	output << "Variables = s ux uy omega f IntU tau IntUr" << std::endl;
+	output << "Variables = s  N_BiCGStab_u  N_BiCGStab_v  N_DeltaP" << std::endl;*/
 
 	int s_max = 10000;
 	// start iterations for pressure and velocity to fulfill the conituity equation
@@ -123,7 +124,9 @@ void Calculate_u_p(Matrix &U_n  , Matrix &V_n,
 		//Output(P, U_new, V_new, Fx, Fy, s, solidList, par);
 		
 
-		bool key_solid = false;
+
+		// code for iterations solid u and omega iterations
+		/*bool key_solid = false;
 		for (auto& it : solidList) {
 
 			double eps_uc = length(it.uc - it.uc_s) / (length(it.uc) + 1e-4);
@@ -133,25 +136,27 @@ void Calculate_u_p(Matrix &U_n  , Matrix &V_n,
 			if (eps_uc < eps_max && eps_omega < eps_max) key_solid = true;
 
 			//output << s << "   " << it.uc[1] << "   " << it.uc[2] << "   " << it.omega[3] << "   " << it.f[1] << "   " << it.integralV_du_dt[1] << "   " << it.tau[3] << "   " << it.integralV_dur_dt[3] << "   " << std::endl;
-		}
-
-		output << s << "   " << N_BiCGStab_u  << "   " << N_BiCGStab_v << "   " << N_DeltaP << std::endl;
+		}*/
 
 
-		key_solid = true; // workaround
+		// output of the iterations number
+		// output << s << "   " << N_BiCGStab_u  << "   " << N_BiCGStab_v << "   " << N_DeltaP << std::endl;
+
 
 		if (Delta_P_max / P_max < par.eps_P) {
 			Solids_velocity_new(solidList, par);
 			std::cout << "s iterations: " << s << std::endl;
-			if (key_solid == true) break;
+			// if (key_solid == true)
+			break;
 		}
 
 		U_s = U_new;
 		V_s = V_new;
 	}
 
+	// Calculation of the strain rate, pressure and HydroDynamic (HD) force in Lagrange mesh
 	deformation_velocity(U_new, V_new, Exx, Eyy, Exy, par);
-	Output_c(Exy, -1, par);
+	//Output_c(Exy, -1, par);
 	Solids_deformation_velocity_pressure(solidList, Exx, Eyy, Exy, P, par);
 	Solids_Force(solidList, par.Re);
 
