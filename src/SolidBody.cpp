@@ -21,6 +21,7 @@ SolidBody::SolidBody(double x, double y, double ux, double uy, double omega, dou
 	this->uc    = this->uc_n;
 	this->xc    = this->xc_n;
 	this->Fr = 0.;
+	this->n_moving = 0;
 }
 
 
@@ -95,7 +96,8 @@ void SolidBody::log(std::string WorkDir, int n) {
 	std::string filename = WorkDir + "Solids/" + std::to_string(name) + ".plt";
 	output.open(filename, std::ios::app);
 
-	output << xc[1] << "   "
+	output << n << "   "
+		   << xc[1] << "   "
 	       << xc[2] << "   "
 	       << uc[1] << "   "
 	       << uc[2] << "   "
@@ -130,7 +132,8 @@ void Read_Solids(std::string filename, std::list<Circle>& Solids, Param &par) {
 				int Nn = par.Nn;
 				bool moving = true;
 				double r = par.r;
-				bool Poiseuille;   //key for initial ux, uy and omega corresponding to Poiseuille flow
+				int n_moving = 0;
+				bool Poiseuille = false;   //key for initial ux, uy and omega corresponding to Poiseuille flow
 
 				while (line != "}") {
 					getline(input, line);
@@ -148,6 +151,7 @@ void Read_Solids(std::string filename, std::list<Circle>& Solids, Param &par) {
 						else if (PAR == "moving")     moving       = bool(stoi(VALUE));
 						else if (PAR == "Poiseuille") Poiseuille   = bool(stoi(VALUE));
 						else if (PAR == "r")          r            = stod(VALUE);
+						else if (PAR == "n_moving")	  n_moving	   = stoi(VALUE);
 						else    std::cout << "Read_Solids: unknown parameter " << PAR << std::endl;
 					}
 					else {
@@ -256,33 +260,32 @@ void Solids_move(std::list<Circle> &solidList, Param par, int n) {
 	///
 	for (auto it = solidList.begin(); it != solidList.end();) {
 
-
-		if (it->moving) {
-			it->uc_n    = it->uc;
-			it->omega_n = it->omega;
-			it->xc_n    = it->xc;
-			for (size_t k = 0; k < it->Nn; ++k) {
-				it->Nodes[k].xn = it->Nodes[k].x;
+		if (it->n_moving <= n) {
+			if (it->moving) {
+				it->uc_n = it->uc;
+				it->omega_n = it->omega;
+				it->xc_n = it->xc;
+				for (size_t k = 0; k < it->Nn; ++k) {
+					it->Nodes[k].xn = it->Nodes[k].x;
+				}
 			}
-		}
 
-		it->log(par.WorkDir, n);
+			it->log(par.WorkDir, n);
 
-		//Right boundary conditions for Solids
-		if (it->xc_n[1] < par.L) {
-			it++;
-		}
-		else {
-			if (par.BC == periodical) {
-				it->xc_n[1] -= par.L;
+			//Right boundary conditions for Solids
+			if (it->xc_n[1] < par.L) {
 				it++;
 			}
-			else
-			it = solidList.erase(it);
+			else {
+				if (par.BC == periodical) {
+					it->xc_n[1] -= par.L;
+					it++;
+				}
+				else
+					it = solidList.erase(it);
+			}
 		}
-
 	}
-
 }
 
 void Solids_zero_force(std::list<Circle>& Solids) {

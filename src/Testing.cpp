@@ -27,7 +27,41 @@ void DoTesting() {
 	par.WorkDir = dir.string();
 	BodyOfProgram(par, solidList, U_n, V_n, P,true);
 	std::cout << "=======================" << std::endl;
+	//if (TEST&& par.Re < 43) {
 
+	//	//the line is drawn with two points (Cd1,Nx1) & (Cd2,Nx2)
+	//	double Cd1 = -3.15387;
+	//	double Cd2 = -2.13; // Russel and Wang, 2003 
+
+	//	int Nx1 = 101;
+	//	int Nx2 = 301;
+	//	if (par.N1 / (double)Nx1 > 1.5) {
+	//		if (abs((solidList.front().f[1] - Cd1) / (Cd2 - Cd1) - (par.N1 - Nx1) / (Nx2 - Nx1)) < 0.5) {
+	//			std::cout << "OK!" << std::endl;
+	//			log << "OK!" << std::endl;
+	//		}
+	//		else {
+	//			std::cout << "Not OK" << std::endl;
+	//			log << "Not OK" << std::endl;
+	//		}
+
+	//	}
+	//	else {
+	//		double Cd_expected = Cd1 * Nx1 / (double)par.N1;
+	//		if (abs(Cd_expected - solidList.front().f[1]) < 0.8) {
+	//			std::cout << "OK!" << std::endl;
+	//			log << "OK!" << std::endl;
+	//		}
+	//		else {
+	//			std::cout << "Not OK" << std::endl;
+	//			log << "Not OK" << std::endl;
+	//		}
+	//	}
+	//}
+	//else if (TEST) {
+	//	std::cout << "That`s strange" << "Re =" << par.Re << std::endl;
+	//	log << "That`s strange" << "Re =" << std::endl;
+	//}
 	//2.
 	//second test
 	for(int i=0;i<V_n.size();i++)

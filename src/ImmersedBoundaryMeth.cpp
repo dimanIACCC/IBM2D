@@ -1,3 +1,16 @@
+/*
+======================================================================================================
+That project is devoted to numerical simulation of disperse flows in the channels of various shapes.
+======================================================================================================
+
+#######################################################################################
+# If you have some problems with launch that program, please read README.md at first. #
+#######################################################################################
+*/
+
+
+
+
 #include "stdafx.h"
 #include "CalculateForce.h"
 #include "Calculate_u_p.h"
@@ -48,17 +61,18 @@ int main(int argc, char *argv[]) {
 	CreateDirectory(WorkDir.string() + "/Solids");
 
 
-	Param par(WorkDir.string(), "input.txt");
+	Param par(WorkDir.string(), "input.txt");					// create the variable which contains parameters according to input data
+
+	Read_Solids(par.WorkDir + "Solids.txt", solidList, par);	// read Solids from file and write them into list of solids
+
+	CreateMatrix(U_n, par.N1, par.N2 + 1);						// creation matrices for velocity
+	CreateMatrix(V_n, par.N1 + 1, par.N2);						// and pressure
+	CreateMatrix(P, par.N1 + 1, par.N2 + 1);					//
+	ApplyInitialData(U_n, P, par);                              // Applying initial conditions for velocity and pressure according to 
+																// boundary conditions
 
 
-	Read_Solids(par.WorkDir + "Solids.txt", solidList, par); // read Solids from file
-
-	CreateMatrix(U_n, par.N1, par.N2 + 1);
-	CreateMatrix(V_n, par.N1 + 1, par.N2);
-	CreateMatrix(P, par.N1 + 1, par.N2 + 1);
-	ApplyInitialData(U_n, P, par); // Applying initial data 
-
-	BodyOfProgram(par, solidList, U_n, V_n, P);
+	BodyOfProgram(par, solidList, U_n, V_n, P);					// start solver
 
 
 	std::cout << "The End" << std::endl;
@@ -67,6 +81,7 @@ int main(int argc, char *argv[]) {
 	return 0;
 }
 
+//this method is restoring calculated values to continue calculations
 void Awake(int& n0, Param& par, std::list<Circle>& solidList, Matrix& U_n, Matrix& V_n, Matrix& P) {
 	std::ifstream hibernation_source;
 	std::string line;
@@ -183,6 +198,7 @@ void Awake(int& n0, Param& par, std::list<Circle>& solidList, Matrix& U_n, Matri
 								else if (PAR == "Nn")			 c.Nn = stoi(VALUE);
 								else if (PAR == "name")			 c.name = stoi(VALUE);
 								else if (PAR == "r")			 c.r = stod(VALUE);
+								else if (PAR == "n_moving")			 c.n_moving = stoi(VALUE);
 								else if (PAR == "<Nodes>") {
 									while (line != "<\\Nodes>") {
 										getline(hibernation_source, line);

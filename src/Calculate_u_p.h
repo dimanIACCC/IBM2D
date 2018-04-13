@@ -14,3 +14,4 @@ void Calculate_u_p(Matrix &U_n, Matrix &V_n,
     std::list<Circle> &solidList, Param par, int N_step);
 
 void ApplyInitialData(Matrix &u, Matrix &p, Param par);
+void Zero_velocity_in_Solids(Matrix &u, Param par, std::list<Circle> iList);

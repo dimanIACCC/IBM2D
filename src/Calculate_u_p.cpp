@@ -42,17 +42,17 @@ void Calculate_u_p(Matrix &U_n  , Matrix &V_n,
 	output << "Variables = s ux uy omega f IntU tau IntUr" << std::endl;
 	output << "Variables = s  N_BiCGStab_u  N_BiCGStab_v  N_DeltaP" << std::endl;*/
 
-	int s_max = 10000;
+	int s_max = 1000;
 	// start iterations for pressure and velocity to fulfill the conituity equation
-	for (int s = 0; s <= s_max; ++s) {
-
+	for (int s = 0; s <= s_max; ++s) {													// cycle while (delta_P / P > eps_P)
 		begin = std::clock();
 		#pragma region Velocity
-			CreateMatrix(B_u, par.N1, par.N2 + 1);
-			CreateMatrix(B_v, par.N1 + 1, par.N2);
+			CreateMatrix(B_u, par.N1, par.N2 + 1);										// create matrix filled by 0
+			CreateMatrix(B_v, par.N1 + 1, par.N2);										//
 
-			B_u = CalculateB(U_n, V_n, U_s, V_s, P, par, Du);
+			B_u = CalculateB(U_n, V_n, U_s, V_s, P, par, Du);                           // RHS for Navier-Stokes non-lenear equation
 			B_v = CalculateB(V_n, U_n, V_s, U_s, P, par, Dv);
+
 
 			U_new = U_s;
 			V_new = V_s;
@@ -60,11 +60,11 @@ void Calculate_u_p(Matrix &U_n  , Matrix &V_n,
 			{
 				#pragma omp section
 				{
-					BiCGStab(U_new, A_u, B_u, par, Du, N_BiCGStab_u);
+					BiCGStab(U_new, A_u, B_u, par, Du, N_BiCGStab_u);                   // solving A_u * U_new = B_u
 				}
 				#pragma omp section
 				{
-					BiCGStab(V_new, A_v, B_v, par, Dv, N_BiCGStab_v);
+					BiCGStab(V_new, A_v, B_v, par, Dv, N_BiCGStab_v);                   // solving A_v * V_new = B_v
 				}
 			}
 
@@ -92,10 +92,12 @@ void Calculate_u_p(Matrix &U_n  , Matrix &V_n,
 		#pragma region Pressure
 			begin = std::clock();
 
-			P_Right = Calculate_Press_Right(U_new, V_new, par);
-			double Delta_P_max = Calculate_Press_correction(Delta_P, P_Right, par, N_DeltaP);
+			P_Right = Calculate_Press_Right(U_new, V_new, par);                                     // calculating P_Right = 1/dt ( {U_i,j - U_i-1,j}/{h_x} + {V_i,j - V_i,j-1}/{h_x} )
+			double Delta_P_max = Calculate_Press_correction(Delta_P, P_Right, par, N_DeltaP);       // Zeidel method for solving Poisson equation
+
 			double P_max = std::max(max(P), 1.e-4);
-			double relax = 0.02 * std::max(pow(P_max / Delta_P_max, 0.5), 1.);
+			double relax = 0.02 * std::max(pow(P_max / Delta_P_max, 0.5), 1.);						// coefficient of relaxation
+
 
 			std::cout << "s = " << s << ", delta_P / P = " << Delta_P_max / P_max << std::endl;
 
@@ -103,20 +105,21 @@ void Calculate_u_p(Matrix &U_n  , Matrix &V_n,
 			//std::cout << "time of Pressure     : " << end - begin << " " << std::endl;
 		#pragma endregion Pressure
 
-		#pragma region New P and U
-			P += Delta_P * relax;
-
-			for (size_t i = 0; i < U_new.size(); ++i) {
-				for (size_t j = 0; j < U_new[0].size(); ++j) {
-					U_new[i][j] -= relax * par.d_t * (Delta_P[i + 1][j] - Delta_P[i][j]) / par.d_x;
-				}
-			}
-
-			for (size_t i = 0; i < V_new.size(); ++i) {
-				for (size_t j = 0; j < V_new[0].size(); ++j) {
-					V_new[i][j] -= relax * par.d_t * (Delta_P[i][j + 1] - Delta_P[i][j]) / par.d_y;
-				}
-			}
+		#pragma region New P and U																
+																										// area of correction pressure and velocity fields
+			P += Delta_P * relax;																		// correction of pressure
+																										//
+			for (size_t i = 0; i < U_new.size(); ++i) {													//
+				for (size_t j = 0; j < U_new[0].size(); ++j) {											//
+					U_new[i][j] -= relax * par.d_t * (Delta_P[i + 1][j] - Delta_P[i][j]) / par.d_x;		// correction of velocity
+				}																						//
+			}																							//
+																										//
+			for (size_t i = 0; i < V_new.size(); ++i) {													//
+				for (size_t j = 0; j < V_new[0].size(); ++j) {											//
+					V_new[i][j] -= relax * par.d_t * (Delta_P[i][j + 1] - Delta_P[i][j]) / par.d_y;		// correction of velocity
+				}																						//
+			}																							//
 
 		#pragma endregion New P and U
 
@@ -141,7 +144,6 @@ void Calculate_u_p(Matrix &U_n  , Matrix &V_n,
 
 		// output of the iterations number
 		// output << s << "   " << N_BiCGStab_u  << "   " << N_BiCGStab_v << "   " << N_DeltaP << std::endl;
-
 
 		if (Delta_P_max / P_max < par.eps_P) {
 			Solids_velocity_new(solidList, par);
@@ -170,10 +172,10 @@ void ApplyInitialData(Matrix &u, Matrix &p, Param par) {
 		for (size_t j = 0; j < u[0].size(); ++j) {
 			GeomVec xu = x_u(i, j, par);
 			switch (par.BC) {
-				case u_infinity: u[i][j] = 1.0; break;
-				case u_inflow:   u[i][j] = 1.0 * ux_Poiseuille(xu[2], par.H); break;
-				case periodical: u[i][j] = 1.0 * ux_Poiseuille(xu[2], par.H); break;
-				default: std::cout << "ApplyInitialData: unknown BC" << std::endl;
+			case u_infinity: u[i][j] = 1.0; break;
+			case u_inflow:   u[i][j] = 1.0 * ux_Poiseuille(xu[2], par.H); break;
+			case periodical: u[i][j] = 1.0 * ux_Poiseuille(xu[2], par.H); break;
+			default: std::cout << "ApplyInitialData: unknown BC" << std::endl;
 			}
 		}
 	}
@@ -185,14 +187,28 @@ void ApplyInitialData(Matrix &u, Matrix &p, Param par) {
 		}
 	}
 
-	size_t Nx = p.size();
-	if (par.BC == periodical) {
-		for (size_t j = 0; j < p[0].size(); ++j) {
-			//p[0][j]      = par.L * dpdx_Poiseuille(par.H, par.Re);
-			//p[1][j]      = par.L * dpdx_Poiseuille(par.H, par.Re);
-			//p[Nx-2][j]   = 0;
-			//p[Nx-1][j]   = 0;
+
+		size_t Nx = p.size();
+		if (par.BC == periodical) {
+			for (size_t j = 0; j < p[0].size(); ++j) {
+				//p[0][j]      = par.L * dpdx_Poiseuille(par.H, par.Re);
+				//p[1][j]      = par.L * dpdx_Poiseuille(par.H, par.Re);
+				//p[Nx-2][j]   = 0;
+				//p[Nx-1][j]   = 0;
+			}
 		}
+
+	}
+
+void Zero_velocity_in_Solids(Matrix &u, Param par, std::list<Circle> iList) {
+
+	for (auto solid : iList) {
+		for (int i = ((solid.xc[1] - solid.r) / par.d_x + 1); i < (solid.xc[1] + solid.r) / par.d_x + 1; i++)
+			for (int j = (solid.xc[2] - solid.r) / par.d_y + 1; j < (solid.xc[2] + solid.r) / par.d_y + 1; j++) {
+				double distance = sqrt(pow(par.d_x*i - solid.xc[1], 2) + pow(par.d_y*j - solid.xc[2], 2));
+				if (distance <= solid.r) u[i][j] = 0;
+				//p[i][j] /= solid.GetSweetness(i, j, par);
+			}
 	}
 
 }

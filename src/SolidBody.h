@@ -38,7 +38,7 @@ public:
 	std::vector<Node> Nodes;   // Nodes of the SolidBody mesh
 	size_t Nn;                    // Number of Nodes
 	int name;                     // integer name of the solid
-	
+	int n_moving;					//step which is the first moving for solid
 	SolidBody(double x, double y, double ux, double uy, double omega, double rho, int Nn, bool moving, int &name);
 	~SolidBody();
 	void velocities();      // calculates the velocities in all Nodes of the SolidBody
