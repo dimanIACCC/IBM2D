@@ -1,0 +1,17 @@
+Re      = 20
+L       = 1.5
+H       = 1
+N1      = 151
+N2      = 101
+d_t     = 0.002
+Nn      = 50
+r       = 0.125
+output_step = 10
+N_max       = 50000
+N_Zeidel    = 500000
+Zeidel_eps  = 1e-5
+eps_P       = 1e-2
+BC = periodical
+AddSolids_N = 0
+AddSolids_start = 0
+AddSolids_interval = 10000

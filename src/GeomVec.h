@@ -10,11 +10,7 @@ namespace ublas = boost::numeric::ublas; // shorten the namespace name
 typedef ublas::bounded_vector<double, 4> GeomVec; // define type of geometric vector
 typedef ublas::bounded_matrix<double, 4, 4> GeomMat;
 
-//Type of matrix with double
-typedef  std::vector<std::vector<double>> Matrix;
 
-//Macros which make matrix type of double size of n*m
-#define CreateMatrix(name, n, m) Matrix name(n,std::vector<double>(m, 0))
 
 double length(GeomVec x);                                         // length of the geometric vector
 double dot_product(GeomVec v1, GeomVec v2);                       // scalar product of two vectors
