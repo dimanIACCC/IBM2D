@@ -39,9 +39,6 @@ void BodyOfProgram(Param par, std::list<Circle> solidList, Matrix U_n, Matrix V_
 		U_n = U_new;
 		V_n = V_new;
 		
-		Solids_move(solidList, par,n);												// moving solids if it necessary (checking it up inside) 
-																					// and detection of collisions 
-
 		//workaround for moving walls
 		//for (auto& solid : solidList) {
 		//	for (size_t i = 0; i < U_n.size(); i++)
@@ -51,7 +48,8 @@ void BodyOfProgram(Param par, std::list<Circle> solidList, Matrix U_n, Matrix V_
 		//	solid.uc[1] = 0;
 		//}
 
-		Solids_move(solidList, par,n);
+		Solids_move(solidList, par, n);												// moving solids if it necessary (checking it up inside)
+																					// and detection of collisions
 
 		PushLog(log, n, eps_u, eps_v);                                              // writting log into log-file
 		log.flush();

@@ -96,8 +96,7 @@ void SolidBody::log(std::string WorkDir, int n) {
 	std::string filename = WorkDir + "Solids/" + std::to_string(name) + ".plt";
 	output.open(filename, std::ios::app);
 
-	output << n << "   "
-		   << xc[1] << "   "
+	output << xc[1] << "   "
 	       << xc[2] << "   "
 	       << uc[1] << "   "
 	       << uc[2] << "   "
