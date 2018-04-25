@@ -35,6 +35,7 @@ GeomVec Circle_Equation(GeomVec xc, double r, double theta) {
 	xy[1] = xc[1] + cos(theta) * r;
 	xy[2] = xc[2] + sin(theta) * r;
 	xy[3] = 0;
+	return xy;
 }
 
 Circle::Circle(double x, double y, double ux, double uy, double omega, double rho, int Nn, bool moving, int name, double r) :

@@ -12,7 +12,7 @@
 // Right-hand side term is calculated in B_u and B_v (subroutine CalculateB() )
 void Calculate_u_p(Matrix &U_n  , Matrix &V_n,
                    Matrix &U_new, Matrix &V_new,
-                   Matrix &P    ,
+                   Matrix &P    , Matrix &P_new,
                    Matrix &Fx   , Matrix &Fy,
                    Template A_u, Template A_v,
                    std::list<Circle> &solidList, Param par, int N_step) {
@@ -30,6 +30,7 @@ void Calculate_u_p(Matrix &U_n  , Matrix &V_n,
 
 	U_s = U_n;
 	V_s = V_n;
+	P_new = P;
 
 	std::clock_t begin, end;
 
@@ -50,8 +51,8 @@ void Calculate_u_p(Matrix &U_n  , Matrix &V_n,
 			CreateMatrix(B_u, par.N1, par.N2 + 1);										// create matrix filled by 0
 			CreateMatrix(B_v, par.N1 + 1, par.N2);										//
 
-			B_u = CalculateB(U_n, V_n, U_s, V_s, P, par, Du);                           // RHS for Navier-Stokes non-lenear equation
-			B_v = CalculateB(V_n, U_n, V_s, U_s, P, par, Dv);
+			B_u = CalculateB(U_n, V_n, U_s, V_s, P, P_new, par, Du);                           // RHS for Navier-Stokes non-linear equation
+			B_v = CalculateB(V_n, U_n, V_s, U_s, P, P_new, par, Dv);
 
 
 			U_new = U_s;
@@ -107,24 +108,26 @@ void Calculate_u_p(Matrix &U_n  , Matrix &V_n,
 
 		#pragma region New P and U																
 																										// area of correction pressure and velocity fields
-			P += Delta_P * relax;																		// correction of pressure
-																										//
-			for (size_t i = 0; i < U_new.size(); ++i) {													//
-				for (size_t j = 0; j < U_new[0].size(); ++j) {											//
-					U_new[i][j] -= relax * par.d_t * (Delta_P[i + 1][j] - Delta_P[i][j]) / par.d_x;		// correction of velocity
-				}																						//
-			}																							//
-																										//
-			for (size_t i = 0; i < V_new.size(); ++i) {													//
-				for (size_t j = 0; j < V_new[0].size(); ++j) {											//
-					V_new[i][j] -= relax * par.d_t * (Delta_P[i][j + 1] - Delta_P[i][j]) / par.d_y;		// correction of velocity
-				}																						//
-			}																							//
+			P_new += Delta_P * relax;                                                                   // correction of pressure
+			if (N_step < 2)
+			P = P_new;
+
+			for (size_t i = 0; i < U_new.size(); ++i) {
+				for (size_t j = 0; j < U_new[0].size(); ++j) {
+					U_new[i][j] -= relax * par.d_t * (Delta_P[i + 1][j] - Delta_P[i][j]) / par.d_x;		// correction of predicted velocity U_new
+				}
+			}
+
+			for (size_t i = 0; i < V_new.size(); ++i) {
+				for (size_t j = 0; j < V_new[0].size(); ++j) {
+					V_new[i][j] -= relax * par.d_t * (Delta_P[i][j + 1] - Delta_P[i][j]) / par.d_y;		// correction of predicted velocity V_new
+				}
+			}
 
 		#pragma endregion New P and U
 
 		//Output_dp(Delta_P, s, par);
-		//Output(P, U_new, V_new, Fx, Fy, s, solidList, par);
+		//Output(P_new, U_new, V_new, Fx, Fy, s, solidList, par);
 		
 
 

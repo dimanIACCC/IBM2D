@@ -5,8 +5,6 @@
 // LHS = (1 / d_t - 1/Re * 0.5 \Delta ) * U_new
 void Calculate_A(Template &A, Param par, double Re, Direction Dir) {
 
-	size_t N;
-
 	double d_u, d_v;
 
 	if      (Dir == Du) { d_u = par.d_x;	d_v = par.d_y;	}
@@ -83,7 +81,7 @@ Matrix Operator_Ax(Template &A, Matrix &u, Param par, Direction Dir) {
 }
 
 // RHS of Navier-Stokes equation
-Matrix CalculateB(Matrix &u_n, Matrix &v_n, Matrix &u_s, Matrix &v_s, Matrix &p, Param par, Direction Dir) {
+Matrix CalculateB(Matrix &u_n, Matrix &v_n, Matrix &u_s, Matrix &v_s, Matrix &p, Matrix &p_new, Param par, Direction Dir) {
 
 	size_t Nx = u_n.size();
 	size_t Ny = u_n[0].size();
@@ -105,7 +103,10 @@ Matrix CalculateB(Matrix &u_n, Matrix &v_n, Matrix &u_s, Matrix &v_s, Matrix &p,
 			double advective_term_n    = advective_term(u_n, v_n, i, j, d_u, d_v, Dir, Nx, Ny);
 			double advective_term_s    = advective_term(u_s, v_s, i, j, d_u, d_v, Dir, Nx, Ny);
 			double diffusion_term_n    = diffusion_term(u_n     , i, j, d_uu, d_vv, Dir, Nx, Ny);
-			double pressure_term = (R(p, i, j, Dir, par.N1 + 1, par.N2 + 1) - p[i][j]) / d_u;
+			double pressure_term = 0.5 * (
+			                                (R(p    , i, j, Dir, par.N1 + 1, par.N2 + 1) - p    [i][j]) / d_u
+			                              + (R(p_new, i, j, Dir, par.N1 + 1, par.N2 + 1) - p_new[i][j]) / d_u
+			                             );
 
 			result[i][j] = -(       alpha  * advective_term_n
 			               + (1.0 - alpha) * advective_term_s)
@@ -122,7 +123,12 @@ Matrix CalculateB(Matrix &u_n, Matrix &v_n, Matrix &u_s, Matrix &v_s, Matrix &p,
 				double advective_term_n = advective_term(u_n, v_n, i, j, d_u, d_v, Dir, par.N1, par.N2);
 				double advective_term_s = advective_term(u_s, v_s, i, j, d_u, d_v, Dir, par.N1, par.N2);
 				double diffusion_term_n = diffusion_term(u_n, i, j, d_uu, d_vv, Dir, par.N1, par.N2 + 1);
-				double pressure_term = (p[1][j] - p[par.N1 - 1][j] - par.L * dpdx_Poiseuille(par.H, par.Re)) / d_u;
+				double pressure_term = (0.5 * (
+				                              p    [1][j] - p    [par.N1 - 1][j]
+				                            + p_new[1][j] - p_new[par.N1 - 1][j]
+				                             )
+				                             - par.L * dpdx_Poiseuille(par.H, par.Re)
+										) / d_u;
 				result[i][j] = -(alpha * advective_term_n
 				       + (1.0 - alpha) * advective_term_s)
 				                       - pressure_term
