@@ -12,8 +12,8 @@ void DoTesting() {
 	std::list<Circle> solidList; // list of immersed solids
 	Circle c(10.0, 3.5, 0.0, 0.0, 0.0, par.rho, par.Nn, false, 0, 1.0);
 	solidList.push_back(c);
-	CreateMatrix(U_n, par.N1, par.N2 + 1);
-	CreateMatrix(V_n, par.N1 + 1, par.N2);
+	CreateMatrix(U_n, par.N1_u, par.N2_u);
+	CreateMatrix(V_n, par.N1_v, par.N2_v);
 	CreateMatrix(P, par.N1 + 1, par.N2 + 1);
 	ApplyInitialData(U_n, P, par); // Applying initial data
 

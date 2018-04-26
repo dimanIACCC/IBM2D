@@ -65,8 +65,8 @@ int main(int argc, char *argv[]) {
 
 	Read_Solids(par.WorkDir + "Solids.txt", solidList, par);	// read Solids from file and write them into list of solids
 
-	CreateMatrix(U_n, par.N1, par.N2 + 1);						// creation matrices for velocity
-	CreateMatrix(V_n, par.N1 + 1, par.N2);						// and pressure
+	CreateMatrix(U_n, par.N1_u, par.N2_u);						// creation matrices for velocity
+	CreateMatrix(V_n, par.N1_v, par.N2_v);						// and pressure
 	CreateMatrix(P, par.N1 + 1, par.N2 + 1);					//
 	ApplyInitialData(U_n, P, par);                              // Applying initial conditions for velocity and pressure according to 
 																// boundary conditions
@@ -179,26 +179,26 @@ void Awake(int& n0, Param& par, std::list<Circle>& solidList, Matrix& U_n, Matri
 
 							GetParValue(line, PAR, VALUE);
 							
-								if (PAR == "moving")			 c.moving = bool(stoi(VALUE));
-								else if (PAR == "xc_n")			 hibernation_source >> c.xc_n;//
-								else if (PAR == "uc")			 hibernation_source >> c.uc;//
-								else if (PAR == "uc_n")			 hibernation_source >> c.uc_n;//
-								else if (PAR == "omega")		 hibernation_source >> c.omega;//
+								if (PAR == "moving")             c.moving = bool(stoi(VALUE));
+								else if (PAR == "xc_n")          hibernation_source >> c.xc_n;//
+								else if (PAR == "uc_new")        hibernation_source >> c.uc_new;//
+								else if (PAR == "uc_n")          hibernation_source >> c.uc_n;//
+								else if (PAR == "omega_new")     hibernation_source >> c.omega_new;//
 								else if (PAR == "omega_n")       hibernation_source >> c.omega_n;//
-								else if (PAR == "f")			 hibernation_source >> c.f;//
-								else if (PAR == "Fr")			 c.Fr = stod(VALUE);
+								else if (PAR == "f")             hibernation_source >> c.f;//
+								else if (PAR == "Fr")            c.Fr = stod(VALUE);
 								else if (PAR == "Fr_all")        c.Fr_all = stod(VALUE);
 								else if (PAR == "F_hd")          hibernation_source >> c.F_hd;//
 								else if (PAR == "tau_hd")        hibernation_source >> c.tau_hd;//
-								else if (PAR == "S")			 c.S = stod(VALUE);
-								else if (PAR == "tau")			 hibernation_source >> c.tau;//
-								else if (PAR == "I")			 c.I = stod(VALUE);
-								else if (PAR == "rho")			 c.rho = stod(VALUE);
-								else if (PAR == "V")			 c.V = stod(VALUE);
-								else if (PAR == "Nn")			 c.Nn = stoi(VALUE);
-								else if (PAR == "name")			 c.name = stoi(VALUE);
-								else if (PAR == "r")			 c.r = stod(VALUE);
-								else if (PAR == "n_moving")			 c.n_moving = stoi(VALUE);
+								else if (PAR == "S")             c.S = stod(VALUE);
+								else if (PAR == "tau")           hibernation_source >> c.tau;//
+								else if (PAR == "I")             c.I = stod(VALUE);
+								else if (PAR == "rho")           c.rho = stod(VALUE);
+								else if (PAR == "V")             c.V = stod(VALUE);
+								else if (PAR == "Nn")            c.Nn = stoi(VALUE);
+								else if (PAR == "name")          c.name = stoi(VALUE);
+								else if (PAR == "r")             c.r = stod(VALUE);
+								else if (PAR == "n_moving")      c.n_moving = stoi(VALUE);
 								else if (PAR == "<Nodes>") {
 									while (line != "<\\Nodes>") {
 										getline(hibernation_source, line);

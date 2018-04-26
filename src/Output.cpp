@@ -26,8 +26,8 @@ void OutputPressure(Matrix p, int n, std::list<Circle> iList, Param par) {
 		output << "zone T = circle" << ",  i=" << solid.Nn << ", f=point" << std::endl;
 		output << "SolutionTime = " << n << std::endl;
 		for (int i = 0; i < solid.Nn; ++i) {
-			output << solid.xc[1] + solid.Nodes[i].x[1] << " "
-			       << solid.xc[2] + solid.Nodes[i].x[2] << " "
+			output << solid.xc_new[1] + solid.Nodes[i].x[1] << " "
+			       << solid.xc_new[2] + solid.Nodes[i].x[2] << " "
 				<< 0 << std::endl;
 		}
 	}
@@ -59,8 +59,8 @@ void OutputVelocity_U(Matrix u, int n, std::list<Circle> iList, Param par) {
 		output << "zone T = circle" << ",  i=" << solid.Nn << ", f=point" << std::endl;
 		output << "SolutionTime = " << n << std::endl;
 		for (int i = 0; i < solid.Nn; ++i) {
-			output << solid.xc[1] + solid.Nodes[i].x[1] << " "
-			       << solid.xc[2] + solid.Nodes[i].x[2] << " "
+			output << solid.xc_new[1] + solid.Nodes[i].x[1] << " "
+			       << solid.xc_new[2] + solid.Nodes[i].x[2] << " "
 				<< solid.Nodes[i].f[1] << " "
 				<< solid.Nodes[i].f[2] << " " << std::endl;
 		}
@@ -96,8 +96,8 @@ void OutputVelocity_V(Matrix v, int n, std::list<Circle> iList, Param par) {
 		output << "zone T = circle" << ",  i=" << solid.Nn << ", f=point" << std::endl;
 		output << "SolutionTime = " << n << std::endl;
 		for (int i = 0; i < solid.Nn; ++i) {
-			output << solid.xc[1] + solid.Nodes[i].x[1] << " "
-			       << solid.xc[2] + solid.Nodes[i].x[2] << " "
+			output << solid.xc_new[1] + solid.Nodes[i].x[1] << " "
+			       << solid.xc_new[2] + solid.Nodes[i].x[2] << " "
 				<< solid.Nodes[i].f[1] << " "
 				<< solid.Nodes[i].f[2] << " " << std::endl;
 		}
@@ -137,11 +137,11 @@ void Output(Matrix p, Matrix u, Matrix v, Matrix Fx, Matrix Fy, int n, std::list
 		output << "zone T = circle" << ",  i=" << solid.Nn + 2 << ", f=point" << std::endl;
 		output << "SolutionTime = " << n << std::endl;
 
-		output << solid.xc[1] << " "
-		       << solid.xc[2] << " "
+		output << solid.xc_new[1] << " "
+		       << solid.xc_new[2] << " "
 		       << 0 << " "
-		       << solid.uc[1] << " "
-		       << solid.uc[2] << " "
+		       << solid.uc_new[1] << " "
+		       << solid.uc_new[2] << " "
 		       << solid.f[1] << " "
 		       << solid.f[2] << " "
 		       << solid.F_hd[1] << " "
@@ -149,8 +149,8 @@ void Output(Matrix p, Matrix u, Matrix v, Matrix Fx, Matrix Fy, int n, std::list
 		       << std::endl;
 		for (int i = 0; i < solid.Nn; ++i) {
 
-			output << solid.Nodes[i].x[1] + solid.xc[1] << " "
-			       << solid.Nodes[i].x[2] + solid.xc[2] << " "
+			output << solid.Nodes[i].x[1] + solid.xc_new[1] << " "
+			       << solid.Nodes[i].x[2] + solid.xc_new[2] << " "
 			       << solid.Nodes[i].p << " "
 			       << solid.Nodes[i].uf[1] << " "
 			       << solid.Nodes[i].uf[2] << " "
@@ -161,8 +161,8 @@ void Output(Matrix p, Matrix u, Matrix v, Matrix Fx, Matrix Fy, int n, std::list
 			       << std::endl;
 
 		}
-		output << solid.Nodes[0].x[1] + solid.xc[1] << " "
-		       << solid.Nodes[0].x[2] + solid.xc[2] << " "
+		output << solid.Nodes[0].x[1] + solid.xc_new[1] << " "
+		       << solid.Nodes[0].x[2] + solid.xc_new[2] << " "
 		       << solid.Nodes[0].p << " "
 		       << solid.Nodes[0].uf[1] << " "
 		       << solid.Nodes[0].uf[2] << " "
@@ -346,9 +346,9 @@ void MakeHibernationFile(int n, Param& par, std::list<Circle>& solidList, Matrix
 		output << "<Solid>" << std::endl;
 		output << "moving = " << one->moving << std::endl;
 		output << "xc_n = " << std::endl << one->xc_n << std::endl;
-		output << "uc = " << std::endl << one->uc << std::endl;
+		output << "uc_new = " << std::endl << one->uc_new << std::endl;
 		output << "uc_n = " << std::endl << one->uc_n << std::endl;
-		output << "omega = " << std::endl << one->omega << std::endl;
+		output << "omega_new = " << std::endl << one->omega_new << std::endl;
 		output << "omega_n = " << std::endl << one->omega_n << std::endl;
 		output << "f = " << std::endl << one->f << std::endl;
 		output << "Fr = " << one->Fr << std::endl;

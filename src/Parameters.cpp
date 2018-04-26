@@ -29,6 +29,11 @@ Param::Param() {
 	SolidName_max = 0;
 	WorkDir = "";
 
+	N1_u = N1;
+	N2_u = N2 + 1;
+	N1_v = N1 + 1;
+	N2_v = N2;
+
 	d_x = L / (N1 - 1);
 	d_y = H / (N2 - 1);
 }
@@ -77,6 +82,12 @@ Param::Param(std::string WorkDir, std::string filename) : Param() {
 	}
 
 	this->WorkDir = WorkDir;
+
+	N1_u = N1;
+	N2_u = N2 + 1;
+	N1_v = N1 + 1;
+	N2_v = N2;
+
 	d_x = L / (N1 - 1);
 	d_y = H / (N2 - 1);
 

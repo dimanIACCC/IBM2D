@@ -18,6 +18,7 @@ public:
 	int N1;                   // number of points in x-direction
 	int N2;                   // number of points in y-direction
 	int N1_u, N2_u;           // sizes for u-direction arrays
+	int N1_v, N2_v;           // sizes for v-direction arrays
 	double d_x;               // mesh step in x-direction
 	double d_y;               // mesh step in y-direction
 	double d_t;               // time step

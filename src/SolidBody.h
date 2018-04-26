@@ -21,15 +21,15 @@ class SolidBody
 {
 public:
 	bool moving;
-	GeomVec xc, xc_n;        // coordinates of the mass center
-	GeomVec uc, uc_n, uc_s;  // velocity of the mass center
-	GeomVec omega, omega_n, omega_s;  // angular velocity
-	GeomVec f;      // force applied to the whole SolidBody
+	GeomVec xc, xc_n, xc_new;        // coordinates of the mass center
+	GeomVec uc, uc_n, uc_new, uc_s;  // velocity of the mass center
+	GeomVec omega, omega_n, omega_new, omega_s;  // angular velocity
+	GeomVec f, f_n, f_new;      // force applied to the whole SolidBody
 	double Fr, Fr_all;      // average radial Force applied to SolidBody
 	GeomVec F_hd;   // Force calculated from hydrodynamics
 	GeomVec tau_hd; // torque, moment of force calculated from hydrodynamics
 	double S;       // length of contour for radial Force averaging
-	GeomVec tau;    // torque, moment of force applied to the whole SolidBody
+	GeomVec tau, tau_n, tau_new;    // torque, moment of force applied to the whole SolidBody
 	double I;       // moment of inertia
 	double rho;     // density
 	double V;       // volume
