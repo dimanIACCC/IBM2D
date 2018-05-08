@@ -94,7 +94,7 @@ Matrix CalculateB(Matrix &u_n, Matrix &v_n, Matrix &u_s, Matrix &v_s, Matrix &p,
 	double d_uu = 1.0 / (d_u*d_u);
 	double d_vv = 1.0 / (d_v*d_v);
 
-	double alpha = 0.5;
+	double alpha = 1.;
 
 	CreateMatrix(result, Nx, Ny);
 
@@ -104,7 +104,7 @@ Matrix CalculateB(Matrix &u_n, Matrix &v_n, Matrix &u_s, Matrix &v_s, Matrix &p,
 			double advective_term_s    = advective_term(u_s, v_s, i, j, d_u, d_v, Dir, Nx, Ny);
 			double diffusion_term_n    = diffusion_term(u_n     , i, j, d_uu, d_vv, Dir, Nx, Ny);
 			double pressure_term = 0.5 * (
-			                                (R(p    , i, j, Dir, par.N1 + 1, par.N2 + 1) - p    [i][j]) / d_u
+			                                (R(p_new, i, j, Dir, par.N1 + 1, par.N2 + 1) - p_new[i][j]) / d_u
 			                              + (R(p_new, i, j, Dir, par.N1 + 1, par.N2 + 1) - p_new[i][j]) / d_u
 			                             );
 
@@ -124,7 +124,7 @@ Matrix CalculateB(Matrix &u_n, Matrix &v_n, Matrix &u_s, Matrix &v_s, Matrix &p,
 				double advective_term_s = advective_term(u_s, v_s, i, j, d_u, d_v, Dir, par.N1, par.N2);
 				double diffusion_term_n = diffusion_term(u_n, i, j, d_uu, d_vv, Dir, par.N1, par.N2 + 1);
 				double pressure_term = (0.5 * (
-				                              p    [1][j] - p    [par.N1 - 1][j]
+				                              p_new[1][j] - p_new[par.N1 - 1][j]
 				                            + p_new[1][j] - p_new[par.N1 - 1][j]
 				                             )
 				                             - par.L * dpdx_Poiseuille(par.H, par.Re)

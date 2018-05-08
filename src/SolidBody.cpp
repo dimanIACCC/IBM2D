@@ -41,12 +41,20 @@ GeomVec Circle_Equation(GeomVec xc, double r, double theta) {
 Circle::Circle(double x, double y, double ux, double uy, double omega, double rho, int Nn, bool moving, int name, double r) :
      SolidBody(       x,        y,        ux,        uy,        omega,        rho,     Nn,      moving,      name) {
 	this->r = r;
+	int Nn2 = Nn/2;
+	for (int i = 0; i < Nn2; ++i){
+		Nodes[i].xn[1] = cos(i * 2.0 * M_PI / Nn2) * r;
+		Nodes[i].xn[2] = sin(i * 2.0 * M_PI / Nn2) * r;
+		Nodes[i].n[1]  = cos(i * 2.0 * M_PI / Nn2);
+		Nodes[i].n[2]  = sin(i * 2.0 * M_PI / Nn2);
+		Nodes[i].x = Nodes[i].xn;
+	}
 
-	for (int i = 0; i < Nn; ++i){
-		Nodes[i].xn[1] = cos(i * 2.0 * M_PI / Nn) * r;
-		Nodes[i].xn[2] = sin(i * 2.0 * M_PI / Nn) * r;
-		Nodes[i].n[1]  = cos(i * 2.0 * M_PI / Nn);
-		Nodes[i].n[2]  = sin(i * 2.0 * M_PI / Nn);
+	for (int i = Nn2; i < Nn; ++i) {
+		Nodes[i].xn[1] = cos(i * 2.0 * M_PI / Nn2) * r/2;
+		Nodes[i].xn[2] = sin(i * 2.0 * M_PI / Nn2) * r/2;
+		Nodes[i].n[1]  = cos(i * 2.0 * M_PI / Nn2);
+		Nodes[i].n[2]  = sin(i * 2.0 * M_PI / Nn2);
 		Nodes[i].x = Nodes[i].xn;
 	}
 	V = M_PI * r * r;

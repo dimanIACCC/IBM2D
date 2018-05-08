@@ -119,7 +119,7 @@ void Calculate_u_p(Matrix &U_n   , Matrix &U_new,
 			double Delta_P_max = Calculate_Press_correction(Delta_P, P_Right, par, N_DeltaP);       // Zeidel method for solving Poisson equation
 
 			double P_max = std::max(max(P_new), 1.e-4);
-			double relax = 0.02 * std::max(pow(P_max / Delta_P_max, 0.5), 1.);						// coefficient of relaxation
+			double relax = 0.05 * std::max(pow(P_max / Delta_P_max, 0.5), 1.);						// coefficient of relaxation
 
 
 			std::cout << "s = " << s << ", delta_P / P = " << Delta_P_max / P_max << std::endl;

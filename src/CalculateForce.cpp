@@ -44,10 +44,11 @@ void CalculateForce(Matrix &Fx, Matrix &Fy, std::list<Circle> &iList, Matrix& u,
 
 	for (auto& solid : iList) {
 
-		for (size_t k = 0; k < solid.Nn; ++k) {
 
-			//calculating velocities us of the solid boundary
-			solid.velocities();
+		//calculating velocities us of the solid boundary
+		solid.velocities();
+
+		for (size_t k = 0; k < solid.Nn; ++k) {
 
 			int i_max, i_min;
 			int j_max, j_min;
