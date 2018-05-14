@@ -11,6 +11,7 @@ Param::Param() {
 	N1 = 101;
 	N2 = 21;
 	d_t = 0.00125;
+	N_step = -1;
 	Nn = 50;
 	rho = 10;
 	r = 0.5;
@@ -99,9 +100,10 @@ Param::Param(std::string WorkDir) : Param() {
 
 Boundary_Conditions string_to_BC(std::string s) {
 	Boundary_Conditions BC;
-	if      (s == "u_infinity"|| s == "0") BC = u_infinity;
-	else if (s == "u_inflow"  || s == "1") BC = u_inflow;
-	else if (s == "periodical"|| s == "2") BC = periodical;
+	if      (s == "u_infinity"   || s == "0") BC = u_infinity;
+	else if (s == "u_inflow"     || s == "1") BC = u_inflow;
+	else if (s == "periodical"   || s == "2") BC = periodical;
+	else if (s == "Taylor_Green" || s == "3") BC = Taylor_Green;
 	else std::cout << "string_to_BC: unknown BC" << std::endl;
 	return BC;
 }

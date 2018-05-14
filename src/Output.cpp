@@ -106,17 +106,17 @@ void OutputVelocity_V(Matrix v, int n, std::list<Circle> iList, Param par) {
 	output.close();
 }
 
-void Output(Matrix p, Matrix u, Matrix v, Matrix Fx, Matrix Fy, int n, std::list<Circle> iList, Param par) {
+void Output(Matrix p, Matrix u, Matrix v, Matrix Fx, Matrix Fy, std::list<Circle> iList, Param par) {
 
 	std::ofstream output;
-	std::string filename = par.WorkDir + "step" + std::to_string(n) + ".plt";
+	std::string filename = par.WorkDir + "step" + std::to_string(par.N_step) + ".plt";
 
 	output.open(filename);
 
 	output << "title = " << '"' << "sample mesh" << '"' << std::endl;
 	output << "Variables = x y p u v fx fy tx ty" << std::endl;
-	output << "zone T=" << '"' << n << '"' << ",  i=" << par.N1 + 1 << ", j=" << par.N2 + 1 << ", f=point" << std::endl;
-	output << "SolutionTime = " << n << std::endl;
+	output << "zone T=" << '"' << par.N_step << '"' << ",  i=" << par.N1 + 1 << ", j=" << par.N2 + 1 << ", f=point" << std::endl;
+	output << "SolutionTime = " << par.N_step << std::endl;
 
 	for (int j = 0; j <= par.N2; ++j) {
 		for (int i = 0; i <= par.N1; ++i) {
@@ -135,7 +135,7 @@ void Output(Matrix p, Matrix u, Matrix v, Matrix Fx, Matrix Fy, int n, std::list
 
 	for (auto& solid : iList) {
 		output << "zone T = circle" << ",  i=" << solid.Nn + 2 << ", f=point" << std::endl;
-		output << "SolutionTime = " << n << std::endl;
+		output << "SolutionTime = " << par.N_step << std::endl;
 
 		output << solid.xc_new[1] << " "
 		       << solid.xc_new[2] << " "

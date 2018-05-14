@@ -1,7 +1,7 @@
 #include "stdafx.h"
 #include "BodyOfProgram.h"
 
-void BodyOfProgram(Param par, std::list<Circle> solidList, Matrix U_n, Matrix V_n, Matrix P_n, int n0, bool TEST, bool NeedNewLog) {
+void BodyOfProgram(Param par, std::list<Circle> solidList, Matrix U_n, Matrix V_n, Matrix P_n, int n0, bool NeedNewLog) {
 																		 
 #pragma region SetMatrices 
 	CreateMatrix(U_new, par.N1_u, par.N2_u);
@@ -25,13 +25,13 @@ void BodyOfProgram(Param par, std::list<Circle> solidList, Matrix U_n, Matrix V_
 	}else
 		log.open(par.WorkDir + "log.txt", std::ios::app);
 
-	Output(P_n, U_n, V_n, Fx_n, Fy_n, -1, solidList, par);
+	Output(P_n, U_n, V_n, Fx_n, Fy_n, solidList, par);
 
-	for (int n = n0; n <= par.N_max; ++n) {                                 // main cycle of time iterations
-		MakeHibernationFile(n-1, par, solidList, U_n, V_n, P_n);              // writting hibernation file for prior time step
-		Add_Solids(solidList, n, par);										// add solids if the conditions are fulfilled
+	for (par.N_step = n0; par.N_step <= par.N_max; ++par.N_step) {                                 // main cycle of time iterations
+		MakeHibernationFile(par.N_step-1, par, solidList, U_n, V_n, P_n);              // writting hibernation file for prior time step
+		Add_Solids(solidList, par);                                                     // add solids if the conditions are fulfilled
 
-		Calculate_u_p(U_n, U_new, V_n, V_new, P_n, P_new, Fx_n, Fx_new, Fy_n, Fy_new, A_u, A_v, solidList, par, n);  // calculate velocity and pressure at the new time step
+		Calculate_u_p(U_n, U_new, V_n, V_new, P_n, P_new, Fx_n, Fx_new, Fy_n, Fy_new, A_u, A_v, solidList, par);  // calculate velocity and pressure at the new time step
 
 		double eps_u = diff(U_n, U_new);												// calculate maximum difference between current and prior velocity fields
 		double eps_v = diff(V_n, V_new);
@@ -49,18 +49,18 @@ void BodyOfProgram(Param par, std::list<Circle> solidList, Matrix U_n, Matrix V_
 		//	solid.uc_new[1] = 0;
 		//}
 
-		Solids_move(solidList, par, n);												// moving solids if it is necessary (checking it up inside)
+		Solids_move(solidList, par);												// moving solids if it is necessary (checking it up inside)
 																					// and detection of collisions
 
-		PushLog(log, n, eps_u, eps_v);                                              // writting log into log-file
+		PushLog(log, par.N_step, eps_u, eps_v);                                              // writting log into log-file
 		log.flush();
 
-		if (n % par.output_step == 0|| n<1000) {
-			Output(P_n, U_new, V_new, Fx_new, Fy_new, n, solidList, par);
+		if (par.N_step % par.output_step == 0|| par.N_step < 1000) {
+			Output(P_n, U_new, V_new, Fx_new, Fy_new, solidList, par);
 		}
 
 		const double epsilon = 1e-7;
-		if (eps_u < epsilon && eps_v < epsilon && n>1000) {
+		if (eps_u < epsilon && eps_v < epsilon && par.N_step > 1000) {
 			break;
 		}
 	}

@@ -50,7 +50,7 @@ int main(int argc, char *argv[]) {
 			int n;
 			par.WorkDir = WorkDir.string();
 			Awake(n, par, solidList, U_n, V_n, P);
-			BodyOfProgram(par, solidList, U_n, V_n, P, n+1,false,false);
+			BodyOfProgram(par, solidList, U_n, V_n, P, n+1,false);
 			return 0;
 		}
 		else if (PAR == "-dir") if (VALUE.size() > 0) WorkDir = VALUE + '/';
@@ -68,9 +68,7 @@ int main(int argc, char *argv[]) {
 	CreateMatrix(U_n, par.N1_u, par.N2_u);						// creation matrices for velocity
 	CreateMatrix(V_n, par.N1_v, par.N2_v);						// and pressure
 	CreateMatrix(P, par.N1 + 1, par.N2 + 1);					//
-	ApplyInitialData(U_n, P, par);                              // Applying initial conditions for velocity and pressure according to 
-																// boundary conditions
-
+	ApplyInitialData(U_n, V_n, P, par);                          // Initial conditions for velocity and pressure
 
 	BodyOfProgram(par, solidList, U_n, V_n, P);					// start solver
 

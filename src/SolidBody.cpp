@@ -185,8 +185,8 @@ void Read_Solids(std::string filename, std::list<Circle>& Solids, Param &par) {
 
 }
 
-void Add_Solids(std::list<Circle>& Solids, int n, Param &par) {
-	if (   (n - par.AddSolids_start) % par.AddSolids_interval == 0   &&   (n >= par.AddSolids_start)) { //create new solids starting from $AddSolids_start$ iteration with interval of $AddSolids_interval$ iterations
+void Add_Solids(std::list<Circle>& Solids, Param &par) {
+	if (   (par.N_step - par.AddSolids_start) % par.AddSolids_interval == 0   &&   (par.N_step >= par.AddSolids_start)) { //create new solids starting from $AddSolids_start$ iteration with interval of $AddSolids_interval$ iterations
 		for (int i = 0; i < par.AddSolids_N; i++) { // add $AddSolids_N$ solids
 			GeomVec x;
 			x[0] = 0;
@@ -246,7 +246,7 @@ bool Collide(Circle& s1, Circle& s2, Param par) {
 	return result;
 }
 
-void Solids_move(std::list<Circle> &solidList, Param par, int n) {
+void Solids_move(std::list<Circle> &solidList, Param par) {
 
 	///--------------collisions between particles-----------------
 	for (auto one = solidList.begin(); one != solidList.end(); one++) {
@@ -268,7 +268,7 @@ void Solids_move(std::list<Circle> &solidList, Param par, int n) {
 	///
 	for (auto it = solidList.begin(); it != solidList.end();) {
 
-		if (it->n_moving <= n) {
+		if (it->n_moving <= par.N_step) {
 			if (it->moving) {
 				it->uc_n    = it->uc_new;
 				it->omega_n = it->omega_new;
@@ -278,7 +278,7 @@ void Solids_move(std::list<Circle> &solidList, Param par, int n) {
 				}
 			}
 
-			it->log(par.WorkDir, n);
+			it->log(par.WorkDir, par.N_step);
 
 			//Right boundary conditions for Solids
 			if (it->xc_n[1] < par.L) {

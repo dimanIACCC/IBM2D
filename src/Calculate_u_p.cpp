@@ -16,7 +16,7 @@ void Calculate_u_p(Matrix &U_n   , Matrix &U_new,
                    Matrix &Fx_n  , Matrix &Fx_new,
                    Matrix &Fy_n  , Matrix &Fy_new,
                    Template A_u  , Template A_v,
-                   std::list<Circle> &solidList, Param par, int N_step) {
+                   std::list<Circle> &solidList, Param par) {
 
 	CreateMatrix(U_s, par.N1_u, par.N2_u);
 	CreateMatrix(V_s, par.N1_v, par.N2_v);
@@ -131,7 +131,24 @@ void Calculate_u_p(Matrix &U_n   , Matrix &U_new,
 		#pragma region New P and U																
 																										// area of correction pressure and velocity fields
 			P_new += Delta_P * relax;                                                                   // correction of pressure
-			if (N_step < 2)
+
+			if (par.BC == Taylor_Green) {
+				for (size_t i = 0; i < par.N1 + 1; ++i) {
+					GeomVec x_D = x_p(i, 0     , par);
+					GeomVec x_U = x_p(i, par.N2, par);
+					P_new[i][0]      = 0.5 * (pow(cos(M_PI* x_D[2]),2) - pow(sin(M_PI * x_D[1]),2)) * exp(-8 * (M_PI*M_PI) / par.Re * par.d_t * par.N_step);      // D
+					P_new[i][par.N2] = 0.5 * (pow(cos(M_PI* x_U[2]),2) - pow(sin(M_PI * x_U[1]),2)) * exp(-8 * (M_PI*M_PI) / par.Re * par.d_t * par.N_step);      // U
+				}
+				for (size_t j = 0; j < par.N2 + 1; ++j) {
+					GeomVec x_L = x_p(0     , j, par);
+					GeomVec x_R = x_p(par.N1, j, par);
+					P_new[0][j]      = 0.5 * (pow(cos(M_PI* x_L[2]), 2) - pow(sin(M_PI * x_L[1]), 2)) * exp(-8 * (M_PI*M_PI) / par.Re * par.d_t * par.N_step);    // L
+					P_new[par.N1][j] = 0.5 * (pow(cos(M_PI* x_R[2]), 2) - pow(sin(M_PI * x_R[1]), 2)) * exp(-8 * (M_PI*M_PI) / par.Re * par.d_t * par.N_step);    // R
+				}
+				//P_new[par.N1 / 2][par.N2 / 2] = 0;
+			}
+
+			if (par.N_step < 2)
 			P_n = P_new;
 
 			for (size_t i = 0; i < U_new.size(); ++i) {
@@ -191,17 +208,26 @@ void Calculate_u_p(Matrix &U_n   , Matrix &U_new,
 
 
 // Apply initial data for velocity
-void ApplyInitialData(Matrix &u, Matrix &p, Param par) {
+void ApplyInitialData(Matrix &u, Matrix &v, Matrix &p, Param par) {
 
 	for (size_t i = 0; i < u.size(); ++i) {
 		for (size_t j = 0; j < u[0].size(); ++j) {
 			GeomVec xu = x_u(i, j, par);
 			switch (par.BC) {
-			case u_infinity: u[i][j] = 1.0; break;
-			case u_inflow:   u[i][j] = 1.0 * ux_Poiseuille(xu[2], par.H); break;
-			case periodical: u[i][j] = 1.0 * ux_Poiseuille(xu[2], par.H); break;
-			default: std::cout << "ApplyInitialData: unknown BC" << std::endl;
+				case u_infinity:   u[i][j] = 1.0; break;
+				case u_inflow:     u[i][j] = 1.0 * ux_Poiseuille(xu[2], par.H); break;
+				case periodical:   u[i][j] = 1.0 * ux_Poiseuille(xu[2], par.H); break;
+				case Taylor_Green: u[i][j] = sin(M_PI * xu[1]) * cos(M_PI * xu[2]);  break;
+				default: std::cout << "ApplyInitialData: unknown BC" << std::endl;
 			}
+		}
+	}
+
+	for (size_t i = 0; i < v.size(); ++i) {
+		for (size_t j = 0; j < v[0].size(); ++j) {
+			GeomVec xv = x_v(i, j, par);
+			if (par.BC == Taylor_Green)
+				v[i][j] = -sin(M_PI * xv[2]) * cos(M_PI * xv[1]);
 		}
 	}
 
@@ -220,6 +246,15 @@ void ApplyInitialData(Matrix &u, Matrix &p, Param par) {
 				//p[1][j]      = par.L * dpdx_Poiseuille(par.H, par.Re);
 				//p[Nx-2][j]   = 0;
 				//p[Nx-1][j]   = 0;
+			}
+		}
+
+		if (par.BC == Taylor_Green) {
+			for (size_t i = 0; i < par.N1 + 1; ++i) {
+				for (size_t j = 0; j < par.N2 + 1; ++j) {
+					GeomVec x = x_p(i, j, par);
+					p[i][j] = 0.5 * (pow(cos(M_PI* x[2]), 2) - pow(sin(M_PI * x[1]), 2)) * exp(-4 * (M_PI*M_PI) / par.Re * par.d_t * par.N_step);
+				}
 			}
 		}
 

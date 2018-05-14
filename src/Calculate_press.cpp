@@ -33,7 +33,7 @@ double Calculate_Press_correction(Matrix &delta_p, Matrix &b_p, Param par, int &
 						if (j == 1)
 							help = 0.0; // down corner
 					}
-					else {
+					else if (par.BC == u_inflow || par.BC == u_infinity) {
 						help = 0.0;
 					}
 				}
@@ -67,12 +67,24 @@ double Calculate_Press_correction(Matrix &delta_p, Matrix &b_p, Param par, int &
 			delta_p[n1 - 1][0]      = delta_p[n1 - 2][1];       // RD
 			delta_p[n1 - 1][n2 - 1] = delta_p[n1 - 2][n2 - 2];  // RU
 
-		// Left-Right BC
-		if (par.BC == periodical) {  // periodical pressure
+		// Periodical Left-Right BC
+		if (par.BC == periodical) {
 			for (size_t j = 0; j < n2; ++j) {
 				delta_p[0][j] = delta_p[n1 - 2][j];        // L
 				delta_p[n1 - 1][j] = delta_p[1][j];        // R
 			}
+		}
+
+		if (par.BC == Taylor_Green) {
+			//for (size_t i = 0; i < n1; ++i) {
+			//	delta_p[i][0] = 0;                         // D
+			//	delta_p[i][n2 - 1] = 0;                    // U
+			//}
+			//for (size_t j = 0; j < n2; ++j) {
+			//	delta_p[0][j]       = 0;                   // L
+			//	delta_p[n1 - 1][j]  = 0;                   // R
+			//}
+			delta_p[par.N1 / 2][par.N2 / 2] = 0;
 		}
 
 		/*if (n % 100 == 0) {

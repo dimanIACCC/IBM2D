@@ -7,7 +7,7 @@
 namespace fs = boost::filesystem;
 
 enum Boundary_Conditions {
-	u_infinity, u_inflow, periodical
+	u_infinity, u_inflow, periodical, Taylor_Green
 };
 
 class Param{
@@ -22,6 +22,7 @@ public:
 	double d_x;               // mesh step in x-direction
 	double d_y;               // mesh step in y-direction
 	double d_t;               // time step
+	int N_step;               // step number
 	int Nn;                   // number of nodes of Solid
 	double rho;               // default density of Solid
 	double r;                 // default radius of Circle

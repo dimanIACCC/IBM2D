@@ -41,7 +41,7 @@ Matrix Operator_Ax(Template &A, Matrix &u, Param par, Direction Dir) {
 		}
 	}
 
-	// Boundary Conditions
+	// Periodical BC
 	if (par.BC == periodical) {
 		if (Dir == Du) {
 			for (size_t j = 1; j < Ny; ++j) {
@@ -59,20 +59,35 @@ Matrix Operator_Ax(Template &A, Matrix &u, Param par, Direction Dir) {
 	// Up-Down BC
 	for (size_t i = 0; i < Nx; ++i) {
 
-		size_t j = 0;
-		result[i][j] = u[i][j];
-		if ((par.BC == u_infinity) && (Dir == Du)) result[i][j] = (u[i][j + 1] - u[i][j]) / par.d_y;
+		// velocity
+		result[i][0]      = u[i][0];
+		result[i][Ny - 1] = u[i][Ny - 1];
 
-		j = Ny - 1;
-		result[i][j] = u[i][j];
-		if ((par.BC == u_infinity) && (Dir == Du)) result[i][j] = (u[i][j] - u[i][j - 1]) / par.d_y;
+		// derivative of the horizontal velocity
+		if ((par.BC == u_infinity) && (Dir == Du)) {
+			result[i][0]      = (u[i][1]      - u[i][0]     ) / par.d_y;
+			result[i][Ny - 1] = (u[i][Ny - 1] - u[i][Ny - 2]) / par.d_y;
+		}
 
 	}
 
+	// Left-Right BC
 	for (size_t j = 0; j < Ny; ++j) {
 		switch (par.BC) {
 			case u_infinity:	result[0][j] = u[0][j];		result[Nx - 1][j] = (3.0 * u[Nx - 1][j] - 4.0 * u[Nx - 2][j] + 1.0 * u[Nx - 3][j]) / (2.0*par.d_x);		break;
 			case u_inflow  :	result[0][j] = u[0][j];		result[Nx - 1][j] = (3.0 * u[Nx - 1][j] - 4.0 * u[Nx - 2][j] + 1.0 * u[Nx - 3][j]) / (2.0*par.d_x);		break;
+		}
+	}
+
+	// Taylor-Green BC
+	if (par.BC == Taylor_Green) {
+		for (size_t i = 0; i < Nx; ++i) {
+			result[i][0]      = u[i][0];
+			result[i][Ny - 1] = u[i][Ny - 1];
+		}
+		for (size_t j = 0; j < Ny; ++j) {
+			result[0][j]      = u[0][j];
+			result[Nx - 1][j] = u[Nx - 1][j];
 		}
 	}
 	
@@ -151,6 +166,8 @@ Matrix CalculateB(Matrix &u_n, Matrix &v_n, Matrix &u_s, Matrix &v_s, Matrix &p,
 		if      (Dir == Du) {
 			result[i][0]      = 2 * par.u_wall - u_n[i][1];
 			result[i][Ny - 1] = 2 * par.u_wall - u_n[i][Ny - 2];
+			
+			// zero derivative of the horizontal velocity
 			if (par.BC == u_infinity) {
 				result[i][0] = 0;
 				result[i][Ny - 1] = 0;
@@ -160,14 +177,64 @@ Matrix CalculateB(Matrix &u_n, Matrix &v_n, Matrix &u_s, Matrix &v_s, Matrix &p,
 			result[i][0] = 0;
 			result[i][Ny - 1] = 0;
 		}
+
 	}
 
+	// Left-Right BC
 	for (size_t j = 0; j < Ny; ++j) {
 		switch (par.BC) {
 			case u_infinity:	result[0][j] = u_n[0][j]     ;		result[Nx - 1][j] = 0;		break;
 			case u_inflow  :	result[0][j] = u_n[0][j]     ;		result[Nx - 1][j] = 0;		break;
 		}
 	}
+
+	// Taylor-Green BC
+	if (par.BC == Taylor_Green) {
+		double time_exp = exp(-4 * (M_PI*M_PI) / par.Re * par.d_t * par.N_step);
+		// Up-Down BC
+		for (size_t i = 0; i < Nx; ++i) {
+			GeomVec x_D;
+			GeomVec x_U;
+			if (Dir == Du) {
+				x_D = x_u(i, 0     , par);
+				x_U = x_u(i, Ny - 1, par);
+				double u_D = sin(M_PI * x_D[1]) * cos(M_PI * x_D[2]) * time_exp;
+				double u_U = sin(M_PI * x_U[1]) * cos(M_PI * x_U[2]) * time_exp;
+				
+				result[i][0]      = 2 * u_D - u_n[i][1];
+				result[i][Ny - 1] = 2 * u_U - u_n[i][Ny - 2];
+			}
+			else if (Dir == Dv) {
+				x_D = x_v(i, 0     , par);
+				x_U = x_v(i, Ny - 1, par);
+				double v_D = -sin(M_PI * x_D[2]) * cos(M_PI * x_D[1]) * time_exp;
+				double v_U = -sin(M_PI * x_U[2]) * cos(M_PI * x_U[1]) * time_exp;
+			}
+		}
+		// Left-Right BC
+		for (size_t j = 0; j < Ny; ++j) {
+			GeomVec x_L;
+			GeomVec x_R;
+			if (Dir == Du) {
+				x_L = x_u(0     , j, par);
+				x_R = x_u(Nx - 1, j, par);
+				double u_L = sin(M_PI * x_L[1]) * cos(M_PI * x_L[2]) * time_exp;
+				double u_R = sin(M_PI * x_R[1]) * cos(M_PI * x_R[2]) * time_exp;
+				result[0][j]      = u_L;
+				result[Nx - 1][j] = u_R;
+			}
+			else if (Dir == Dv) {
+				x_L = x_v(0     , j, par);
+				x_R = x_v(Nx - 1, j, par);
+				double v_L = -sin(M_PI * x_L[2]) * cos(M_PI * x_L[1]) * time_exp;
+				double v_R = -sin(M_PI * x_R[2]) * cos(M_PI * x_R[1]) * time_exp;
+				result[0][j]      = 2 * v_L - u_n[1][j];
+				result[Nx - 1][j] = 2 * v_R - u_n[Nx - 2][j];
+			}	
+		}
+
+	}
+
 
 	return result;
 }

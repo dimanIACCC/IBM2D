@@ -15,7 +15,7 @@ void DoTesting() {
 	CreateMatrix(U_n, par.N1_u, par.N2_u);
 	CreateMatrix(V_n, par.N1_v, par.N2_v);
 	CreateMatrix(P, par.N1 + 1, par.N2 + 1);
-	ApplyInitialData(U_n, P, par); // Applying initial data
+	ApplyInitialData(U_n, V_n, P, par); // Applying initial data
 
 
 	//1.
@@ -25,7 +25,7 @@ void DoTesting() {
 	CreateDirectory(dir);
 	par.Re = 20;
 	par.WorkDir = dir.string();
-	BodyOfProgram(par, solidList, U_n, V_n, P,true);
+	BodyOfProgram(par, solidList, U_n, V_n, P);
 	std::cout << "=======================" << std::endl;
 	//if (TEST&& par.Re < 43) {
 
@@ -66,7 +66,7 @@ void DoTesting() {
 	//second test
 	for(int i=0;i<V_n.size();i++)
 	std::fill(V_n[i].begin(), V_n[i].end(), 0);
-	ApplyInitialData(U_n, P, par); // Applying initial data
+	ApplyInitialData(U_n, V_n, P, par); // Applying initial data
 	std::cout << "Second test for large Re" << std::endl;
 	par.Re = 100;
 	dir = L"TestsResult\\Overflow(Re=" + to_wstring(par.Re) + (wchar_t)')' + (wchar_t)'\\';
