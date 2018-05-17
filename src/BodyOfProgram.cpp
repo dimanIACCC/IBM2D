@@ -25,7 +25,7 @@ void BodyOfProgram(Param par, std::list<Circle> solidList, Matrix U_n, Matrix V_
 	}else
 		log.open(par.WorkDir + "log.txt", std::ios::app);
 
-	Output(P_n, U_n, V_n, Fx_n, Fy_n, solidList, par);
+	Output(P_n, U_n, V_n, Fx_n, Fy_n, -1, solidList, par);
 
 	for (par.N_step = n0; par.N_step <= par.N_max; ++par.N_step) {                                 // main cycle of time iterations
 		MakeHibernationFile(par.N_step-1, par, solidList, U_n, V_n, P_n);              // writting hibernation file for prior time step
@@ -56,7 +56,9 @@ void BodyOfProgram(Param par, std::list<Circle> solidList, Matrix U_n, Matrix V_
 		log.flush();
 
 		if (par.N_step % par.output_step == 0|| par.N_step < 1000) {
-			Output(P_n, U_new, V_new, Fx_new, Fy_new, solidList, par);
+			Output(P_n, U_new, V_new, Fx_new, Fy_new, par.N_step, solidList, par);
+			OutputVelocity_U(U_new, par.N_step, par);
+			OutputVelocity_V(V_new, par.N_step, par);
 		}
 
 		const double epsilon = 1e-7;

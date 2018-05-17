@@ -38,6 +38,10 @@ double Calculate_Press_correction(Matrix &delta_p, Matrix &b_p, Param par, int &
 					}
 				}
 
+				if (par.BC == Taylor_Green && i == par.N1 / 2 && j == par.N2 / 2) {
+					help = 0;
+				}
+
 				if (fabs(help) > delta_p_max) {
 					delta_p_max = fabs(help);
 				}
@@ -50,22 +54,26 @@ double Calculate_Press_correction(Matrix &delta_p, Matrix &b_p, Param par, int &
 			}
 		}
 
-		// Up-Down BC
-		for (size_t i = 0; i < n1; ++i) {
-			delta_p[i][0]      = delta_p[i][1];            // D
-			delta_p[i][n2 - 1] = delta_p[i][n2 - 2];       // U
-		}
+		if (par.BC == u_infinity || par.BC == u_inflow || par.BC == periodical || par.BC == Taylor_Green) {
 
-		// Left-Right BC
-		for (size_t j = 0; j < n2; ++j) {
-			delta_p[0][j]      = delta_p[1][j];            // L
-			delta_p[n1 - 1][j] = delta_p[n1 - 2][j];       // R
-		}
-		// Corners
+			// Up-Down BC
+			for (size_t i = 0; i < n1; ++i) {
+				delta_p[i][0]      = delta_p[i][1];            // D
+				delta_p[i][n2 - 1] = delta_p[i][n2 - 2];       // U
+			}
+
+			// Left-Right BC
+			for (size_t j = 0; j < n2; ++j) {
+				delta_p[0][j]      = delta_p[1][j];            // L
+				delta_p[n1 - 1][j] = delta_p[n1 - 2][j];       // R
+			}
+
+			// Corners
 			delta_p[0][0]           = delta_p[1][1];            // LD
 			delta_p[0][n2 - 1]      = delta_p[1][n2 - 2];       // LU
 			delta_p[n1 - 1][0]      = delta_p[n1 - 2][1];       // RD
 			delta_p[n1 - 1][n2 - 1] = delta_p[n1 - 2][n2 - 2];  // RU
+		}
 
 		// Periodical Left-Right BC
 		if (par.BC == periodical) {
@@ -73,18 +81,6 @@ double Calculate_Press_correction(Matrix &delta_p, Matrix &b_p, Param par, int &
 				delta_p[0][j] = delta_p[n1 - 2][j];        // L
 				delta_p[n1 - 1][j] = delta_p[1][j];        // R
 			}
-		}
-
-		if (par.BC == Taylor_Green) {
-			//for (size_t i = 0; i < n1; ++i) {
-			//	delta_p[i][0] = 0;                         // D
-			//	delta_p[i][n2 - 1] = 0;                    // U
-			//}
-			//for (size_t j = 0; j < n2; ++j) {
-			//	delta_p[0][j]       = 0;                   // L
-			//	delta_p[n1 - 1][j]  = 0;                   // R
-			//}
-			delta_p[par.N1 / 2][par.N2 / 2] = 0;
 		}
 
 		/*if (n % 100 == 0) {
@@ -122,8 +118,8 @@ Matrix Calculate_Press_Right(Matrix &u, Matrix &v, Param par){
 	for (size_t i = 1; i < n1 - 1; ++i){
 		for (size_t j = 1; j < n2 - 1; ++j){
 
-			double d = (1.0 / par.d_x) * (u[i][j] - u[i - 1][j])
-			         + (1.0 / par.d_y) * (v[i][j] - v[i][j - 1]);
+			double d = (1.0 / par.d_x) * (u[i + 1][j] - u[i][j])
+			         + (1.0 / par.d_y) * (v[i][j + 1] - v[i][j]);
 
 			result[i][j] = d / par.d_t;
 

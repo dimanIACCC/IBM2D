@@ -1,8 +1,8 @@
-//circle{
-   x = 5
-   y =        7.5
+circle{
+   x = 0.5
+   y =        0.8
    moving = 0
-   r = 0.5
+   r = 0.05
    Poiseuille = 0
    rho = 1e9
 }

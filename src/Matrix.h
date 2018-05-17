@@ -24,7 +24,7 @@ double R(Matrix &A, size_t i, size_t j, Direction dir, size_t Ni, size_t Nj);
 double D(Matrix &A, size_t i, size_t j, Direction dir, size_t Ni, size_t Nj);
 double U(Matrix &A, size_t i, size_t j, Direction dir, size_t Ni, size_t Nj);
 
-double RD(Matrix &A, size_t i, size_t j, Direction dir, size_t Ni, size_t Nj);
+double UL(Matrix &A, size_t i, size_t j, Direction dir);
 
 double max(Matrix &A);
 double diff(Matrix &A, Matrix &B);

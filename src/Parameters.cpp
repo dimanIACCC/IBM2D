@@ -30,10 +30,10 @@ Param::Param() {
 	SolidName_max = 0;
 	WorkDir = "";
 
-	N1_u = N1;
+	N1_u = N1 + 2;
 	N2_u = N2 + 1;
 	N1_v = N1 + 1;
-	N2_v = N2;
+	N2_v = N2 + 2;
 
 	d_x = L / (N1 - 1);
 	d_y = H / (N2 - 1);
@@ -84,10 +84,10 @@ Param::Param(std::string WorkDir, std::string filename) : Param() {
 
 	this->WorkDir = WorkDir;
 
-	N1_u = N1;
+	N1_u = N1 + 2;
 	N2_u = N2 + 1;
 	N1_v = N1 + 1;
-	N2_v = N2;
+	N2_v = N2 + 2;
 
 	d_x = L / (N1 - 1);
 	d_y = H / (N2 - 1);
@@ -138,7 +138,7 @@ GeomVec x_p(int i, int j, Param par) {
 GeomVec x_u(int i, int j, Param par) {
 	GeomVec result;
 	result[0] = 0.0;
-	result[1] =  i        * par.d_x;
+	result[1] = (i - 1.0) * par.d_x;
 	result[2] = (j - 0.5) * par.d_y;
 	result[3] = 0.0;
 	//if (j == 0     ) result[2] = 0.0;
@@ -150,7 +150,7 @@ GeomVec x_v(int i, int j, Param par) {
 	GeomVec result;
 	result[0] = 0.0;
 	result[1] = (i - 0.5) * par.d_x;
-	result[2] =  j        * par.d_y;
+	result[2] = (j - 1.0) * par.d_y;
 	result[3] = 0.0;
 	//if (i == 0) result[1] = 0.0;
 	//if (i == par.N1) result[1] = (i - 1) * par.d_x;

@@ -67,7 +67,6 @@ void Calculate_u_p(Matrix &U_n   , Matrix &U_new,
 			B_u = CalculateB(U_n, V_n, U_s, V_s, P_n, P_new, par, Du);                           // RHS for Navier-Stokes non-linear equation
 			B_v = CalculateB(V_n, U_n, V_s, U_s, P_n, P_new, par, Dv);
 
-
 			U_new = U_s;
 			V_new = V_s;
 			#pragma omp parallel sections num_threads(2)
@@ -116,6 +115,7 @@ void Calculate_u_p(Matrix &U_n   , Matrix &U_new,
 			begin = std::clock();
 
 			P_Right = Calculate_Press_Right(U_new, V_new, par);                                     // calculating P_Right = 1/dt ( {U_i,j - U_i-1,j}/{h_x} + {V_i,j - V_i,j-1}/{h_x} )
+
 			double Delta_P_max = Calculate_Press_correction(Delta_P, P_Right, par, N_DeltaP);       // Zeidel method for solving Poisson equation
 
 			double P_max = std::max(max(P_new), 1.e-4);
@@ -133,44 +133,47 @@ void Calculate_u_p(Matrix &U_n   , Matrix &U_new,
 			P_new += Delta_P * relax;                                                                   // correction of pressure
 
 			if (par.BC == Taylor_Green) {
-				for (size_t i = 0; i < par.N1 + 1; ++i) {
-					GeomVec x_D = x_p(i, 0     , par);
-					GeomVec x_U = x_p(i, par.N2, par);
-					P_new[i][0]      = 0.5 * (pow(cos(M_PI* x_D[2]),2) - pow(sin(M_PI * x_D[1]),2)) * exp(-8 * (M_PI*M_PI) / par.Re * par.d_t * par.N_step);      // D
-					P_new[i][par.N2] = 0.5 * (pow(cos(M_PI* x_U[2]),2) - pow(sin(M_PI * x_U[1]),2)) * exp(-8 * (M_PI*M_PI) / par.Re * par.d_t * par.N_step);      // U
-				}
-				for (size_t j = 0; j < par.N2 + 1; ++j) {
-					GeomVec x_L = x_p(0     , j, par);
-					GeomVec x_R = x_p(par.N1, j, par);
-					P_new[0][j]      = 0.5 * (pow(cos(M_PI* x_L[2]), 2) - pow(sin(M_PI * x_L[1]), 2)) * exp(-8 * (M_PI*M_PI) / par.Re * par.d_t * par.N_step);    // L
-					P_new[par.N1][j] = 0.5 * (pow(cos(M_PI* x_R[2]), 2) - pow(sin(M_PI * x_R[1]), 2)) * exp(-8 * (M_PI*M_PI) / par.Re * par.d_t * par.N_step);    // R
-				}
+				//for (size_t i = 0; i < par.N1 + 1; ++i) {
+				//	GeomVec x_D = x_p(i, 0     , par);
+				//	GeomVec x_U = x_p(i, par.N2, par);
+				//	P_new[i][0]      = 0.5 * (pow(cos(M_PI* x_D[2]),2) - pow(sin(M_PI * x_D[1]),2)) * exp(-4 * (M_PI*M_PI) / par.Re * par.d_t * par.N_step);      // D
+				//	P_new[i][par.N2] = 0.5 * (pow(cos(M_PI* x_U[2]),2) - pow(sin(M_PI * x_U[1]),2)) * exp(-4 * (M_PI*M_PI) / par.Re * par.d_t * par.N_step);      // U
+				//}
+				//for (size_t j = 0; j < par.N2 + 1; ++j) {
+				//	GeomVec x_L = x_p(0     , j, par);
+				//	GeomVec x_R = x_p(par.N1, j, par);
+				//	P_new[0][j]      = 0.5 * (pow(cos(M_PI* x_L[2]), 2) - pow(sin(M_PI * x_L[1]), 2)) * exp(-4 * (M_PI*M_PI) / par.Re * par.d_t * par.N_step);    // L
+				//	P_new[par.N1][j] = 0.5 * (pow(cos(M_PI* x_R[2]), 2) - pow(sin(M_PI * x_R[1]), 2)) * exp(-4 * (M_PI*M_PI) / par.Re * par.d_t * par.N_step);    // R
+				//}
 				//P_new[par.N1 / 2][par.N2 / 2] = 0;
 			}
 
 			if (par.N_step < 2)
 			P_n = P_new;
 
-			for (size_t i = 0; i < U_new.size(); ++i) {
-				for (size_t j = 0; j < U_new[0].size(); ++j) {
-					U_new[i][j] -= relax * par.d_t * (Delta_P[i + 1][j] - Delta_P[i][j]) / par.d_x;		// correction of predicted velocity U_new
+			for (size_t i = 1; i < U_new.size() - 1; ++i) {
+				for (size_t j = 1; j < U_new[0].size() - 1; ++j) {
+					U_new[i][j] -= relax * par.d_t * (Delta_P[i][j] - Delta_P[i - 1][j]) / par.d_x;		// correction of predicted velocity U_new
 				}
 			}
 
-			for (size_t i = 0; i < V_new.size(); ++i) {
-				for (size_t j = 0; j < V_new[0].size(); ++j) {
-					V_new[i][j] -= relax * par.d_t * (Delta_P[i][j + 1] - Delta_P[i][j]) / par.d_y;		// correction of predicted velocity V_new
+			for (size_t i = 1; i < V_new.size() - 1; ++i) {
+				for (size_t j = 1; j < V_new[0].size() - 1; ++j) {
+					V_new[i][j] -= relax * par.d_t * (Delta_P[i][j] - Delta_P[i][j - 1]) / par.d_y;		// correction of predicted velocity V_new
 				}
 			}
+
+			//OutputVelocity_U(U_new, s, par);
+			//OutputVelocity_V(V_new, s, par);
 
 		#pragma endregion New P and U
 
 		//Output_dp(Delta_P, s, par);
-		//Output(P_new, U_new, V_new, Fx, Fy, s, solidList, par);
+		//Output(P_new, U_new, V_new, Fx_n, Fy_n, s, solidList, par);
 		
 
 
-		// code for iterations solid u and omega_new iterations
+		// code for solid u and omega_new iterations
 		/*bool key_solid = false;
 		for (auto& it : solidList) {
 
@@ -217,7 +220,7 @@ void ApplyInitialData(Matrix &u, Matrix &v, Matrix &p, Param par) {
 				case u_infinity:   u[i][j] = 1.0; break;
 				case u_inflow:     u[i][j] = 1.0 * ux_Poiseuille(xu[2], par.H); break;
 				case periodical:   u[i][j] = 1.0 * ux_Poiseuille(xu[2], par.H); break;
-				case Taylor_Green: u[i][j] = sin(M_PI * xu[1]) * cos(M_PI * xu[2]);  break;
+				case Taylor_Green: u[i][j] = sin(M_PI * xu[1] / par.L) * cos(M_PI * xu[2] / par.H);  break;
 				default: std::cout << "ApplyInitialData: unknown BC" << std::endl;
 			}
 		}
@@ -227,7 +230,7 @@ void ApplyInitialData(Matrix &u, Matrix &v, Matrix &p, Param par) {
 		for (size_t j = 0; j < v[0].size(); ++j) {
 			GeomVec xv = x_v(i, j, par);
 			if (par.BC == Taylor_Green)
-				v[i][j] = -sin(M_PI * xv[2]) * cos(M_PI * xv[1]);
+				v[i][j] = -par.H / par.L *sin(M_PI * xv[2] / par.H) * cos(M_PI * xv[1] / par.L);
 		}
 	}
 
@@ -253,7 +256,9 @@ void ApplyInitialData(Matrix &u, Matrix &v, Matrix &p, Param par) {
 			for (size_t i = 0; i < par.N1 + 1; ++i) {
 				for (size_t j = 0; j < par.N2 + 1; ++j) {
 					GeomVec x = x_p(i, j, par);
-					p[i][j] = 0.5 * (pow(cos(M_PI* x[2]), 2) - pow(sin(M_PI * x[1]), 2)) * exp(-4 * (M_PI*M_PI) / par.Re * par.d_t * par.N_step);
+					double k1 = M_PI / par.L;
+					double k2 = M_PI / par.H;
+					p[i][j] = 0.5 * (pow(cos(k2 * x[2]) * k1 / k2, 2) - pow(sin(k1 * x[1]), 2)) * exp(-2 * (k1*k1 + k2*k2) / par.Re * par.d_t * par.N_step);
 				}
 			}
 		}

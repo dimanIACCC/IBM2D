@@ -62,19 +62,13 @@ double U(Matrix &A, size_t i, size_t j, Direction dir, size_t Ni, size_t Nj) {
 	return result;
 }
 
-double RD(Matrix &A, size_t i, size_t j, Direction dir, size_t Ni, size_t Nj) {
+double UL(Matrix &A, size_t i, size_t j, Direction dir) {
 	double result;
 	if (dir == Du) {
-		if      (i < Ni - 1 && j > 0) result = A[i + 1][j - 1];
-		else if (i == Ni - 1 && j == 0) result = A[1][Nj - 2];
-		else if (i == Ni - 1)         result = A[1][j - 1];
-		else if (j == 0)              result = A[i + 1][Nj - 2];
+		result = A[i - 1][j + 1];
 	}
 	else if (dir == Dv) {
-		if      (i > 0 && j < Nj - 1) result = A[i - 1][j + 1];
-		else if (i == 0 && j == Nj - 1) result = A[Ni - 2][1];
-		else if (i == 0)              result = A[Ni - 2][j + 1];
-		else if (j == Nj - 1)         result = A[i - 1][1];
+		result = A[i + 1][j - 1];
 	}
 	else
 		std::cout << "RD: wrong direction" << std::endl;

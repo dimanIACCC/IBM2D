@@ -59,9 +59,8 @@ void CalculateForce(Matrix &Fx, Matrix &Fy, std::list<Circle> &iList, Matrix& u,
 			for (int i = i_min; i <= i_max; ++i) {
 				for (int j = j_min; j <= j_max; ++j) {
 					int i_real = i;
-					if (i_real <  0           ) i_real += par.N1_u - 1;
-					if (i_real >  par.N1_u - 1) i_real -= par.N1_u - 1;
-					if (i_real == par.N1_u - 1) i_real = 0;
+					if (i_real < 1     ) i_real += par.N1;
+					if (i_real > par.N1) i_real -= par.N1;
 					GeomVec xu = x_u(i_real, j, par);
 					GeomVec xs = solid.xc + solid.Nodes[k].x;
 					solid.Nodes[k].uf[1] += u[i_real][j] * DeltaFunction(xu[1] - xs[1], xu[2] - xs[2], par) * par.d_x * par.d_y;
@@ -77,10 +76,8 @@ void CalculateForce(Matrix &Fx, Matrix &Fy, std::list<Circle> &iList, Matrix& u,
 			for (int i = i_min; i <= i_max; ++i) {
 				for (int j = j_min; j <= j_max; ++j) {
 					int i_real = i;
-					if (i_real <  0           ) i_real += par.N1_v - 2;
-					if (i_real >  par.N1_v - 1) i_real -= par.N1_v - 2;
-					if (i_real == 0           ) i_real  = par.N1_v - 2;
-					if (i_real == par.N1_v - 1) i_real  = 1;
+					if (i_real < 1         ) i_real += par.N1 - 1;
+					if (i_real > par.N1 - 1) i_real -= par.N1 - 1;
 					GeomVec xv = x_v(i_real, j, par);
 					GeomVec xs = solid.xc + solid.Nodes[k].x;
 					solid.Nodes[k].uf[2] += v[i_real][j] * DeltaFunction(xv[1] - xs[1], xv[2] - xs[2], par) * par.d_x * par.d_y;
@@ -135,9 +132,8 @@ void CalculateForce(Matrix &Fx, Matrix &Fy, std::list<Circle> &iList, Matrix& u,
 			for (int i = ix_min; i <= ix_max; ++i) {
 				for (int j = jx_min; j <= jx_max; ++j) {
 					int i_real = i;
-					if (i_real <  0           ) i_real += par.N1_u - 1;
-					if (i_real >  par.N1_u - 1) i_real -= par.N1_u - 1;
-					if (i_real == par.N1_u - 1) i_real = 0;
+					if (i_real < 1     ) i_real += par.N1;
+					if (i_real > par.N1) i_real -= par.N1;
 					
 					GeomVec xu = x_u(i_real, j, par);
 					GeomVec xs = solid.xc + solid.Nodes[k].x;
@@ -172,10 +168,8 @@ void CalculateForce(Matrix &Fx, Matrix &Fy, std::list<Circle> &iList, Matrix& u,
 			for (int i = iy_min; i <= iy_max; ++i) {
 				for (int j = jy_min; j <= jy_max; ++j) {
 					int i_real = i;
-					if (i_real <  0           ) i_real += par.N1_v - 2;
-					if (i_real >  par.N1_v - 1) i_real -= par.N1_v - 2;
-					if (i_real == 0           ) i_real  = par.N1_v - 2;
-					if (i_real == par.N1_v - 1) i_real  = 1;
+					if (i_real < 1         ) i_real += par.N1 - 1;
+					if (i_real > par.N1 - 1) i_real -= par.N1 - 1;
 					GeomVec xv = x_v(i_real, j, par);
 					GeomVec xs = solid.xc + solid.Nodes[k].x;
 					double w = FunctionD((xv[1] - xs[1]) / par.d_x) * FunctionD((xv[2] - xs[2]) / par.d_y) * 4.;
@@ -219,9 +213,8 @@ void CalculateForce(Matrix &Fx, Matrix &Fy, std::list<Circle> &iList, Matrix& u,
 		for (int i = ix_min; i <= ix_max; ++i) {
 			for (int j = jx_min; j <= jx_max; ++j) {
 				int i_real = i;
-				if (i_real <  0           ) i_real += par.N1_u - 1;
-				if (i_real >  par.N1_u - 1) i_real -= par.N1_u - 1;
-				if (i_real == par.N1_u - 1) i_real  = 0;
+				if (i_real < 1     ) i_real += par.N1;
+				if (i_real > par.N1) i_real -= par.N1;
 				if (fabs(S_x[i_real][j]) > 1.e-12) Fx_temp[i_real][j] = Fx_temp[i_real][j] / S_x[i_real][j];
 				Fx[i_real][j] += Fx_temp[i_real][j];
 				solid.f[1]    += Fx_temp[i_real][j] * par.d_x * par.d_y;
@@ -236,10 +229,8 @@ void CalculateForce(Matrix &Fx, Matrix &Fy, std::list<Circle> &iList, Matrix& u,
 		for (int i = iy_min; i <= iy_max; ++i) {
 			for (int j = jy_min; j <= jy_max; ++j) {
 				int i_real = i;
-				if (i_real <  0           ) i_real += par.N1_v - 2;
-				if (i_real >  par.N1_v - 1) i_real -= par.N1_v - 2;
-				if (i_real == 0           ) i_real  = par.N1_v - 2;
-				if (i_real == par.N1_v - 1) i_real  = 1;
+				if (i_real < 1         ) i_real += par.N1 - 1;
+				if (i_real > par.N1 - 1) i_real -= par.N1 - 1;
 				if (fabs(S_y[i_real][j]) > 1.e-12) Fy_temp[i_real][j] = Fy_temp[i_real][j] / S_y[i_real][j];
 				Fy[i_real][j] += Fy_temp[i_real][j];
 				solid.f[2]    += Fy_temp[i_real][j] * par.d_x * par.d_y;
@@ -318,10 +309,8 @@ void Solids_deformation_velocity_pressure(std::list<Circle> &Solids, Matrix &Exx
 			for (int i = i_min; i <= i_max; ++i) {
 				for (int j = j_min; j <= j_max; ++j) {
 					int i_real = i;
-					if (i_real <  0      ) i_real += np1 - 2;
-					if (i_real >  np1 - 1) i_real -= np1 - 2;
-					if (i_real == 0      ) i_real  = np1 - 2;
-					if (i_real == np1 - 1) i_real  = 1;
+					if (i_real <  1      ) i_real += np1 - 2;
+					if (i_real >  np1 - 2) i_real -= np1 - 2;
 					GeomVec xp = x_p(i_real, j, par);
 					GeomVec xs = solid.xc + solid.Nodes[k].x;
 					solid.Nodes[k].Eps(1, 1) += Exx[i_real][j] * DeltaFunction(xp[1] - xs[1], xp[2] - xs[2], par) * par.d_x * par.d_y;
