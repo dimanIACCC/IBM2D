@@ -35,11 +35,15 @@ void Calculate_u_p(Matrix &U_n   , Matrix &U_new,
 		solid.uc = solid.uc_n;
 		solid.omega = solid.omega_n;
 	}
+
 	Multidirect_Forcing_Method(Fx_n, Fy_n, U_n, V_n, solidList, par);
 	for (auto& solid : solidList) {
 		solid.f_n = solid.f;
 		solid.tau_n = solid.tau;
 	}
+
+	Boundary_Conditions(U_n, par, Du, true);
+	Boundary_Conditions(V_n, par, Dv, true);
 
 	U_s = U_n;
 	V_s = V_n;
@@ -96,6 +100,7 @@ void Calculate_u_p(Matrix &U_n   , Matrix &U_new,
 				solid.uc = solid.uc_new;
 				solid.omega = solid.omega_new;
 			}
+
 			Multidirect_Forcing_Method(Fx_new, Fy_new, U_new, V_new, solidList, par);
 			for (auto& solid : solidList) {
 				solid.f_new = solid.f;
@@ -162,6 +167,9 @@ void Calculate_u_p(Matrix &U_n   , Matrix &U_new,
 					V_new[i][j] -= relax * par.d_t * (Delta_P[i][j] - Delta_P[i][j - 1]) / par.d_y;		// correction of predicted velocity V_new
 				}
 			}
+
+			Boundary_Conditions(U_new, par, Du, false);
+			Boundary_Conditions(V_new, par, Dv, false);
 
 			//OutputVelocity_U(U_new, s, par);
 			//OutputVelocity_V(V_new, s, par);

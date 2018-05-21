@@ -5,57 +5,49 @@ Template::Template() {
 	C = L = R = D = U = 0.0;
 }
 
-double L(Matrix &A, size_t i, size_t j, Direction dir, size_t Ni, size_t Nj) {
+double L(Matrix &A, size_t i, size_t j, Direction dir) {
 	double result;
 	if (dir == Du) {
-		if (i > 0) result = A[i - 1][j];
-		else       result = A[Ni - 2][j];
+		result = A[i - 1][j];
 	}
 	else if (dir == Dv) {
-		if (j > 0) result = A[i][j - 1];
-		else       result = A[i][Nj - 2];
+		result = A[i][j - 1];
 	}
 	else
 		std::cout << "L: wrong direction" << std::endl;
 	return result;
 }
-double R(Matrix &A, size_t i, size_t j, Direction dir, size_t Ni, size_t Nj) {
+double R(Matrix &A, size_t i, size_t j, Direction dir) {
 	double result;
 	if (dir == Du) {
-		if (i < Ni - 1) result = A[i + 1][j];
-		else            result = A[1][j];
+		result = A[i + 1][j];
 	}
 	else if (dir == Dv) {
-		if (j < Nj - 1) result = A[i][j + 1];
-		else            result = A[i][1];
+		result = A[i][j + 1];
 	}
 	else
 		std::cout << "R: wrong direction" << std::endl;
 	return result;
 }
-double D(Matrix &A, size_t i, size_t j, Direction dir, size_t Ni, size_t Nj) {
+double D(Matrix &A, size_t i, size_t j, Direction dir) {
 	double result;
 	if (dir == Du) {
-		if (j > 0) result = A[i][j - 1];
-		else       result = A[i][Nj - 2];
+		result = A[i][j - 1];
 	}
 	else if (dir == Dv) {
 		if (i > 0) result = A[i - 1][j];
-		else       result = A[Ni - 2][j];
 	}
 	else
 		std::cout << "D: wrong direction" << std::endl;
 	return result;
 }
-double U(Matrix &A, size_t i, size_t j, Direction dir, size_t Ni, size_t Nj) {
+double U(Matrix &A, size_t i, size_t j, Direction dir) {
 	double result;
 	if (dir == Du) {
-		if (j < Nj - 1) result = A[i][j + 1];
-		else            result = A[i][1];
+		result = A[i][j + 1];
 	}
 	else if (dir == Dv) {
-		if (i < Ni - 1) result = A[i + 1][j];
-		else            result = A[1][j];
+		result = A[i + 1][j];
 	}
 	else
 		std::cout << "U: wrong direction" << std::endl;

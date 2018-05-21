@@ -57,8 +57,8 @@ void BodyOfProgram(Param par, std::list<Circle> solidList, Matrix U_n, Matrix V_
 
 		if (par.N_step % par.output_step == 0|| par.N_step < 1000) {
 			Output(P_n, U_new, V_new, Fx_new, Fy_new, par.N_step, solidList, par);
-			OutputVelocity_U(U_new, par.N_step, par);
-			OutputVelocity_V(V_new, par.N_step, par);
+			//OutputVelocity_U(U_new, par.N_step, par);
+			//OutputVelocity_V(V_new, par.N_step, par);
 		}
 
 		const double epsilon = 1e-7;

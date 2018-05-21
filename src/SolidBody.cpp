@@ -41,7 +41,7 @@ GeomVec Circle_Equation(GeomVec xc, double r, double theta) {
 Circle::Circle(double x, double y, double ux, double uy, double omega, double rho, int Nn, bool moving, int name, double r) :
      SolidBody(       x,        y,        ux,        uy,        omega,        rho,     Nn,      moving,      name) {
 	this->r = r;
-	int Nn2 = Nn/2;
+	int Nn2 = Nn;
 	for (int i = 0; i < Nn2; ++i){
 		Nodes[i].xn[1] = cos(i * 2.0 * M_PI / Nn2) * r;
 		Nodes[i].xn[2] = sin(i * 2.0 * M_PI / Nn2) * r;
@@ -50,13 +50,13 @@ Circle::Circle(double x, double y, double ux, double uy, double omega, double rh
 		Nodes[i].x = Nodes[i].xn;
 	}
 
-	for (int i = Nn2; i < Nn; ++i) {
+	/*for (int i = Nn2; i < Nn; ++i) {
 		Nodes[i].xn[1] = cos(i * 2.0 * M_PI / Nn2) * r/2;
 		Nodes[i].xn[2] = sin(i * 2.0 * M_PI / Nn2) * r/2;
 		Nodes[i].n[1]  = cos(i * 2.0 * M_PI / Nn2);
 		Nodes[i].n[2]  = sin(i * 2.0 * M_PI / Nn2);
 		Nodes[i].x = Nodes[i].xn;
-	}
+	}*/
 	V = M_PI * r * r;
 	I =  V * r * r / 2.0; // angular momentum for unit density
 }
@@ -352,10 +352,7 @@ void Circle::integrals(Matrix U_n, Matrix V_n, Matrix U_new, Matrix V_new, Param
 	GetInfluenceArea(i_min, i_max, j_min, j_max, nx1 - 1, nx2 - 1, xc_n, int(r / par.d_x) + 4, par);
 	for (int i = i_min; i <= i_max; ++i) {
 		for (int j = j_min; j <= j_max; ++j) {
-			int i_real = i;
-			if (i_real <  0      ) i_real += nx1 - 1;
-			if (i_real >  nx1 - 1) i_real -= nx1 - 1;
-			if (i_real == nx1 - 1) i_real = 0;
+			int i_real = i_real_u(i, par);
 			GeomVec xu = x_u(i, j, par);
 			double Frac_n = par.d_x * par.d_y * Volume_Frac(xc_n, r, xu, par.d_x, par.d_y);
 			integralV_un[1] += Frac_n * U_n[i_real][j];
@@ -370,10 +367,7 @@ void Circle::integrals(Matrix U_n, Matrix V_n, Matrix U_new, Matrix V_new, Param
 	GetInfluenceArea(i_min, i_max, j_min, j_max, nx1 - 1, nx2 - 1, xc_new, int(r / par.d_x) + 4, par);
 	for (int i = i_min; i <= i_max; ++i) {
 		for (int j = j_min; j <= j_max; ++j) {
-			int i_real = i;
-			if (i_real <  0      ) i_real += nx1 - 1;
-			if (i_real >  nx1 - 1) i_real -= nx1 - 1;
-			if (i_real == nx1 - 1) i_real = 0;
+			int i_real = i_real_u(i, par);
 			GeomVec xu = x_u(i, j, par);
 			double Frac = par.d_x * par.d_y * Volume_Frac(xc_new, r, xu, par.d_x, par.d_y);
 			integralV_unew[1] += Frac * U_new[i_real][j];
@@ -388,11 +382,7 @@ void Circle::integrals(Matrix U_n, Matrix V_n, Matrix U_new, Matrix V_new, Param
 	GetInfluenceArea(i_min, i_max, j_min, j_max, ny1 - 1, ny2 - 1, xc_n, int(r / par.d_y) + 4, par);
 	for (int i = i_min; i <= i_max; ++i) {
 		for (int j = j_min; j <= j_max; ++j) {
-			int i_real = i;
-			if (i_real <  0      ) i_real += ny1 - 2;
-			if (i_real >  ny1 - 1) i_real -= ny1 - 2;
-			if (i_real == 0      ) i_real  = ny1 - 2;
-			if (i_real == ny1 - 1) i_real  = 1;
+			int i_real = i_real_v(i, par);
 			GeomVec xv = x_v(i, j, par);
 			double Frac_n = par.d_x * par.d_y * Volume_Frac(xc_n, r, xv, par.d_x, par.d_y);
 			integralV_un[2] += Frac_n * V_n[i_real][j];
@@ -407,11 +397,7 @@ void Circle::integrals(Matrix U_n, Matrix V_n, Matrix U_new, Matrix V_new, Param
 	GetInfluenceArea(i_min, i_max, j_min, j_max, ny1 - 1, ny2 - 1, xc_new, int(r / par.d_y) + 4, par);
 	for (int i = i_min; i <= i_max; ++i) {
 		for (int j = j_min; j <= j_max; ++j) {
-			int i_real = i;
-			if (i_real <  0      ) i_real += ny1 - 2;
-			if (i_real >  ny1 - 1) i_real -= ny1 - 2;
-			if (i_real == 0      ) i_real  = ny1 - 2;
-			if (i_real == ny1 - 1) i_real  = 1;
+			int i_real = i_real_v(i, par);
 			GeomVec xv = x_v(i, j, par);
 			double Frac = par.d_x * par.d_y * Volume_Frac(xc_new, r, xv, par.d_x, par.d_y);
 			integralV_unew[2] += Frac * V_new[i_real][j];

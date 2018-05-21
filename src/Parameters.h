@@ -21,6 +21,7 @@ public:
 	int N1_v, N2_v;           // sizes for v-direction arrays
 	double d_x;               // mesh step in x-direction
 	double d_y;               // mesh step in y-direction
+	double ldxdx, ldydy;      // coefficients in Laplace approximation
 	double d_t;               // time step
 	int N_step;               // step number
 	int Nn;                   // number of nodes of Solid
@@ -60,3 +61,5 @@ double FunctionD(double r);
 void GetInfluenceArea(int &i_min, int &i_max, int &j_min, int &j_max, size_t Ni, size_t Nj, GeomVec x, int size, Param par);
 double Volume_Frac(GeomVec xc, double r, GeomVec x, double dx, double dy);
 double Heaviside(double x);
+int i_real_u(int i, Param par);
+int i_real_v(int i, Param par);

@@ -19,10 +19,10 @@ public:
 	Template();
 };
 
-double L(Matrix &A, size_t i, size_t j, Direction dir, size_t Ni, size_t Nj);
-double R(Matrix &A, size_t i, size_t j, Direction dir, size_t Ni, size_t Nj);
-double D(Matrix &A, size_t i, size_t j, Direction dir, size_t Ni, size_t Nj);
-double U(Matrix &A, size_t i, size_t j, Direction dir, size_t Ni, size_t Nj);
+double L(Matrix &A, size_t i, size_t j, Direction dir);
+double R(Matrix &A, size_t i, size_t j, Direction dir);
+double D(Matrix &A, size_t i, size_t j, Direction dir);
+double U(Matrix &A, size_t i, size_t j, Direction dir);
 
 double UL(Matrix &A, size_t i, size_t j, Direction dir);
 

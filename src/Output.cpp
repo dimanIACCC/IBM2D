@@ -3,39 +3,6 @@
 
 #pragma warning(disable : 4996)//for using <chrono>
 
-void OutputPressure(Matrix p, int n, std::list<Circle> iList, Param par) {
-
-	std::ofstream output;
-	std::string filename = par.WorkDir + "solution_pressure" + std::to_string(n) + ".plt";
-
-	output.open(filename);
-
-	output << "title = " << '"' << "sample mesh" << '"' << std::endl;
-	output << "Variables = x y p" << std::endl;
-	output << "zone T=" << '"' << n << '"' << ",  i=" << par.N1 + 1 << ", j=" << par.N2 + 1 << ", f=point" << std::endl;
-	output << "SolutionTime = " << n << std::endl;
-
-	for (int j = 0; j <= par.N2; ++j) {
-		for (int i = 0; i <= par.N1; ++i) {
-			GeomVec xp = x_p(i, j, par);
-			output << xp[1] << ' ' << xp[2] << ' ' << p[i][j] << std::endl;
-		}
-	}
-
-	for (auto& solid : iList) {
-		output << "zone T = circle" << ",  i=" << solid.Nn << ", f=point" << std::endl;
-		output << "SolutionTime = " << n << std::endl;
-		for (int i = 0; i < solid.Nn; ++i) {
-			output << solid.xc_new[1] + solid.Nodes[i].x[1] << " "
-			       << solid.xc_new[2] + solid.Nodes[i].x[2] << " "
-				<< 0 << std::endl;
-		}
-	}
-
-	output.close();
-}
-
-
 void OutputVelocity_U(Matrix u, int n, Param par) {
 
 	std::ofstream output;
@@ -101,12 +68,8 @@ void Output(Matrix p, Matrix u, Matrix v, Matrix Fx, Matrix Fy, int n, std::list
 			GeomVec xp = x_p(i, j, par);
 
 			double u_, v_, Fx_, Fy_;
-			if      (i == 0)      { u_ = u[0][j]                      ;	Fx_ = Fx[0][j]; }
-			else if (i == par.N1) { u_ = u[par.N1 + 1][j]             ;	Fx_ = Fx[par.N1 + 1][j]; }
-			else                  { u_ = (u[i][j] + u[i + 1][j]) * 0.5;	Fx_ = (Fx[i][j] + Fx[i + 1][j]) * 0.5; }
-			if      (j == 0)      { v_ = v[i][0]                      ;	Fy_ = Fy[i][0]; }
-			else if (j == par.N2) { v_ = v[i][par.N2 + 1]             ;	Fy_ = Fy[i][par.N2 + 1]; }
-			else                  { v_ = (v[i][j] + v[i][j + 1]) * 0.5;	Fy_ = (Fy[i][j] + Fy[i][j + 1]) * 0.5; }
+			u_ = (u[i][j] + u[i + 1][j]) * 0.5;		Fx_ = (Fx[i][j] + Fx[i + 1][j]) * 0.5;
+			v_ = (v[i][j] + v[i][j + 1]) * 0.5;		Fy_ = (Fy[i][j] + Fy[i][j + 1]) * 0.5;
 			output << xp[1] << " " << xp[2] << " " << p[i][j] << " " << u_ << " " << v_ << " " << Fx_ << " " << Fy_ << " " << 0 << " " << 0 << std::endl;
 		}
 	}

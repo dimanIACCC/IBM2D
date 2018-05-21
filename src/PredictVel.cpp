@@ -28,7 +28,7 @@ Matrix Operator_Ax(Template &A, Matrix &u, Param par, Direction Dir) {
 
 	CreateMatrix(result, Nx, Ny);
 
-	//Boundary_Conditions(u, par, Dir, false);
+	Boundary_Conditions(u, par, Dir, false);
 
 	// For direction Du  (U, R, D, L)  are  (up, right, down, left)  neighbour elements in matrix u[i][j]
 	// For direction Dv  (U, R, D, L)  are  (up, right, down, left)  neighbour elements in transpose matrix (v[i][j])^T
@@ -36,10 +36,10 @@ Matrix Operator_Ax(Template &A, Matrix &u, Param par, Direction Dir) {
 	for (size_t j = 1; j < Ny - 1; ++j) {
 		for (size_t i = 1; i < Nx - 1; ++i) {
 			result[i][j] = A.C * u[i][j]
-			             + A.U * U(u, i, j, Dir, Nx, Ny)
-			             + A.R * R(u, i, j, Dir, Nx, Ny)
-			             + A.D * D(u, i, j, Dir, Nx, Ny)
-			             + A.L * L(u, i, j, Dir, Nx, Ny);
+			             + A.U * U(u, i, j, Dir)
+			             + A.R * R(u, i, j, Dir)
+			             + A.D * D(u, i, j, Dir)
+			             + A.L * L(u, i, j, Dir);
 		}
 	}
 
@@ -65,17 +65,15 @@ Matrix CalculateB(Matrix &u_n, Matrix &v_n, Matrix &u_s, Matrix &v_s, Matrix &p,
 
 	CreateMatrix(result, Nx, Ny);
 
-	Boundary_Conditions(u_n, par, Dir, true);
-	Boundary_Conditions(u_s, par, Dir, false);
-
 	for (size_t i = 1; i < (Nx - 1); ++i) {
 		for (size_t j = 1; j < (Ny - 1); ++j) {
-			double advective_term_n    = advective_term(u_n, v_n, i, j, d_u, d_v, Dir, Nx, Ny);
-			double advective_term_s    = advective_term(u_s, v_s, i, j, d_u, d_v, Dir, Nx, Ny);
-			double diffusion_term_n    = diffusion_term(u_n     , i, j, d_uu, d_vv, Dir, Nx, Ny);
+			double advective_term_n    = advective_term(u_n, v_n, i, j, d_u, d_v, Dir);
+			double advective_term_s    = advective_term(u_s, v_s, i, j, d_u, d_v, Dir);
+			double diffusion_term_n    = par.ldxdx * (u_n[i + 1][j] - 2.0 * u_n[i][j] + u_n[i - 1][j])
+			                           + par.ldydy * (u_n[i][j + 1] - 2.0 * u_n[i][j] + u_n[i][j - 1]);
 			double pressure_term = 0.5 * (
-			                                (p_new[i][j] - L(p_new, i, j, Dir, par.N1 + 1, par.N2 + 1)) / d_u
-			                              + (p_new[i][j] - L(p_new, i, j, Dir, par.N1 + 1, par.N2 + 1)) / d_u
+			                                (p_new[i][j] - L(p_new, i, j, Dir)) / d_u
+			                              + (p_new[i][j] - L(p_new, i, j, Dir)) / d_u
 			                             );
 
 			result[i][j] = -(       alpha  * advective_term_n
@@ -85,6 +83,8 @@ Matrix CalculateB(Matrix &u_n, Matrix &v_n, Matrix &u_s, Matrix &v_s, Matrix &p,
 			                               + u_n[i][j] / par.d_t;
 		}
 	}
+
+	Boundary_Conditions(u_s, par, Dir, false);
 
 	return result;
 }
@@ -128,10 +128,11 @@ void Boundary_Conditions(Matrix &u, Param par, Direction Dir, bool apply_Taylor_
 
 	// Periodical BC
 	if (par.BC == periodical) {
-		for (size_t j = 1; j < Ny; ++j) {
+		for (size_t j = 0; j < Ny; ++j) {
 			if (Dir == Du) {
 				u[0         ][j] = u[par.N1 - 1][j];
 				u[par.N1 + 1][j] = u[2         ][j];
+				u[par.N1    ][j] = u[1         ][j];
 			}
 			else if (Dir == Dv) {
 				u[0         ][j] = u[par.N1 - 1][j];
@@ -191,15 +192,9 @@ void Boundary_Conditions(Matrix &u, Param par, Direction Dir, bool apply_Taylor_
 
 }
 
-double advective_term(Matrix &u, Matrix &v, size_t i, size_t j, double d_x, double d_y, Direction Dir, size_t N1, size_t N2) {
-	double v_help = 0.25 * (v[i][j] + L(v, i, j, Dir, N1, N2) + U(v, i, j, Dir, N1, N2) + UL(v, i, j, Dir));
-	double result = u[i][j] * (R(u, i, j, Dir, N1, N2) - L(u, i, j, Dir, N1, N2)) / (2.0*d_x)
-	               + v_help * (U(u, i, j, Dir, N1, N2) - D(u, i, j, Dir, N1, N2)) / (2.0*d_y);
-	return result;
-}
-
-double diffusion_term(Matrix &u, size_t i, size_t j, double d_xx, double d_yy, Direction Dir, size_t N1, size_t N2) {
-	double result = d_xx * (R(u, i, j, Dir, N1, N2) - 2.0 * u[i][j] + L(u, i, j, Dir, N1, N2))
-	              + d_yy * (U(u, i, j, Dir, N1, N2) - 2.0 * u[i][j] + D(u, i, j, Dir, N1, N2));
+double advective_term(Matrix &u, Matrix &v, size_t i, size_t j, double d_x, double d_y, Direction Dir) {
+	double v_help = 0.25 * (v[i][j] + L(v, i, j, Dir) + U(v, i, j, Dir) + UL(v, i, j, Dir));
+	double result = u[i][j] * (R(u, i, j, Dir) - L(u, i, j, Dir)) / (2.0*d_x)
+	               + v_help * (U(u, i, j, Dir) - D(u, i, j, Dir)) / (2.0*d_y);
 	return result;
 }

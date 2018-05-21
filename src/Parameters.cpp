@@ -37,6 +37,9 @@ Param::Param() {
 
 	d_x = L / (N1 - 1);
 	d_y = H / (N2 - 1);
+
+	ldxdx = 1 / (d_x*d_x);
+	ldydy = 1 / (d_y*d_y);
 }
 
 Param::Param(std::string WorkDir, std::string filename) : Param() {
@@ -91,6 +94,9 @@ Param::Param(std::string WorkDir, std::string filename) : Param() {
 
 	d_x = L / (N1 - 1);
 	d_y = H / (N2 - 1);
+
+	ldxdx = 1 / (d_x*d_x);
+	ldydy = 1 / (d_y*d_y);
 
 }
 Param::Param(std::string WorkDir) : Param() {
@@ -230,4 +236,19 @@ double Heaviside(double x) {
 	double result;
 	result = (x >= 0) ? 1 : 0;
 	return result;
+}
+
+int i_real_u(int i, Param par) {
+	int i_real = i;
+	if (i_real < 1     ) i_real += par.N1 - 1;
+	if (i_real > par.N1) i_real -= par.N1 - 1;
+	if (i_real == 1    ) i_real  = par.N1;
+	return i_real;
+}
+
+int i_real_v(int i, Param par) {
+	int i_real = i;
+	if (i_real < 1         ) i_real += par.N1 - 1;
+	if (i_real > par.N1 - 1) i_real -= par.N1 - 1;
+	return i_real;
 }

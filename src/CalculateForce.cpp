@@ -25,7 +25,8 @@ void Multidirect_Forcing_Method(Matrix &Fx, Matrix &Fy, Matrix &u, Matrix &v, st
 		Fx += Fx_tmp;
 		Fy += Fy_tmp;
 
-		//Output(P, u, v, Fx, Fy, f, solidList, par);
+		//OutputVelocity_U(u, f, par);
+		//OutputVelocity_V(v, f, par);
 	}
 }
 
@@ -54,13 +55,11 @@ void CalculateForce(Matrix &Fx, Matrix &Fy, std::list<Circle> &iList, Matrix& u,
 			int j_max, j_min;
 
 			//calculating fluid velocity uf in Lagrange nodes by using near Euler nodes and discrete delta function
-			GetInfluenceArea(i_min, i_max, j_min, j_max, par.N1_u - 1, par.N1_u - 1, solid.xc + solid.Nodes[k].x, 4, par);
+			GetInfluenceArea(i_min, i_max, j_min, j_max, par.N1_u - 1, par.N2_u - 1, solid.xc + solid.Nodes[k].x, 4, par);
 			solid.Nodes[k].uf[1] = 0.0;
 			for (int i = i_min; i <= i_max; ++i) {
 				for (int j = j_min; j <= j_max; ++j) {
-					int i_real = i;
-					if (i_real < 1     ) i_real += par.N1;
-					if (i_real > par.N1) i_real -= par.N1;
+					int i_real = i_real_u(i, par);
 					GeomVec xu = x_u(i_real, j, par);
 					GeomVec xs = solid.xc + solid.Nodes[k].x;
 					solid.Nodes[k].uf[1] += u[i_real][j] * DeltaFunction(xu[1] - xs[1], xu[2] - xs[2], par) * par.d_x * par.d_y;
@@ -75,9 +74,7 @@ void CalculateForce(Matrix &Fx, Matrix &Fy, std::list<Circle> &iList, Matrix& u,
 			solid.Nodes[k].uf[2] = 0.0;
 			for (int i = i_min; i <= i_max; ++i) {
 				for (int j = j_min; j <= j_max; ++j) {
-					int i_real = i;
-					if (i_real < 1         ) i_real += par.N1 - 1;
-					if (i_real > par.N1 - 1) i_real -= par.N1 - 1;
+					int i_real = i_real_v(i, par);
 					GeomVec xv = x_v(i_real, j, par);
 					GeomVec xs = solid.xc + solid.Nodes[k].x;
 					solid.Nodes[k].uf[2] += v[i_real][j] * DeltaFunction(xv[1] - xs[1], xv[2] - xs[2], par) * par.d_x * par.d_y;
@@ -131,10 +128,7 @@ void CalculateForce(Matrix &Fx, Matrix &Fy, std::list<Circle> &iList, Matrix& u,
 			// calculating force force_temp for Euler nodes caused by k-th solid
 			for (int i = ix_min; i <= ix_max; ++i) {
 				for (int j = jx_min; j <= jx_max; ++j) {
-					int i_real = i;
-					if (i_real < 1     ) i_real += par.N1;
-					if (i_real > par.N1) i_real -= par.N1;
-					
+					int i_real = i_real_u(i, par);
 					GeomVec xu = x_u(i_real, j, par);
 					GeomVec xs = solid.xc + solid.Nodes[k].x;
 					double w = FunctionD((xu[1] - xs[1]) / par.d_x) * FunctionD((xu[2] - xs[2]) / par.d_y) * 4.;
@@ -167,9 +161,7 @@ void CalculateForce(Matrix &Fx, Matrix &Fy, std::list<Circle> &iList, Matrix& u,
 
 			for (int i = iy_min; i <= iy_max; ++i) {
 				for (int j = jy_min; j <= jy_max; ++j) {
-					int i_real = i;
-					if (i_real < 1         ) i_real += par.N1 - 1;
-					if (i_real > par.N1 - 1) i_real -= par.N1 - 1;
+					int i_real = i_real_v(i, par);
 					GeomVec xv = x_v(i_real, j, par);
 					GeomVec xs = solid.xc + solid.Nodes[k].x;
 					double w = FunctionD((xv[1] - xs[1]) / par.d_x) * FunctionD((xv[2] - xs[2]) / par.d_y) * 4.;
@@ -212,9 +204,7 @@ void CalculateForce(Matrix &Fx, Matrix &Fy, std::list<Circle> &iList, Matrix& u,
 		// summarizing force for Euler nodes and for solids
 		for (int i = ix_min; i <= ix_max; ++i) {
 			for (int j = jx_min; j <= jx_max; ++j) {
-				int i_real = i;
-				if (i_real < 1     ) i_real += par.N1;
-				if (i_real > par.N1) i_real -= par.N1;
+				int i_real = i_real_u(i, par);
 				if (fabs(S_x[i_real][j]) > 1.e-12) Fx_temp[i_real][j] = Fx_temp[i_real][j] / S_x[i_real][j];
 				Fx[i_real][j] += Fx_temp[i_real][j];
 				solid.f[1]    += Fx_temp[i_real][j] * par.d_x * par.d_y;
@@ -228,9 +218,7 @@ void CalculateForce(Matrix &Fx, Matrix &Fy, std::list<Circle> &iList, Matrix& u,
 		}
 		for (int i = iy_min; i <= iy_max; ++i) {
 			for (int j = jy_min; j <= jy_max; ++j) {
-				int i_real = i;
-				if (i_real < 1         ) i_real += par.N1 - 1;
-				if (i_real > par.N1 - 1) i_real -= par.N1 - 1;
+				int i_real = i_real_v(i, par);
 				if (fabs(S_y[i_real][j]) > 1.e-12) Fy_temp[i_real][j] = Fy_temp[i_real][j] / S_y[i_real][j];
 				Fy[i_real][j] += Fy_temp[i_real][j];
 				solid.f[2]    += Fy_temp[i_real][j] * par.d_x * par.d_y;
@@ -247,12 +235,14 @@ void CalculateForce(Matrix &Fx, Matrix &Fy, std::list<Circle> &iList, Matrix& u,
 	// copy force to non-used boundary nodes
 	if (par.BC == periodical) {
 		for (size_t j = 0; j < par.N2_u; ++j) {
-			Fx[par.N1_u - 1][j] = Fx[0][j];
+			Fx[0         ][j] = Fx[par.N1 - 1][j];
+			Fx[par.N1 + 1][j] = Fx[2         ][j];
+			Fx[1         ][j] = Fx[par.N1    ][j];
 		}
 
 		for (size_t j = 0; j < par.N2_v; ++j) {
-			Fy[0][j]            = Fy[par.N1_v - 2][j];
-			Fy[par.N1_v - 1][j] = Fy[1][j];
+			Fy[0     ][j] = Fy[par.N1 - 1][j];
+			Fy[par.N1][j] = Fy[1         ][j];
 		}
 	}
 
