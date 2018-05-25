@@ -12,7 +12,6 @@ void CreateDirectory(fs::path directory);
 void SetLog(std::ostream &log, Param par);
 void PushLog(std::ostream &log, int n, double eps_u, double eps_v);
 
-void OutputPressure  (Matrix data, int n, std::list<Circle> iList, Param par);
 void OutputVelocity_U(Matrix data, int n, Param par);
 void OutputVelocity_V(Matrix data, int n, Param par);
 void Output(Matrix p, Matrix u, Matrix v, Matrix Fx, Matrix Fy, int n, std::list<Circle> iList, Param par);

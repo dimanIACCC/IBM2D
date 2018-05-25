@@ -7,6 +7,7 @@ void BodyOfProgram(Param par, std::list<Circle> solidList, Matrix U_n, Matrix V_
 	CreateMatrix(U_new, par.N1_u, par.N2_u);
 	CreateMatrix(V_new, par.N1_v, par.N2_v);
 	CreateMatrix(P_new, par.N1 + 1, par.N2 + 1);
+	CreateMatrix(P_05 , par.N1 + 1, par.N2 + 1);
 	CreateMatrix(Fx_n  , par.N1_u, par.N2_u);
 	CreateMatrix(Fy_n  , par.N1_v, par.N2_v);
 	CreateMatrix(Fx_new, par.N1_u, par.N2_u);
@@ -36,6 +37,14 @@ void BodyOfProgram(Param par, std::list<Circle> solidList, Matrix U_n, Matrix V_
 		double eps_u = diff(U_n, U_new);												// calculate maximum difference between current and prior velocity fields
 		double eps_v = diff(V_n, V_new);
 
+		P_05 = P_n*0.5;
+		P_05 += P_new*0.5;
+		if (par.N_step % par.output_step == 0 || par.N_step < 1000) {
+			Output(P_05, U_n, V_n, Fx_n, Fy_n, par.N_step, solidList, par);
+			OutputVelocity_U(U_n, par.N_step, par);
+			OutputVelocity_V(V_n, par.N_step, par);
+		}
+
 		U_n = U_new;
 		V_n = V_new;
 		P_n = P_new;
@@ -55,11 +64,6 @@ void BodyOfProgram(Param par, std::list<Circle> solidList, Matrix U_n, Matrix V_
 		PushLog(log, par.N_step, eps_u, eps_v);                                              // writting log into log-file
 		log.flush();
 
-		if (par.N_step % par.output_step == 0|| par.N_step < 1000) {
-			Output(P_n, U_new, V_new, Fx_new, Fy_new, par.N_step, solidList, par);
-			//OutputVelocity_U(U_new, par.N_step, par);
-			//OutputVelocity_V(V_new, par.N_step, par);
-		}
 
 		const double epsilon = 1e-7;
 		if (eps_u < epsilon && eps_v < epsilon && par.N_step > 1000) {

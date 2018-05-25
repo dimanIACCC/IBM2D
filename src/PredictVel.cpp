@@ -28,7 +28,7 @@ Matrix Operator_Ax(Template &A, Matrix &u, Param par, Direction Dir) {
 
 	CreateMatrix(result, Nx, Ny);
 
-	Boundary_Conditions(u, par, Dir, false);
+	Boundary_Conditions(u, par, Dir, -1);
 
 	// For direction Du  (U, R, D, L)  are  (up, right, down, left)  neighbour elements in matrix u[i][j]
 	// For direction Dv  (U, R, D, L)  are  (up, right, down, left)  neighbour elements in transpose matrix (v[i][j])^T
@@ -72,7 +72,7 @@ Matrix CalculateB(Matrix &u_n, Matrix &v_n, Matrix &u_s, Matrix &v_s, Matrix &p,
 			double diffusion_term_n    = par.ldxdx * (u_n[i + 1][j] - 2.0 * u_n[i][j] + u_n[i - 1][j])
 			                           + par.ldydy * (u_n[i][j + 1] - 2.0 * u_n[i][j] + u_n[i][j - 1]);
 			double pressure_term = 0.5 * (
-			                                (p_new[i][j] - L(p_new, i, j, Dir)) / d_u
+			                                (p    [i][j] - L(p    , i, j, Dir)) / d_u
 			                              + (p_new[i][j] - L(p_new, i, j, Dir)) / d_u
 			                             );
 
@@ -84,12 +84,12 @@ Matrix CalculateB(Matrix &u_n, Matrix &v_n, Matrix &u_s, Matrix &v_s, Matrix &p,
 		}
 	}
 
-	Boundary_Conditions(u_s, par, Dir, false);
+	Boundary_Conditions(u_s, par, Dir, par.N_step + 1);
 
 	return result;
 }
 
-void Boundary_Conditions(Matrix &u, Param par, Direction Dir, bool apply_Taylor_Green) {
+void Boundary_Conditions(Matrix &u, Param par, Direction Dir, int N_step) {
 
 	size_t Nx = u.size();
 	size_t Ny = u[0].size();
@@ -142,10 +142,10 @@ void Boundary_Conditions(Matrix &u, Param par, Direction Dir, bool apply_Taylor_
 	}
 
 	// Taylor-Green BC
-	if (par.BC == Taylor_Green && apply_Taylor_Green == true) {
+	if (par.BC == Taylor_Green && N_step > 0) {
 		double k1 = M_PI / par.L;
 		double k2 = M_PI / par.H;
-		double time_exp = exp(-(k2*k1 + k2*k2) / par.Re * par.d_t * par.N_step);
+		double time_exp = exp(-(k1*k1 + k2*k2) / par.Re * par.d_t * N_step);
 		// Up-Down BC
 		for (size_t i = 0; i < Nx; ++i) {
 			GeomVec x_D;

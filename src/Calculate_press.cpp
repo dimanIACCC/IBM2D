@@ -28,6 +28,7 @@ double Calculate_Press_correction(Matrix &delta_p, Matrix &b_p, Param par, int &
 				          + dy2 * (delta_p[i][j + 1] + delta_p[i][j - 1]) - b_p[i][j]);
 
 				if (par.BC == Taylor_Green && i == par.N1 / 2 && j == par.N2 / 2) {
+					//delta_p[par.N1 / 2][par.N2 / 2] = 0;
 					help = 0;
 				}
 
@@ -39,7 +40,6 @@ double Calculate_Press_correction(Matrix &delta_p, Matrix &b_p, Param par, int &
 				}
 
 				delta_p[i][j] = help;
-
 			}
 		}
 
@@ -112,6 +112,10 @@ Matrix Calculate_Press_Right(Matrix &u, Matrix &v, Param par){
 			         + (1.0 / par.d_y) * (v[i][j + 1] - v[i][j]);
 
 			result[i][j] = d / par.d_t;
+
+			//if (par.BC == Taylor_Green && i == par.N1 / 2 && j == par.N2 / 2) {
+			//	result[i][j] = 0;
+			//}
 
 		}
 

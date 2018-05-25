@@ -15,4 +15,9 @@ void Calculate_u_p(Matrix &U_n , Matrix &U_new,
                    std::list<Circle> &solidList, Param par);
 
 void ApplyInitialData(Matrix &u, Matrix &v, Matrix &p, Param par);
+void TaylorGreen_BC(Matrix &u, Matrix &v, Matrix &p, Param par, double time);
+double Taylor_Green_u(GeomVec x, double k1, double k2, double time_exp);
+double Taylor_Green_v(GeomVec x, double k1, double k2, double time_exp);
+double Taylor_Green_p(GeomVec x, double k1, double k2, double time_exp2);
+
 void Zero_velocity_in_Solids(Matrix &u, Param par, std::list<Circle> iList);

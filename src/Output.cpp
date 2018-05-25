@@ -18,7 +18,16 @@ void OutputVelocity_U(Matrix u, int n, Param par) {
 	for (int j = 0; j < u[0].size(); ++j) {
 		for (int i = 0; i < u.size(); ++i) {
 			GeomVec xu = x_u(i, j, par);
-			output << xu[1] << ' ' << xu[2] << ' ' << u[i][j] << ' ' << 0 << std::endl;
+			double U = u[i][j];
+			if (j == 0) {
+				xu = (x_u(i, 0, par) + x_u(i, 1, par))*0.5;
+				U  = (u[i][0] + u[i][1])*0.5;
+			}
+			if (j == par.N2) {
+				xu = (x_u(i, par.N2,  par) + x_u(i, par.N2 - 1,  par))*0.5;
+				U = (u[i][par.N2] + u[i][par.N2 - 1])*0.5;
+			}
+			output << xu[1] << ' ' << xu[2] << ' ' << U << ' ' << 0 << std::endl;
 		}
 	}
 
@@ -44,6 +53,15 @@ void OutputVelocity_V(Matrix v, int n, Param par) {
 	for (int j = 0; j < v[0].size(); ++j) {
 		for (int i = 0; i < v.size(); ++i) {
 			GeomVec xv = x_v(i, j, par);
+			double V = v[i][j];
+			if (i == 0) {
+				xv = (x_v(0, j, par) + x_v(1, j, par))*0.5;
+				V = (v[0][j] + v[1][j])*0.5;
+			}
+			if (i == par.N1) {
+				xv = (x_v(par.N1, j, par) + x_u(par.N1 - 1, j, par))*0.5;
+				V = (v[par.N1][j] + v[par.N1 - 1][j])*0.5;
+			}
 			output << xv[1] << ' ' << xv[2] << ' ' << 0 << ' ' << v[i][j] << std::endl;
 		}
 	}
