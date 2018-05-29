@@ -31,4 +31,6 @@ double diff(Matrix &A, Matrix &B);
 double Summ(Matrix& A);
 
 Matrix &operator+=(Matrix &A, const Matrix &B);
+Matrix operator+(const Matrix& A, const Matrix& B);
+Matrix operator-(const Matrix& A, const Matrix& B);
 Matrix operator*(const Matrix &A, const double &b);

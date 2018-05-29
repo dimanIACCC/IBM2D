@@ -6,7 +6,7 @@
 
 namespace fs = boost::filesystem;
 
-enum Boundary_Conditions {
+enum boundary_conditions {
 	u_infinity, u_inflow, periodical, Taylor_Green
 };
 
@@ -37,7 +37,7 @@ public:
 	int AddSolids_N;          // number of added Solids
 	int AddSolids_start;      // step when Solids start to add
 	int AddSolids_interval;   // interval for Solids adding
-	Boundary_Conditions BC;   // Boundary Conditions
+	boundary_conditions BC;   // Boundary Conditions
 	double u_wall;            // velocity of the channel walls
 	int SolidName_max;        // Maximal Name of Solids
 	std::string WorkDir;      // WorkDir
@@ -47,7 +47,7 @@ public:
 
 };
 
-Boundary_Conditions string_to_BC(std::string s);
+boundary_conditions string_to_BC(std::string s);
 double ux_Poiseuille(double y, double H);
 double dux_dy_Poiseuille(double y, double H);
 double dpdx_Poiseuille(double H, double Re);

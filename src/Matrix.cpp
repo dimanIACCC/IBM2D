@@ -93,7 +93,7 @@ double diff(Matrix &A, Matrix &B) {
 	return eps;
 }
 
-double Summ(Matrix& A) {
+double Summ(Matrix &A) {
 	double sum = 0;
 	for (size_t i = 0; i < A.size(); i++) {
 		for (size_t j = 0; j < A[0].size(); j++) {
@@ -103,13 +103,33 @@ double Summ(Matrix& A) {
 	return sum;
 }
 
-Matrix &operator+=(Matrix& A, const Matrix& B) {
+Matrix &operator+=(Matrix &A, const Matrix &B) {
 	for (size_t i = 0; i < A.size(); i++) {
 		for (size_t j = 0; j < A[0].size(); j++) {
 			A[i][j] += B[i][j];
 		}
 	}
 	return A;
+}
+
+Matrix operator+(const Matrix &A, const Matrix &B) {
+	CreateMatrix(C, A.size(), A[1].size());
+	for (size_t i = 0; i < C.size(); i++) {
+		for (size_t j = 0; j < C[0].size(); j++) {
+			C[i][j] = A[i][j] + B[i][j];
+		}
+	}
+	return C;
+}
+
+Matrix operator-(const Matrix &A, const Matrix &B) {
+	CreateMatrix(C, A.size(), A[0].size());
+	for (size_t i = 0; i < C.size(); i++) {
+		for (size_t j = 0; j < C[0].size(); j++) {
+			C[i][j] = A[i][j] - B[i][j];
+		}
+	}
+	return C;
 }
 
 Matrix operator*(const Matrix &A, const double &b) {

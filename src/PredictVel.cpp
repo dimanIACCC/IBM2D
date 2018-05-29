@@ -153,16 +153,16 @@ void Boundary_Conditions(Matrix &u, Param par, Direction Dir, int N_step) {
 			if (Dir == Du) {
 				x_D = (x_u(i, 0     , par) + x_u(i, 1     , par)) * 0.5;
 				x_U = (x_u(i, Ny - 1, par) + x_u(i, Ny - 2, par)) * 0.5;
-				double u_D = sin(k1 * x_D[1]) * cos(k2 * x_D[2]) * time_exp;
-				double u_U = sin(k1 * x_U[1]) * cos(k2 * x_U[2]) * time_exp;
+				double u_D = Taylor_Green_u(x_D, k1, k2, time_exp);
+				double u_U = Taylor_Green_u(x_U, k1, k2, time_exp);
 				u[i][0     ] = (2 * u_D - u[i][1     ]);
 				u[i][Ny - 1] = (2 * u_U - u[i][Ny - 2]);
 			}
 			else if (Dir == Dv) {
 				x_D = x_v(i, 1, par);
 				x_U = x_v(i, Ny - 2, par);
-				double v_D = -k1 / k2 * sin(k2 * x_D[2]) * cos(k1 * x_D[1]) * time_exp;
-				double v_U = -k1 / k2 * sin(k2 * x_U[2]) * cos(k1 * x_U[1]) * time_exp;
+				double v_D = Taylor_Green_v(x_D, k1, k2, time_exp);
+				double v_U = Taylor_Green_v(x_U, k1, k2, time_exp);
 				u[i][0     ] = (2 * v_D - u[i][2     ]);
 				u[i][Ny - 1] = (2 * v_U - u[i][Ny - 3]);
 			}
@@ -174,16 +174,16 @@ void Boundary_Conditions(Matrix &u, Param par, Direction Dir, int N_step) {
 			if (Dir == Du) {
 				x_L = x_u(1, j, par);
 				x_R = x_u(Nx - 2, j, par);
-				double u_L = sin(k1 * x_L[1]) * cos(k2 * x_L[2]) * time_exp;
-				double u_R = sin(k1 * x_R[1]) * cos(k2 * x_R[2]) * time_exp;
+				double u_L = Taylor_Green_u(x_L, k1, k2, time_exp);
+				double u_R = Taylor_Green_u(x_R, k1, k2, time_exp);
 				u[0     ][j] = (2 * u_L - u[2     ][j]);
 				u[Nx - 1][j] = (2 * u_R - u[Nx - 3][j]);
 			}
 			else if (Dir == Dv) {
 				x_L = (x_v(0     , j, par) + x_v(1     , j, par)) * 0.5;
 				x_R = (x_v(Nx - 1, j, par) + x_v(Nx - 2, j, par)) * 0.5;
-				double v_L = -k1 / k2 * sin(k2 * x_L[2]) * cos(k1 * x_L[1]) * time_exp;
-				double v_R = -k1 / k2 * sin(k2 * x_R[2]) * cos(k1 * x_R[1]) * time_exp;
+				double v_L = Taylor_Green_v(x_L, k1, k2, time_exp);
+				double v_R = Taylor_Green_v(x_R, k1, k2, time_exp);
 				u[0     ][j] = (2 * v_L - u[1     ][j]);
 				u[Nx - 1][j] = (2 * v_R - u[Nx - 2][j]);
 			}
@@ -197,4 +197,49 @@ double advective_term(Matrix &u, Matrix &v, size_t i, size_t j, double d_x, doub
 	double result = u[i][j] * (R(u, i, j, Dir) - L(u, i, j, Dir)) / (2.0*d_x)
 	               + v_help * (U(u, i, j, Dir) - D(u, i, j, Dir)) / (2.0*d_y);
 	return result;
+}
+
+void TaylorGreen_exact(Matrix &u, Matrix &v, Matrix &p, Param par, double time) {
+
+	double k1 = M_PI / par.L;
+	double k2 = M_PI / par.H;
+	double time_exp = exp(-(k1*k1 + k2*k2) / par.Re * time);
+	double time_exp2 = time_exp*time_exp;
+
+	for (size_t i = 0; i < u.size(); ++i) {
+		for (size_t j = 0; j < u[0].size(); ++j) {
+			GeomVec xu = x_u(i, j, par);
+			//if (j == 0     ) xu = (x_u(i, 0     , par) + x_u(i, 1         , par))*0.5;
+			//if (j == par.N2) xu = (x_u(i, par.N2, par) + x_u(i, par.N2 - 1, par))*0.5;
+			u[i][j] = Taylor_Green_u(xu, k1, k2, time_exp);
+		}
+	}
+
+	for (size_t i = 0; i < v.size(); ++i) {
+		for (size_t j = 0; j < v[0].size(); ++j) {
+			GeomVec xv = x_v(i, j, par);
+			//if (i == 0     ) xv = (x_v(0     , j, par) + x_v(1         , j, par))*0.5;
+			//if (i == par.N1) xv = (x_v(par.N1, j, par) + x_u(par.N1 - 1, j, par))*0.5;
+			v[i][j] = Taylor_Green_v(xv, k1, k2, time_exp);
+		}
+	}
+
+	for (size_t i = 0; i < par.N1 + 1; ++i) {
+		for (size_t j = 0; j < par.N2 + 1; ++j) {
+			GeomVec xp = x_p(i, j, par);
+			//p[i][j] = Taylor_Green_p(xp, k1, k2, time_exp2);
+		}
+	}
+}
+
+double Taylor_Green_u(GeomVec x, double k1, double k2, double time_exp) {
+	return sin(k1 * x[1]) * cos(k2 * x[2]) * time_exp;
+}
+
+double Taylor_Green_v(GeomVec x, double k1, double k2, double time_exp) {
+	return -k1 / k2 * sin(k2 * x[2]) * cos(k1 * x[1]) * time_exp;
+}
+
+double Taylor_Green_p(GeomVec x, double k1, double k2, double time_exp2) {
+	return 0.5 * (pow(cos(k2 * x[2]) * k1 / k2, 2) - pow(sin(k1 * x[1]), 2)) * time_exp2;
 }

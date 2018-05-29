@@ -104,8 +104,8 @@ Param::Param(std::string WorkDir) : Param() {
 }
 
 
-Boundary_Conditions string_to_BC(std::string s) {
-	Boundary_Conditions BC;
+boundary_conditions string_to_BC(std::string s) {
+	boundary_conditions BC;
 	if      (s == "u_infinity"   || s == "0") BC = u_infinity;
 	else if (s == "u_inflow"     || s == "1") BC = u_inflow;
 	else if (s == "periodical"   || s == "2") BC = periodical;

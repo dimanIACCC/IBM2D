@@ -25,8 +25,8 @@ void Multidirect_Forcing_Method(Matrix &Fx, Matrix &Fy, Matrix &u, Matrix &v, st
 		Fx += Fx_tmp;
 		Fy += Fy_tmp;
 
-		//OutputVelocity_U(u, f, par);
-		//OutputVelocity_V(v, f, par);
+		//Output_U(u, "u", f, par);
+		//Output_V(v, "u", f, par);
 	}
 }
 
@@ -256,8 +256,8 @@ void deformation_velocity(Matrix &u, Matrix &v, Matrix &Exx, Matrix &Eyy, Matrix
 	for (size_t i = 1; i < n1 - 1; ++i) {
 		for (size_t j = 1; j < n2 - 1; ++j) {
 
-			Exx[i][j] = (u[i][j] - u[i - 1][j]) / par.d_x;
-			Eyy[i][j] = (v[i][j] - v[i][j - 1]) / par.d_y;
+			Exx[i][j] = (u[i + 1][j] - u[i][j]) / par.d_x;
+			Eyy[i][j] = (v[i][j + 1] - v[i][j]) / par.d_y;
 
 		}
 	}
@@ -268,8 +268,8 @@ void deformation_velocity(Matrix &u, Matrix &v, Matrix &Exx, Matrix &Eyy, Matrix
 	for (size_t i = 0; i < n1; ++i) {
 		for (size_t j = 0; j < n2; ++j) {
 
-			Exy[i][j] = ((v[i + 1][j] - v[i][j]) / par.d_x
-			           + (u[i][j + 1] - u[i][j]) / par.d_y) * 0.5;
+			Exy[i][j] = ((v[i + 1][j+1] - v[i][j+1]) / par.d_x
+			           + (u[i+1][j + 1] - u[i+1][j]) / par.d_y) * 0.5;
 
 		}
 	}

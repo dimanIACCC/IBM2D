@@ -22,6 +22,7 @@ void Calculate_u_p(Matrix &U_n   , Matrix &U_new,
 	CreateMatrix(V_s, par.N1_v, par.N2_v);
 	CreateMatrix(P_Right, par.N1 + 1, par.N2 + 1);
 	CreateMatrix(Delta_P, par.N1 + 1, par.N2 + 1);
+	CreateMatrix(P      , par.N1 + 1, par.N2 + 1);
 
 	CreateMatrix(Exx, par.N1 + 1, par.N2 + 1);
 	CreateMatrix(Eyy, par.N1 + 1, par.N2 + 1);
@@ -41,9 +42,6 @@ void Calculate_u_p(Matrix &U_n   , Matrix &U_new,
 		solid.f_n = solid.f;
 		solid.tau_n = solid.tau;
 	}
-
-	Boundary_Conditions(U_n, par, Du, par.N_step);
-	Boundary_Conditions(V_n, par, Dv, par.N_step);
 
 	U_s = U_n;
 	V_s = V_n;
@@ -86,12 +84,6 @@ void Calculate_u_p(Matrix &U_n   , Matrix &U_new,
 				}
 			}
 
-			Boundary_Conditions(U_new, par, Du, par.N_step + 1);
-			Boundary_Conditions(V_new, par, Dv, par.N_step + 1);
-
-			//OutputVelocity_U(U_new, par.N_step, par);
-			//OutputVelocity_V(V_new, par.N_step, par);
-
 			end = std::clock();
 			//std::cout << "time of Velocity     : " << end - begin << " " << std::endl;
 		#pragma endregion Velocity
@@ -131,11 +123,9 @@ void Calculate_u_p(Matrix &U_n   , Matrix &U_new,
 			double Delta_P_max = Calculate_Press_correction(Delta_P, P_Right, par, N_DeltaP);       // Zeidel method for solving Poisson equation
 
 			double P_max = std::max(max(P_new), 1.e-4);
-			double relax = std::min(0.05 * std::max(pow(P_max / Delta_P_max, 0.5), 1.), 1.5);						// coefficient of relaxation
-			std::cout << "relax = " << relax << std::endl;
+			double relax = std::min(0.05 * std::max(pow(P_max / Delta_P_max, 0.5), 1.), 10.5);						// coefficient of relaxation
 
-
-			std::cout << "s = " << s << ", delta_P / P = " << Delta_P_max / P_max << std::endl;
+			std::cout  << "s = " << s << ", delta_P / P = " << Delta_P_max / P_max << ", relax = " << relax << std::endl;
 
 			end = std::clock();
 			//std::cout << "time of Pressure     : " << end - begin << " " << std::endl;
@@ -144,18 +134,20 @@ void Calculate_u_p(Matrix &U_n   , Matrix &U_new,
 		#pragma region New P and U
 
 			if (par.BC == Taylor_Green) {
-				int i = par.N1 / 2;
-				int j = par.N2 / 2;
-				GeomVec x = x_p(i, j, par);
 				double k1 = M_PI / par.L;
 				double k2 = M_PI / par.H;
-				P_new[i][j] = 0.5 * (pow(cos(k2 * x[2]) * k1 / k2, 2) - pow(sin(k1 * x[1]), 2)) * exp(-2 * (k1*k1 + k2*k2) / par.Re * par.d_t * (par.N_step + 1));
+				double time_exp2 = exp(-2 * (k1*k1 + k2*k2) / par.Re * par.d_t * (par.N_step + 1));
+
+				int i = par.N1 / 2;
+				int j = par.N2 / 2;
+				GeomVec xp = x_p(i, j, par);
+				P_new[i][j] = Taylor_Green_p(xp, k1, k2, time_exp2);
 			}
 
 			P_new += Delta_P * relax;                                                                   // correction of pressure
 
-			if (par.N_step < 2)
-			P_n = P_new;
+			if (par.N_step < 1)
+				P_n = P_new;
 
 			for (size_t i = 1; i < U_new.size() - 1; ++i) {
 				for (size_t j = 1; j < U_new[0].size() - 1; ++j) {
@@ -169,18 +161,7 @@ void Calculate_u_p(Matrix &U_n   , Matrix &U_new,
 				}
 			}
 
-			Boundary_Conditions(U_new, par, Du, par.N_step + 1);
-			Boundary_Conditions(V_new, par, Dv, par.N_step + 1);
-
-			//OutputVelocity_U(U_new, s, par);
-			//OutputVelocity_V(V_new, s, par);
-
 		#pragma endregion New P and U
-
-		//Output_dp(Delta_P, s, par);
-		//Output(P_new, U_new, V_new, Fx_n, Fy_n, s, solidList, par);
-		
-
 
 		// code for solid u and omega_new iterations
 		/*bool key_solid = false;
@@ -212,8 +193,11 @@ void Calculate_u_p(Matrix &U_n   , Matrix &U_new,
 
 	// Calculation of the strain rate, pressure and HydroDynamic (HD) force in Lagrange mesh
 	deformation_velocity(U_new, V_new, Exx, Eyy, Exy, par);
-	//Output_c(Exy, -1, par);
-	Solids_deformation_velocity_pressure(solidList, Exx, Eyy, Exy, P_new, par);
+	//Output_P(Exx, "Exx", -1, par);
+	//Output_P(Eyy, "Eyy", -1, par);
+	//Output_c(Exy, "Exy", -1, par);
+	P = (P_n + P_new) * 0.5;
+	Solids_deformation_velocity_pressure(solidList, Exx, Eyy, Exy, P, par);
 	Solids_Force(solidList, par.Re);
 
 }
@@ -246,50 +230,9 @@ void ApplyInitialData(Matrix &u, Matrix &v, Matrix &p, Param par) {
 	}
 
 	if (par.BC == Taylor_Green) {
-		TaylorGreen_BC(u, v, p, par, 0.);
+		TaylorGreen_exact(u, v, p, par, 0.);
 	}
 
-}
-
-void TaylorGreen_BC(Matrix &u, Matrix &v, Matrix &p, Param par, double time) {
-	
-	double k1 = M_PI / par.L;
-	double k2 = M_PI / par.H;
-	double time_exp = exp(-(k1*k1 + k2*k2) / par.Re * time);
-	double time_exp2 = time_exp*time_exp;
-
-	for (size_t i = 0; i < u.size(); ++i) {
-		for (size_t j = 0; j < u[0].size(); ++j) {
-			GeomVec xu = x_u(i, j, par);
-			u[i][j] = Taylor_Green_u(xu, k1, k2, time_exp);
-		}
-	}
-
-	for (size_t i = 0; i < v.size(); ++i) {
-		for (size_t j = 0; j < v[0].size(); ++j) {
-			GeomVec xv = x_v(i, j, par);
-			v[i][j] = Taylor_Green_v(xv, k1, k2, time_exp);
-		}
-	}
-
-	for (size_t i = 0; i < par.N1 + 1; ++i) {
-		for (size_t j = 0; j < par.N2 + 1; ++j) {
-			GeomVec xp = x_p(i, j, par);
-			p[i][j] = Taylor_Green_p(xp, k1, k2, time_exp2);
-		}
-	}
-}
-
-double Taylor_Green_u(GeomVec x, double k1, double k2, double time_exp) {
-	return sin(k1 * x[1]) * cos(k2 * x[2]) * time_exp;
-}
-
-double Taylor_Green_v(GeomVec x, double k1, double k2, double time_exp) {
-	return -k1 / k2 * sin(k2 * x[2]) * cos(k1 * x[1]) * time_exp;
-}
-
-double Taylor_Green_p(GeomVec x, double k1, double k2, double time_exp2) {
-	return 0.5 * (pow(cos(k2 * x[2]) * k1 / k2, 2) - pow(sin(k1 * x[1]), 2)) * time_exp2;
 }
 
 void Zero_velocity_in_Solids(Matrix &u, Param par, std::list<Circle> iList) {
@@ -299,7 +242,6 @@ void Zero_velocity_in_Solids(Matrix &u, Param par, std::list<Circle> iList) {
 			for (int j = (solid.xc_new[2] - solid.r) / par.d_y + 1; j < (solid.xc_new[2] + solid.r) / par.d_y + 1; j++) {
 				double distance = sqrt(pow(par.d_x*i - solid.xc_new[1], 2) + pow(par.d_y*j - solid.xc_new[2], 2));
 				if (distance <= solid.r) u[i][j] = 0;
-				//p[i][j] /= solid.GetSweetness(i, j, par);
 			}
 	}
 

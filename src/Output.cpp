@@ -3,15 +3,15 @@
 
 #pragma warning(disable : 4996)//for using <chrono>
 
-void OutputVelocity_U(Matrix u, int n, Param par) {
+void Output_U(Matrix u, std::string filename, int n, Param par) {
 
 	std::ofstream output;
-	std::string filename = par.WorkDir + "solution_velocity_u" + std::to_string(n) + ".plt";
+	filename = par.WorkDir + filename + std::to_string(n) + ".plt";
 
 	output.open(filename);
 
-	output << "title = " << '"' << "sample mesh" << '"' << std::endl;
-	output << "Variables = x y u v" << std::endl;
+	output << "title = " << '"' << filename << '"' << std::endl;
+	output << "Variables = x y u" << std::endl;
 	output << "zone T=" << '"' << n << '"' << ",  i=" << u.size() << ", j=" << u[0].size() << ", f=point" << std::endl;
 	output << "SolutionTime = " << n << std::endl;
 
@@ -19,15 +19,17 @@ void OutputVelocity_U(Matrix u, int n, Param par) {
 		for (int i = 0; i < u.size(); ++i) {
 			GeomVec xu = x_u(i, j, par);
 			double U = u[i][j];
-			if (j == 0) {
-				xu = (x_u(i, 0, par) + x_u(i, 1, par))*0.5;
-				U  = (u[i][0] + u[i][1])*0.5;
+			if (par.BC == Taylor_Green) {
+				if (j == 0) {
+					xu = (x_u(i, 0, par) + x_u(i, 1, par))*0.5;
+					U = (u[i][0] + u[i][1])*0.5;
+				}
+				if (j == par.N2) {
+					xu = (x_u(i, par.N2, par) + x_u(i, par.N2 - 1, par))*0.5;
+					U = (u[i][par.N2] + u[i][par.N2 - 1])*0.5;
+				}
 			}
-			if (j == par.N2) {
-				xu = (x_u(i, par.N2,  par) + x_u(i, par.N2 - 1,  par))*0.5;
-				U = (u[i][par.N2] + u[i][par.N2 - 1])*0.5;
-			}
-			output << xu[1] << ' ' << xu[2] << ' ' << U << ' ' << 0 << std::endl;
+			output << xu[1] << ' ' << xu[2] << ' ' << U << std::endl;
 		}
 	}
 
@@ -35,18 +37,18 @@ void OutputVelocity_U(Matrix u, int n, Param par) {
 }
 
 
-void OutputVelocity_V(Matrix v, int n, Param par) {
+void Output_V(Matrix v, std::string filename, int n, Param par) {
 
 	std::ofstream output;
 
 	// Solution v
 
-	std::string filename = par.WorkDir + "solution_velocity_v" + std::to_string(n) + ".plt";
+	filename = par.WorkDir + filename + std::to_string(n) + ".plt";
 
 	output.open(filename);
 
-	output << "title = " << '"' << "sample mesh" << '"' << std::endl;
-	output << "Variables = x y u v" << std::endl;
+	output << "title = " << '"' << filename << '"' << std::endl;
+	output << "Variables = x y v" << std::endl;
 	output << "zone T=" << '"' << n << '"' << ",  i=" << v.size() << ", j=" << v[0].size() << ", f=point" << std::endl;
 	output << "SolutionTime = " << n << std::endl;
 
@@ -54,15 +56,17 @@ void OutputVelocity_V(Matrix v, int n, Param par) {
 		for (int i = 0; i < v.size(); ++i) {
 			GeomVec xv = x_v(i, j, par);
 			double V = v[i][j];
-			if (i == 0) {
-				xv = (x_v(0, j, par) + x_v(1, j, par))*0.5;
-				V = (v[0][j] + v[1][j])*0.5;
+			if (par.BC == Taylor_Green) {
+				if (i == 0) {
+					xv = (x_v(0, j, par) + x_v(1, j, par))*0.5;
+					V = (v[0][j] + v[1][j])*0.5;
+				}
+				if (i == par.N1) {
+					xv = (x_v(par.N1, j, par) + x_v(par.N1 - 1, j, par))*0.5;
+					V = (v[par.N1][j] + v[par.N1 - 1][j])*0.5;
+				}
 			}
-			if (i == par.N1) {
-				xv = (x_v(par.N1, j, par) + x_u(par.N1 - 1, j, par))*0.5;
-				V = (v[par.N1][j] + v[par.N1 - 1][j])*0.5;
-			}
-			output << xv[1] << ' ' << xv[2] << ' ' << 0 << ' ' << v[i][j] << std::endl;
+			output << xv[1] << ' ' << xv[2] << ' '  << V << std::endl;
 		}
 	}
 
@@ -76,7 +80,7 @@ void Output(Matrix p, Matrix u, Matrix v, Matrix Fx, Matrix Fy, int n, std::list
 
 	output.open(filename);
 
-	output << "title = " << '"' << "sample mesh" << '"' << std::endl;
+	output << "title = " << '"' << filename << '"' << std::endl;
 	output << "Variables = x y p u v fx fy tx ty" << std::endl;
 	output << "zone T=" << '"' << n << '"' << ",  i=" << par.N1 + 1 << ", j=" << par.N2 + 1 << ", f=point" << std::endl;
 	output << "SolutionTime = " << n << std::endl;
@@ -202,37 +206,37 @@ void PushLog(std::ostream& log, int n, double eps_u, double eps_v) {
 }
 
 
-void Output_dp(Matrix dp, int n, Param par) {
+void Output_P(Matrix P, std::string filename, int n, Param par) {
 
 
 	std::ofstream output;
-	std::string filename = par.WorkDir + "dp" + std::to_string(n) + ".plt";
+	filename = par.WorkDir + filename + std::to_string(n) + ".plt";
 
 	output.open(filename);
 
-	output << "title = " << '"' << "sample mesh" << '"' << std::endl;
-	output << "Variables = x y dp" << std::endl;
-	output << "zone T=" << '"' << n << '"' << ",  i=" << dp.size() << ", j=" << dp[0].size() << ", f=point" << std::endl;
+	output << "title = " << '"' << filename << '"' << std::endl;
+	output << "Variables = x y p" << std::endl;
+	output << "zone T=" << '"' << n << '"' << ",  i=" << P.size() << ", j=" << P[0].size() << ", f=point" << std::endl;
 	output << "SolutionTime = " << n << std::endl;
 
 	for (int j = 0; j <= par.N2; ++j) {
 		for (int i = 0; i <= par.N1; ++i) {
 			GeomVec xp = x_p(i, j, par);
-			output << xp[1] << " " << xp[2] << " " << dp[i][j] << std::endl;
+			output << xp[1] << " " << xp[2] << " " << P[i][j] << std::endl;
 		}
 	}
 
 	output.close();
 }
 
-void Output_c(Matrix c, int n, Param par) {
+void Output_c(Matrix c, std::string filename, int n, Param par) {
 
 	std::ofstream output;
-	std::string filename = par.WorkDir + "c" + std::to_string(n) + ".plt";
+	filename = par.WorkDir + filename + std::to_string(n) + ".plt";
 
 	output.open(filename);
 
-	output << "title = " << '"' << "sample mesh" << '"' << std::endl;
+	output << "title = " << '"' << filename << '"' << std::endl;
 	output << "Variables = x y c" << std::endl;
 	output << "zone T=" << '"' << n << '"' << ",  i=" << c.size() << ", j=" << c[0].size() << ", f=point" << std::endl;
 	output << "SolutionTime = " << n << std::endl;

@@ -7,11 +7,21 @@ void BodyOfProgram(Param par, std::list<Circle> solidList, Matrix U_n, Matrix V_
 	CreateMatrix(U_new, par.N1_u, par.N2_u);
 	CreateMatrix(V_new, par.N1_v, par.N2_v);
 	CreateMatrix(P_new, par.N1 + 1, par.N2 + 1);
-	CreateMatrix(P_05 , par.N1 + 1, par.N2 + 1);
 	CreateMatrix(Fx_n  , par.N1_u, par.N2_u);
 	CreateMatrix(Fy_n  , par.N1_v, par.N2_v);
 	CreateMatrix(Fx_new, par.N1_u, par.N2_u);
 	CreateMatrix(Fy_new, par.N1_v, par.N2_v);
+
+	CreateMatrix(U_exact, par.N1_u, par.N2_u);
+	CreateMatrix(V_exact, par.N1_v, par.N2_v);
+	CreateMatrix(P_exact, par.N1 + 1, par.N2 + 1);
+	CreateMatrix(U      , par.N1_u, par.N2_u);
+	CreateMatrix(V      , par.N1_v, par.N2_v);
+	CreateMatrix(P      , par.N1 + 1, par.N2 + 1);
+	CreateMatrix(dU, par.N1_u, par.N2_u);
+	CreateMatrix(dV, par.N1_v, par.N2_v);
+	CreateMatrix(dP, par.N1 + 1, par.N2 + 1);
+
 	Template A_u;
 	Template A_v;
 	Calculate_A(A_u, par, par.Re, Du);
@@ -26,6 +36,14 @@ void BodyOfProgram(Param par, std::list<Circle> solidList, Matrix U_n, Matrix V_
 	}else
 		log.open(par.WorkDir + "log.txt", std::ios::app);
 
+	std::ofstream history;
+	std::string filename = par.WorkDir + "/history.plt";
+	if (par.BC == Taylor_Green) {
+		history.open(filename);
+		history << "title = history" << std::endl;
+		history << "Variables = n error_U error_V error_P" << std::endl;
+	}
+
 	Output(P_n, U_n, V_n, Fx_n, Fy_n, -1, solidList, par);
 
 	for (par.N_step = n0; par.N_step <= par.N_max; ++par.N_step) {                                 // main cycle of time iterations
@@ -37,12 +55,33 @@ void BodyOfProgram(Param par, std::list<Circle> solidList, Matrix U_n, Matrix V_
 		double eps_u = diff(U_n, U_new);												// calculate maximum difference between current and prior velocity fields
 		double eps_v = diff(V_n, V_new);
 
-		P_05 = P_n*0.5;
-		P_05 += P_new*0.5;
+		if (par.BC == Taylor_Green && par.N_step == 0) {
+			// if (N_step = 0) replace the solution by the exact one
+			TaylorGreen_exact(U_n  , V_n  , P_n  , par, par.d_t * par.N_step);
+			TaylorGreen_exact(U_new, V_new, P_new, par, par.d_t * (par.N_step + 1));
+		}
+
 		if (par.N_step % par.output_step == 0 || par.N_step < 1000) {
-			Output(P_05, U_n, V_n, Fx_n, Fy_n, par.N_step, solidList, par);
-			OutputVelocity_U(U_n, par.N_step, par);
-			OutputVelocity_V(V_n, par.N_step, par);
+			U = (U_n + U_new) * 0.5;
+			V = (V_n + V_new) * 0.5;
+			P = (P_n + P_new) * 0.5;
+
+			if (par.BC == Taylor_Green) {
+				TaylorGreen_exact(U_exact, V_exact, P_exact, par, par.d_t*(double(par.N_step) + 0.5));
+				dU = U - U_exact;
+				dV = V - V_exact;
+				dP = P - P_exact;
+				double max_dU = max(dU);
+				double max_dV = max(dV);
+				double max_dP = max(dP);
+				history << par.N_step + 0.5 << "  " << max_dU << "  " << max_dV << "  " << max_dP << std::endl;
+				Output_U(dU, "dU", par.N_step, par);
+				Output_V(dV, "dV", par.N_step, par);
+				Output_P(dP, "dP", par.N_step, par);
+			}
+			Output(P, U, V, Fx_new, Fy_new, par.N_step, solidList, par);
+			Output_U(U, "U", par.N_step, par);
+			Output_V(V, "V", par.N_step, par);
 		}
 
 		U_n = U_new;
