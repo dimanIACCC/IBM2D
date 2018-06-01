@@ -7,7 +7,7 @@
 namespace fs = boost::filesystem;
 
 enum boundary_conditions {
-	u_infinity, u_inflow, periodical, Taylor_Green
+	u_infinity, u_inflow, periodical, Taylor_Green, Lamb_Oseen
 };
 
 class Param{
@@ -48,9 +48,6 @@ public:
 };
 
 boundary_conditions string_to_BC(std::string s);
-double ux_Poiseuille(double y, double H);
-double dux_dy_Poiseuille(double y, double H);
-double dpdx_Poiseuille(double H, double Re);
 GeomVec x_p(int i, int j, Param par); // coordinates of (i,j)-th node for pressure p mesh
 GeomVec x_u(int i, int j, Param par); // coordinates of (i,j)-th node for velocity u mesh
 GeomVec x_v(int i, int j, Param par); // coordinates of (i,j)-th node for velocity v mesh

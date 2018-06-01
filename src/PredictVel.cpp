@@ -190,6 +190,10 @@ void Boundary_Conditions(Matrix &u, Param par, Direction Dir, int N_step) {
 		}
 	}
 
+	if (par.BC == Lamb_Oseen && N_step > 0) {
+		Lamb_Oseen_exact(u, Dir, par, par.d_t * N_step, true);
+	}
+
 }
 
 double advective_term(Matrix &u, Matrix &v, size_t i, size_t j, double d_x, double d_y, Direction Dir) {
@@ -209,8 +213,6 @@ void TaylorGreen_exact(Matrix &u, Matrix &v, Matrix &p, Param par, double time) 
 	for (size_t i = 0; i < u.size(); ++i) {
 		for (size_t j = 0; j < u[0].size(); ++j) {
 			GeomVec xu = x_u(i, j, par);
-			//if (j == 0     ) xu = (x_u(i, 0     , par) + x_u(i, 1         , par))*0.5;
-			//if (j == par.N2) xu = (x_u(i, par.N2, par) + x_u(i, par.N2 - 1, par))*0.5;
 			u[i][j] = Taylor_Green_u(xu, k1, k2, time_exp);
 		}
 	}
@@ -218,8 +220,6 @@ void TaylorGreen_exact(Matrix &u, Matrix &v, Matrix &p, Param par, double time) 
 	for (size_t i = 0; i < v.size(); ++i) {
 		for (size_t j = 0; j < v[0].size(); ++j) {
 			GeomVec xv = x_v(i, j, par);
-			//if (i == 0     ) xv = (x_v(0     , j, par) + x_v(1         , j, par))*0.5;
-			//if (i == par.N1) xv = (x_v(par.N1, j, par) + x_u(par.N1 - 1, j, par))*0.5;
 			v[i][j] = Taylor_Green_v(xv, k1, k2, time_exp);
 		}
 	}
@@ -227,19 +227,45 @@ void TaylorGreen_exact(Matrix &u, Matrix &v, Matrix &p, Param par, double time) 
 	for (size_t i = 0; i < par.N1 + 1; ++i) {
 		for (size_t j = 0; j < par.N2 + 1; ++j) {
 			GeomVec xp = x_p(i, j, par);
-			//p[i][j] = Taylor_Green_p(xp, k1, k2, time_exp2);
+			p[i][j] = Taylor_Green_p(xp, k1, k2, time_exp2);
 		}
 	}
 }
 
-double Taylor_Green_u(GeomVec x, double k1, double k2, double time_exp) {
-	return sin(k1 * x[1]) * cos(k2 * x[2]) * time_exp;
-}
+void Lamb_Oseen_exact(Matrix &uv, Direction Dir, Param par, double time, bool boundary) {
 
-double Taylor_Green_v(GeomVec x, double k1, double k2, double time_exp) {
-	return -k1 / k2 * sin(k2 * x[2]) * cos(k1 * x[1]) * time_exp;
-}
+	GeomVec omega, r, r0;
+	r0[1] = 0.5 * par.L;
+	r0[2] = 0.5 * par.H;
+	r0[3] = 0;
 
-double Taylor_Green_p(GeomVec x, double k1, double k2, double time_exp2) {
-	return 0.5 * (pow(cos(k2 * x[2]) * k1 / k2, 2) - pow(sin(k1 * x[1]), 2)) * time_exp2;
+	omega[1] = 0;
+	omega[2] = 0;
+
+	if (Dir == Du) {
+		for (size_t i = 0; i < uv.size(); ++i) {
+			for (size_t j = 0; j < uv[0].size(); ++j) {
+				if (!boundary || i == 0 || j == 0 || i == uv.size() - 1 || j == uv[0].size() - 1) {
+					r = x_u(i, j, par) - r0;
+					omega[3] = Lamb_Oseen_velocity(length(r), par.Re, time);
+					GeomVec U = x_product(omega, r / length(r));
+					uv[i][j] = U[1];
+				}
+			}
+		}
+	}
+
+	if (Dir == Dv) {
+		for (size_t i = 0; i < uv.size(); ++i) {
+			for (size_t j = 0; j < uv[0].size(); ++j) {
+				if (!boundary || i == 0 || j == 0 || i == uv.size() - 1 || j == uv[0].size() - 1) {
+					r = x_v(i, j, par) - r0;
+					omega[3] = Lamb_Oseen_velocity(length(r), par.Re, time);
+					GeomVec V = x_product(omega, r / length(r));
+					uv[i][j] = V[2];
+				}
+			}
+		}
+	}
+
 }

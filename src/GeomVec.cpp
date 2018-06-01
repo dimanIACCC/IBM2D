@@ -1,11 +1,4 @@
-﻿#include "stdafx.h"
-#include "GeomVec.h"
-
-
-
-
-
-
+﻿#include "GeomVec.h"
 
 double length(GeomVec x) {
 	double result = 0.0;

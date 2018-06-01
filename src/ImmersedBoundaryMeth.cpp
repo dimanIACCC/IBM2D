@@ -10,8 +10,6 @@ That project is devoted to numerical simulation of disperse flows in the channel
 
 
 
-
-#include "stdafx.h"
 #include "CalculateForce.h"
 #include "Calculate_u_p.h"
 #include "Output.h"
@@ -64,6 +62,13 @@ int main(int argc, char *argv[]) {
 	Param par(WorkDir.string(), "input.txt");					// create the variable which contains parameters according to input data
 
 	Read_Solids(par.WorkDir + "Solids.txt", solidList, par);	// read Solids from file and write them into list of solids
+
+	if (par.BC == Lamb_Oseen) {
+		for (auto& it : solidList) {
+			it.omega_n[3]   = Lamb_Oseen_velocity(it.r, par.Re, par.d_t*par.N_step) / it.r;
+			it.omega_new[3] = Lamb_Oseen_velocity(it.r, par.Re, par.d_t*(par.N_step + 1)) / it.r;
+		}
+	}
 
 	CreateMatrix(U_n, par.N1_u, par.N2_u);						// creation matrices for velocity
 	CreateMatrix(V_n, par.N1_v, par.N2_v);						// and pressure

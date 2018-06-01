@@ -3,6 +3,7 @@
 #include "GeomVec.h"
 #include "Parameters.h"
 #include "Matrix.h"
+#include "Exact_solutions.h"
 
 class Node
 {

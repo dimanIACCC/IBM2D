@@ -123,7 +123,7 @@ void Calculate_u_p(Matrix &U_n   , Matrix &U_new,
 			double Delta_P_max = Calculate_Press_correction(Delta_P, P_Right, par, N_DeltaP);       // Zeidel method for solving Poisson equation
 
 			double P_max = std::max(max(P_new), 1.e-4);
-			double relax = std::min(0.05 * std::max(pow(P_max / Delta_P_max, 0.5), 1.), 10.5);						// coefficient of relaxation
+			double relax = std::min(0.05 * std::max(pow(P_max / Delta_P_max, 0.5), 1.), 1.5);						// coefficient of relaxation
 
 			std::cout  << "s = " << s << ", delta_P / P = " << Delta_P_max / P_max << ", relax = " << relax << std::endl;
 
@@ -182,6 +182,11 @@ void Calculate_u_p(Matrix &U_n   , Matrix &U_new,
 
 		if (Delta_P_max / P_max < par.eps_P) {
 			Solids_velocity_new(solidList, par);
+			if (par.BC == Lamb_Oseen) {
+				for (auto& it : solidList) {
+					it.omega_new[3] = Lamb_Oseen_velocity(it.r, par.Re, par.d_t*(par.N_step + 1)) / it.r;
+				}
+			}
 			std::cout << "s iterations: " << s << std::endl;
 			// if (key_solid == true)
 			break;
@@ -214,6 +219,7 @@ void ApplyInitialData(Matrix &u, Matrix &v, Matrix &p, Param par) {
 				case u_inflow:     u[i][j] = 1.0 * ux_Poiseuille(xu[2], par.H); break;
 				case periodical:   u[i][j] = 1.0 * ux_Poiseuille(xu[2], par.H); break;
 				case Taylor_Green: break;
+				case Lamb_Oseen:   break;
 				default: std::cout << "ApplyInitialData: unknown BC" << std::endl;
 			}
 		}
@@ -231,6 +237,11 @@ void ApplyInitialData(Matrix &u, Matrix &v, Matrix &p, Param par) {
 
 	if (par.BC == Taylor_Green) {
 		TaylorGreen_exact(u, v, p, par, 0.);
+	}
+
+	if (par.BC == Lamb_Oseen) {
+		Lamb_Oseen_exact(u, Du, par, 0., false);
+		Lamb_Oseen_exact(v, Dv, par, 0., false);
 	}
 
 }

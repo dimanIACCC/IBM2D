@@ -110,22 +110,9 @@ boundary_conditions string_to_BC(std::string s) {
 	else if (s == "u_inflow"     || s == "1") BC = u_inflow;
 	else if (s == "periodical"   || s == "2") BC = periodical;
 	else if (s == "Taylor_Green" || s == "3") BC = Taylor_Green;
+	else if (s == "Lamb_Oseen"   || s == "4") BC = Lamb_Oseen;
 	else std::cout << "string_to_BC: unknown BC" << std::endl;
 	return BC;
-}
-
-double ux_Poiseuille(double y, double H) {
-	double ux = (pow(H / 2.0, 2) - pow(y - H / 2.0, 2)) / pow(H / 2.0, 2);
-	return ux;
-}
-
-double dpdx_Poiseuille(double H, double Re) {
-	return 8.0 / H / H / Re;
-}
-
-double dux_dy_Poiseuille(double y, double H) {           //    dux/dy for Poiseuille flow, divided by 2, that equals angular velocity omega for non-disturbed flow
-	double dux_dy = - (y - H / 2.0) / pow(H / 2.0, 2);
-	return dux_dy;
 }
 
 GeomVec x_p(int i, int j, Param par) {
