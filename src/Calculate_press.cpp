@@ -12,7 +12,7 @@ double Calculate_Press_correction(Matrix &delta_p, Matrix &b_p, Param par, int &
 	double dy2 = 1.0 / (par.d_y*par.d_y);
 	double A   = 1.0 / (2.0 * (dx2 + dy2));
 
-	double help;
+	double help, p_fix = 0;
 
 	size_t n1 = delta_p.size();
 	size_t n2 = delta_p[0].size();
@@ -28,7 +28,6 @@ double Calculate_Press_correction(Matrix &delta_p, Matrix &b_p, Param par, int &
 				          + dy2 * (delta_p[i][j + 1] + delta_p[i][j - 1]) - b_p[i][j]);
 
 				if (par.BC == Taylor_Green && i == par.N1 / 2 && j == par.N2 / 2) {
-					//delta_p[par.N1 / 2][par.N2 / 2] = 0;
 					help = 0;
 				}
 
@@ -36,14 +35,21 @@ double Calculate_Press_correction(Matrix &delta_p, Matrix &b_p, Param par, int &
 					delta_p_max = fabs(help);
 				}
 				if (fabs(help - delta_p[i][j]) > eps){
-					eps = fabs(help - delta_p[i][j]);
+					eps = fabs(help - delta_p[i][j] - p_fix);
 				}
 
 				delta_p[i][j] = help;
 			}
 		}
 
-		if (par.BC == u_infinity || par.BC == u_inflow || par.BC == periodical || par.BC == Taylor_Green) {
+		if (par.BC == Lamb_Oseen) {
+			p_fix = delta_p[par.N1 / 2][par.N2 / 2];
+			for (size_t i = 1; i < n1 - 1; ++i)
+			for (size_t j = 1; j < n2 - 1; ++j)
+				delta_p[i][j] -= p_fix;
+		}
+
+		if (par.BC == u_infinity || par.BC == u_inflow || par.BC == periodical || par.BC == Taylor_Green || par.BC == Lamb_Oseen) {
 
 			// Up-Down BC
 			for (size_t i = 0; i < n1; ++i) {
@@ -85,11 +91,8 @@ double Calculate_Press_correction(Matrix &delta_p, Matrix &b_p, Param par, int &
 
 	}
 
-
-
 	if (eps / delta_p_max > par.Zeidel_eps) {
 		std::cout << "Zeidel has not converged, eps_p = " << eps << ",   delta_p_max = " << delta_p_max << std::endl;
-		
 	}
 
 	return delta_p_max;
@@ -112,10 +115,6 @@ Matrix Calculate_Press_Right(Matrix &u, Matrix &v, Param par){
 			         + (1.0 / par.d_y) * (v[i][j + 1] - v[i][j]);
 
 			result[i][j] = d / par.d_t;
-
-			//if (par.BC == Taylor_Green && i == par.N1 / 2 && j == par.N2 / 2) {
-			//	result[i][j] = 0;
-			//}
 
 		}
 

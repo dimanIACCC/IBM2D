@@ -13,5 +13,6 @@ Matrix CalculateB(Matrix &u_n, Matrix &v_n, Matrix &u_prev, Matrix &v_prev, Matr
 void Boundary_Conditions(Matrix &u, Param par, Direction Dir, int N_step);
 double advective_term(Matrix &u, Matrix &v, size_t i, size_t j, double d_x, double d_y, Direction Dir);
 
-void TaylorGreen_exact(Matrix &u, Matrix &v, Matrix &p, Param par, double time);
-void Lamb_Oseen_exact (Matrix &uv, Direction Dir, Param par, double time, bool boundary);
+void Taylor_Green_exact(Matrix &u, Matrix &v, Matrix &p, Param par, double time);
+void Lamb_Oseen_exact(Matrix &uv, Direction Dir, Param par, double time, bool boundary);
+void Lamb_Oseen_exact_p(Matrix &p, Param par, double time);

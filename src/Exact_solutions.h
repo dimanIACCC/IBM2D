@@ -10,3 +10,4 @@ double Taylor_Green_v(GeomVec x, double k1, double k2, double time_exp);
 double Taylor_Green_p(GeomVec x, double k1, double k2, double time_exp2);
 
 double Lamb_Oseen_velocity(double r, double Re, double time);
+double Lamb_Oseen_pressure(double r, double Re, double time);

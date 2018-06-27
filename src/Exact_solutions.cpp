@@ -28,3 +28,21 @@ double Lamb_Oseen_velocity(double r, double Re, double time) {
 	double r0 = 0.05;
 	return (1 - exp(-r*r / (4 / Re * time + r0*r0))) / (2 * M_PI * r);
 }
+
+double Lamb_Oseen_pressure(double r, double Re, double time) {
+
+	int N = 1000;
+	double dr = r / N;
+
+	if (r < 1e-8) return 0;
+
+	double ri = dr * 0.5;
+	double p = 0;
+	for (int i = 0; i <= N; i++) {
+		double u = Lamb_Oseen_velocity(ri, Re, time);
+		p += u * u / ri * dr;
+		ri += dr;
+	}
+
+	return p;
+}

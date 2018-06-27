@@ -65,8 +65,8 @@ int main(int argc, char *argv[]) {
 
 	if (par.BC == Lamb_Oseen) {
 		for (auto& it : solidList) {
-			it.omega_n[3]   = Lamb_Oseen_velocity(it.r, par.Re, par.d_t*par.N_step) / it.r;
-			it.omega_new[3] = Lamb_Oseen_velocity(it.r, par.Re, par.d_t*(par.N_step + 1)) / it.r;
+			it.omega_n[3]   = Lamb_Oseen_velocity(it.r, par.Re, 0.0    ) / it.r;
+			it.omega_new[3] = Lamb_Oseen_velocity(it.r, par.Re, par.d_t) / it.r;
 		}
 	}
 

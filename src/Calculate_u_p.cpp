@@ -123,7 +123,7 @@ void Calculate_u_p(Matrix &U_n   , Matrix &U_new,
 			double Delta_P_max = Calculate_Press_correction(Delta_P, P_Right, par, N_DeltaP);       // Zeidel method for solving Poisson equation
 
 			double P_max = std::max(max(P_new), 1.e-4);
-			double relax = std::min(0.05 * std::max(pow(P_max / Delta_P_max, 0.5), 1.), 1.5);						// coefficient of relaxation
+			double relax = std::min(0.05 * std::max(pow(P_max / Delta_P_max, 1), 1.), 1.5);						// coefficient of relaxation
 
 			std::cout  << "s = " << s << ", delta_P / P = " << Delta_P_max / P_max << ", relax = " << relax << std::endl;
 
@@ -145,6 +145,8 @@ void Calculate_u_p(Matrix &U_n   , Matrix &U_new,
 			}
 
 			P_new += Delta_P * relax;                                                                   // correction of pressure
+
+			//Output_P(P_new, "P", s, par);
 
 			if (par.N_step < 1)
 				P_n = P_new;
@@ -236,12 +238,13 @@ void ApplyInitialData(Matrix &u, Matrix &v, Matrix &p, Param par) {
 	}
 
 	if (par.BC == Taylor_Green) {
-		TaylorGreen_exact(u, v, p, par, 0.);
+		Taylor_Green_exact(u, v, p, par, 0.);
 	}
 
 	if (par.BC == Lamb_Oseen) {
 		Lamb_Oseen_exact(u, Du, par, 0., false);
 		Lamb_Oseen_exact(v, Dv, par, 0., false);
+		Lamb_Oseen_exact_p(p, par, 0.);
 	}
 
 }

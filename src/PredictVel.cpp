@@ -203,7 +203,7 @@ double advective_term(Matrix &u, Matrix &v, size_t i, size_t j, double d_x, doub
 	return result;
 }
 
-void TaylorGreen_exact(Matrix &u, Matrix &v, Matrix &p, Param par, double time) {
+void Taylor_Green_exact(Matrix &u, Matrix &v, Matrix &p, Param par, double time) {
 
 	double k1 = M_PI / par.L;
 	double k2 = M_PI / par.H;
@@ -233,6 +233,7 @@ void TaylorGreen_exact(Matrix &u, Matrix &v, Matrix &p, Param par, double time) 
 }
 
 void Lamb_Oseen_exact(Matrix &uv, Direction Dir, Param par, double time, bool boundary) {
+// The key boundary stands for the domain where apply the Lamb-Oseen solution: true - only in the boundary, false - in the whole domain
 
 	GeomVec omega, r, r0;
 	r0[1] = 0.5 * par.L;
@@ -265,6 +266,24 @@ void Lamb_Oseen_exact(Matrix &uv, Direction Dir, Param par, double time, bool bo
 					uv[i][j] = V[2];
 				}
 			}
+		}
+	}
+
+}
+
+// Calculate exact pressure for Lamb-Oseen vortex
+void Lamb_Oseen_exact_p(Matrix &p, Param par, double time) {
+	// The key boundary stands for the domain where apply the Lamb-Oseen solution: true - only in the boundary, false - in the whole domain
+
+	GeomVec r, r0;
+	r0[1] = 0.5 * par.L;
+	r0[2] = 0.5 * par.H;
+	r0[3] = 0;
+
+	for (size_t i = 0; i < p.size(); ++i) {
+		for (size_t j = 0; j < p[0].size(); ++j) {
+			r = x_p(i, j, par) - r0;
+			p[i][j] = Lamb_Oseen_pressure(length(r), par.Re, time);
 		}
 	}
 
