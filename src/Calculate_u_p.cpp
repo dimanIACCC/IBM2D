@@ -227,13 +227,12 @@ void ApplyInitialData(Matrix &u, Matrix &v, Matrix &p, Param par) {
 		}
 	}
 
-	size_t Nx = p.size();
-	if (par.BC == periodical) {
-		for (size_t j = 0; j < p[0].size(); ++j) {
-			//p[0][j]      = par.L * dpdx_Poiseuille(par.H, par.Re);
-			//p[1][j]      = par.L * dpdx_Poiseuille(par.H, par.Re);
-			//p[Nx-2][j]   = 0;
-			//p[Nx-1][j]   = 0;
+	if (par.BC == u_inflow || par.BC == u_infinity || par.BC == periodical) {
+		for (size_t i = 0; i < p.size(); ++i) {
+			for (size_t j = 0; j < p[0].size(); ++j) {
+				GeomVec xp = x_p(i, j, par);
+				p[i][j] = (par.L - xp[1]) * dpdx_Poiseuille(par.H, par.Re);
+			}
 		}
 	}
 

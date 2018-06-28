@@ -42,7 +42,7 @@ double Calculate_Press_correction(Matrix &delta_p, Matrix &b_p, Param par, int &
 			}
 		}
 
-		if (par.BC == Lamb_Oseen) {
+		if (par.BC == Lamb_Oseen || par.BC == periodical) {
 			p_fix = delta_p[par.N1 / 2][par.N2 / 2];
 			for (size_t i = 1; i < n1 - 1; ++i)
 			for (size_t j = 1; j < n2 - 1; ++j)
@@ -66,9 +66,6 @@ double Calculate_Press_correction(Matrix &delta_p, Matrix &b_p, Param par, int &
 				}
 			}
 
-			if (par.BC == periodical) {
-				delta_p[n1 - 1][1] = 0.0; // down corner
-			}
 		}
 
 		// Periodical Left-Right BC
@@ -81,7 +78,7 @@ double Calculate_Press_correction(Matrix &delta_p, Matrix &b_p, Param par, int &
 
 		/*if (n % 100 == 0) {
 			std::cout << eps << "  " << delta_p_max << std::endl;
-			OutputPressure(delta_p, n, solidList, par);
+			Output_P(delta_p, "delta_p", n, par);
 		}*/
 
 		if (eps/delta_p_max < par.Zeidel_eps){
