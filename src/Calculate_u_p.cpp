@@ -148,7 +148,7 @@ void Calculate_u_p(Matrix &U_n   , Matrix &U_new,
 
 			//Output_P(P_new, "P", s, par);
 
-			if (par.N_step < 1)
+			if (par.N_step < 0)
 				P_n = P_new;
 
 			for (size_t i = 1; i < U_new.size() - 1; ++i) {
@@ -206,45 +206,6 @@ void Calculate_u_p(Matrix &U_n   , Matrix &U_new,
 	P = (P_n + P_new) * 0.5;
 	Solids_deformation_velocity_pressure(solidList, Exx, Eyy, Exy, P, par);
 	Solids_Force(solidList, par.Re);
-
-}
-
-
-// Apply initial data for velocity
-void ApplyInitialData(Matrix &u, Matrix &v, Matrix &p, Param par) {
-
-	for (size_t i = 0; i < u.size(); ++i) {
-		for (size_t j = 0; j < u[0].size(); ++j) {
-			GeomVec xu = x_u(i, j, par);
-			switch (par.BC) {
-				case u_infinity:   u[i][j] = 1.0; break;
-				case u_inflow:     u[i][j] = 1.0 * ux_Poiseuille(xu[2], par.H); break;
-				case periodical:   u[i][j] = 1.0 * ux_Poiseuille(xu[2], par.H); break;
-				case Taylor_Green: break;
-				case Lamb_Oseen:   break;
-				default: std::cout << "ApplyInitialData: unknown BC" << std::endl;
-			}
-		}
-	}
-
-	if (par.BC == u_inflow || par.BC == u_infinity || par.BC == periodical) {
-		for (size_t i = 0; i < p.size(); ++i) {
-			for (size_t j = 0; j < p[0].size(); ++j) {
-				GeomVec xp = x_p(i, j, par);
-				p[i][j] = (par.L - xp[1]) * dpdx_Poiseuille(par.H, par.Re);
-			}
-		}
-	}
-
-	if (par.BC == Taylor_Green) {
-		Taylor_Green_exact(u, v, p, par, 0.);
-	}
-
-	if (par.BC == Lamb_Oseen) {
-		Lamb_Oseen_exact(u, Du, par, 0., false);
-		Lamb_Oseen_exact(v, Dv, par, 0., false);
-		Lamb_Oseen_exact_p(p, par, 0.);
-	}
 
 }
 

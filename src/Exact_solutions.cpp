@@ -25,7 +25,7 @@ double Taylor_Green_p(GeomVec x, double k1, double k2, double time_exp2) {
 }
 
 double Lamb_Oseen_velocity(double r, double Re, double time) {
-	double r0 = 0.05;
+	double r0 = 0.1;
 	return (1 - exp(-r*r / (4 / Re * time + r0*r0))) / (2 * M_PI * r);
 }
 

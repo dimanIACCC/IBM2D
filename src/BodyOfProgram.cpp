@@ -70,8 +70,8 @@ void BodyOfProgram(Param par, std::list<Circle> solidList, Matrix U_n, Matrix V_
 
 				if (par.BC == Taylor_Green) Taylor_Green_exact(U_exact, V_exact, P_exact, par, par.d_t*(double(par.N_step) + 0.5));
 				if (par.BC == Lamb_Oseen) {
-					Lamb_Oseen_exact(U_exact, Du, par, par.d_t * (double(par.N_step) + 0.5), false);
-					Lamb_Oseen_exact(V_exact, Dv, par, par.d_t * (double(par.N_step) + 0.5), false);
+					Lamb_Oseen_exact_uv(U_exact, Du, par, par.d_t * (double(par.N_step) + 0.5), false);
+					Lamb_Oseen_exact_uv(V_exact, Dv, par, par.d_t * (double(par.N_step) + 0.5), false);
 					Lamb_Oseen_exact_p(P_exact, par, par.d_t * (double(par.N_step) + 0.5));
 				}
 				dU = U - U_exact;
@@ -84,6 +84,9 @@ void BodyOfProgram(Param par, std::list<Circle> solidList, Matrix U_n, Matrix V_
 				Output_U(dU, "dU", par.N_step, par);
 				//Output_V(dV, "dV", par.N_step, par);
 				Output_P(dP, "dP", par.N_step, par);
+				Output_P(P_exact, "P_exact", par.N_step, par);
+				Output_P(P_n  , "P_n", par.N_step, par);
+				Output_P(P_new, "P_new", par.N_step, par);
 			}
 			Output(P, U, V, Fx_new, Fy_new, par.N_step, solidList, par);
 			//Output_U(U, "U", par.N_step, par);
