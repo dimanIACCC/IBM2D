@@ -7,7 +7,7 @@
 namespace fs = boost::filesystem;
 
 enum boundary_conditions {
-	u_infinity, u_inflow, periodical, Taylor_Green, Lamb_Oseen
+	u_infinity, u_inflow, periodical, Taylor_Green, Lamb_Oseen, Line_Vortex
 };
 
 class Param{
@@ -38,13 +38,15 @@ public:
 	int AddSolids_start;      // step when Solids start to add
 	int AddSolids_interval;   // interval for Solids adding
 	boundary_conditions BC;   // Boundary Conditions
+	GeomVec x0;               // Special point in test problems Lamb_Oseen and Line_Vortex
+	GeomVec k;                // Spatial frequencies for Taylor_Green vortices
 	double u_wall;            // velocity of the channel walls
 	int SolidName_max;        // Maximal Name of Solids
 	std::string WorkDir;      // WorkDir
 	Param();
 	Param(std::string WorkDir);
 	Param(std::string WorkDir, std::string filename);
-
+	void init();
 };
 
 boundary_conditions string_to_BC(std::string s);

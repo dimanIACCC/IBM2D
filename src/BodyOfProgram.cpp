@@ -57,8 +57,8 @@ void BodyOfProgram(Param par, std::list<Circle> solidList, Matrix U_n, Matrix V_
 
 		if (par.BC == Taylor_Green && par.N_step == 0) {
 			// if (N_step = 0) replace the solution by the exact one
-			Taylor_Green_exact(U_n  , V_n  , P_n  , par, par.d_t * par.N_step);
-			Taylor_Green_exact(U_new, V_new, P_new, par, par.d_t * (par.N_step + 1));
+			fill_exact(U_n  , V_n  , P_n  , par, par.d_t * par.N_step);
+			fill_exact(U_new, V_new, P_new, par, par.d_t * (par.N_step + 1));
 		}
 
 		if (par.N_step % par.output_step == 0 || par.N_step < 1000) {
@@ -66,14 +66,10 @@ void BodyOfProgram(Param par, std::list<Circle> solidList, Matrix U_n, Matrix V_
 			V = (V_n + V_new) * 0.5;
 			P = (P_n + P_new) * 0.5;
 
-			if (par.BC == Taylor_Green || par.BC == Lamb_Oseen) {
+			if (par.BC == Taylor_Green || par.BC == Lamb_Oseen || par.BC == Line_Vortex) {
 
-				if (par.BC == Taylor_Green) Taylor_Green_exact(U_exact, V_exact, P_exact, par, par.d_t*(double(par.N_step) + 0.5));
-				if (par.BC == Lamb_Oseen) {
-					Lamb_Oseen_exact_uv(U_exact, Du, par, par.d_t * (double(par.N_step) + 0.5), false);
-					Lamb_Oseen_exact_uv(V_exact, Dv, par, par.d_t * (double(par.N_step) + 0.5), false);
-					Lamb_Oseen_exact_p(P_exact, par, par.d_t * (double(par.N_step) + 0.5));
-				}
+				fill_exact(U_exact, V_exact, P_exact, par, par.d_t*(par.N_step + 0.5));
+
 				dU = U - U_exact;
 				dV = V - V_exact;
 				dP = P - P_exact;
@@ -84,9 +80,9 @@ void BodyOfProgram(Param par, std::list<Circle> solidList, Matrix U_n, Matrix V_
 				Output_U(dU, "dU", par.N_step, par);
 				//Output_V(dV, "dV", par.N_step, par);
 				Output_P(dP, "dP", par.N_step, par);
-				Output_P(P_exact, "P_exact", par.N_step, par);
-				Output_P(P_n  , "P_n", par.N_step, par);
-				Output_P(P_new, "P_new", par.N_step, par);
+				//Output_P(P_exact, "P_exact", par.N_step, par);
+				//Output_P(P_n    , "P_n"    , par.N_step, par);
+				//Output_P(P_new  , "P_new"  , par.N_step, par);
 			}
 			Output(P, U, V, Fx_new, Fy_new, par.N_step, solidList, par);
 			//Output_U(U, "U", par.N_step, par);

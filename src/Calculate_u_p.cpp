@@ -66,6 +66,10 @@ void Calculate_u_p(Matrix &U_n   , Matrix &U_new,
 			CreateMatrix(B_u, par.N1_u, par.N2_u);										// create matrix filled by 0
 			CreateMatrix(B_v, par.N1_v, par.N2_v);										//
 
+			if (par.BC == Lamb_Oseen || par.BC == Line_Vortex) {
+				BC_exact_p(P_new, par, par.d_t * (par.N_step + 1));
+			}
+
 			B_u = CalculateB(U_n, V_n, U_s, V_s, P_n, P_new, par, Du);                           // RHS for Navier-Stokes non-linear equation
 			B_v = CalculateB(V_n, U_n, V_s, U_s, P_n, P_new, par, Dv);
 
@@ -88,7 +92,7 @@ void Calculate_u_p(Matrix &U_n   , Matrix &U_new,
 			//std::cout << "time of Velocity     : " << end - begin << " " << std::endl;
 		#pragma endregion Velocity
 
-			//Output(P_new, U_new, V_new, Fx, Fy, s, solidList, par);
+			//Output(P_new, U_new, V_new, Fx_new, Fy_new, s, solidList, par);
 
 		#pragma region Force
 			begin = std::clock();
@@ -134,19 +138,17 @@ void Calculate_u_p(Matrix &U_n   , Matrix &U_new,
 		#pragma region New P and U
 
 			if (par.BC == Taylor_Green) {
-				double k1 = M_PI / par.L;
-				double k2 = M_PI / par.H;
-				double time_exp2 = exp(-2 * (k1*k1 + k2*k2) / par.Re * par.d_t * (par.N_step + 1));
+				double time = par.d_t * (par.N_step + 1);
 
 				int i = par.N1 / 2;
 				int j = par.N2 / 2;
 				GeomVec xp = x_p(i, j, par);
-				P_new[i][j] = Taylor_Green_p(xp, k1, k2, time_exp2);
+				P_new[i][j] = exact_p(xp, par, time);
 			}
 
 			P_new += Delta_P * relax;                                                                   // correction of pressure
 
-			//Output_P(P_new, "P", s, par);
+			//Output_P(P_Right, "P_Right_s", s, par);
 
 			if (par.N_step < 0)
 				P_n = P_new;
@@ -186,7 +188,7 @@ void Calculate_u_p(Matrix &U_n   , Matrix &U_new,
 			Solids_velocity_new(solidList, par);
 			if (par.BC == Lamb_Oseen) {
 				for (auto& it : solidList) {
-					it.omega_new[3] = Lamb_Oseen_velocity(it.r, par.Re, par.d_t*(par.N_step + 1)) / it.r;
+					it.omega_new[3] = Lamb_Oseen_omega(it.r, par.Re, par.d_t*(par.N_step + 1));
 				}
 			}
 			std::cout << "s iterations: " << s << std::endl;

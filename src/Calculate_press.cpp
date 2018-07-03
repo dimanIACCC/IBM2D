@@ -12,7 +12,7 @@ double Calculate_Press_correction(Matrix &delta_p, Matrix &b_p, Param par, int &
 	double dy2 = 1.0 / (par.d_y*par.d_y);
 	double A   = 1.0 / (2.0 * (dx2 + dy2));
 
-	double help, p_fix = 0;
+	double p_tmp, p_fix = 0;
 
 	size_t n1 = delta_p.size();
 	size_t n2 = delta_p[0].size();
@@ -24,32 +24,33 @@ double Calculate_Press_correction(Matrix &delta_p, Matrix &b_p, Param par, int &
 		for (size_t i = 1; i < n1-1; ++i){
 			for (size_t j = 1; j < n2-1; ++j){
 
-				help = A * (dx2 * (delta_p[i + 1][j] + delta_p[i - 1][j])
-				          + dy2 * (delta_p[i][j + 1] + delta_p[i][j - 1]) - b_p[i][j]);
+				p_tmp = A * (dx2 * (delta_p[i + 1][j] + delta_p[i - 1][j])
+				           + dy2 * (delta_p[i][j + 1] + delta_p[i][j - 1]) - b_p[i][j]);
 
 				if (par.BC == Taylor_Green && i == par.N1 / 2 && j == par.N2 / 2) {
-					help = 0;
+					p_tmp = 0;
 				}
 
-				if (fabs(help) > delta_p_max) {
-					delta_p_max = fabs(help);
+				if (fabs(p_tmp) > delta_p_max) {
+					delta_p_max = fabs(p_tmp);
 				}
-				if (fabs(help - delta_p[i][j]) > eps){
-					eps = fabs(help - delta_p[i][j] - p_fix);
+				if (fabs(p_tmp - delta_p[i][j]) > eps){
+					eps = fabs(p_tmp - delta_p[i][j] - p_fix);
 				}
 
-				delta_p[i][j] = help;
+				delta_p[i][j] = p_tmp;
 			}
 		}
 
-		if (par.BC == Lamb_Oseen || par.BC == periodical) {
+		// subtract constant pressure to make delta_p = 0 in the centre of the domain
+		if (par.BC == periodical) {
 			p_fix = delta_p[par.N1 / 2][par.N2 / 2];
 			for (size_t i = 1; i < n1 - 1; ++i)
 			for (size_t j = 1; j < n2 - 1; ++j)
 				delta_p[i][j] -= p_fix;
 		}
 
-		if (par.BC == u_infinity || par.BC == u_inflow || par.BC == periodical || par.BC == Taylor_Green || par.BC == Lamb_Oseen) {
+		if (par.BC == u_infinity || par.BC == u_inflow || par.BC == periodical || par.BC == Taylor_Green) {
 
 			// Up-Down BC
 			for (size_t i = 0; i < n1; ++i) {
@@ -71,8 +72,8 @@ double Calculate_Press_correction(Matrix &delta_p, Matrix &b_p, Param par, int &
 		// Periodical Left-Right BC
 		if (par.BC == periodical) {
 			for (size_t j = 0; j < n2; ++j) {
-				delta_p[0][j] = delta_p[n1 - 2][j];        // L
-				delta_p[n1 - 1][j] = delta_p[1][j];        // R
+				delta_p[0     ][j] = delta_p[n1 - 2][j];        // L
+				delta_p[n1 - 1][j] = delta_p[1     ][j];        // R
 			}
 		}
 

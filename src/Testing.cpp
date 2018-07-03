@@ -15,7 +15,7 @@ void DoTesting() {
 	CreateMatrix(U_n, par.N1_u, par.N2_u);
 	CreateMatrix(V_n, par.N1_v, par.N2_v);
 	CreateMatrix(P, par.N1 + 1, par.N2 + 1);
-	ApplyInitialData(U_n, V_n, P, par); // Applying initial data
+	fill_exact(U_n, V_n, P, par, 0.0); // Applying initial data
 
 
 	//1.
@@ -66,7 +66,7 @@ void DoTesting() {
 	//second test
 	for(int i=0;i<V_n.size();i++)
 	std::fill(V_n[i].begin(), V_n[i].end(), 0);
-	ApplyInitialData(U_n, V_n, P, par); // Applying initial data
+	fill_exact(U_n, V_n, P, par, 0.0); // Applying initial data
 	std::cout << "Second test for large Re" << std::endl;
 	par.Re = 100;
 	dir = L"TestsResult\\Overflow(Re=" + to_wstring(par.Re) + (wchar_t)')' + (wchar_t)'\\';

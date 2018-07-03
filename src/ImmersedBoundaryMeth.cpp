@@ -65,15 +65,15 @@ int main(int argc, char *argv[]) {
 
 	if (par.BC == Lamb_Oseen) {
 		for (auto& it : solidList) {
-			it.omega_n[3]   = Lamb_Oseen_velocity(it.r, par.Re, 0.0    ) / it.r;
-			it.omega_new[3] = Lamb_Oseen_velocity(it.r, par.Re, par.d_t) / it.r;
+			it.omega_n[3]   = Lamb_Oseen_omega(it.r, par.Re, 0.0    );
+			it.omega_new[3] = Lamb_Oseen_omega(it.r, par.Re, par.d_t);
 		}
 	}
 
 	CreateMatrix(U_n, par.N1_u, par.N2_u);						// creation matrices for velocity
 	CreateMatrix(V_n, par.N1_v, par.N2_v);						// and pressure
 	CreateMatrix(P, par.N1 + 1, par.N2 + 1);					//
-	ApplyInitialData(U_n, V_n, P, par);                          // Initial conditions for velocity and pressure
+	fill_exact(U_n, V_n, P, par, 0.0);                          // Initial conditions for velocity and pressure
 
 	BodyOfProgram(par, solidList, U_n, V_n, P);					// start solver
 

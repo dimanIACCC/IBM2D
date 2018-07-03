@@ -30,16 +30,7 @@ Param::Param() {
 	SolidName_max = 0;
 	WorkDir = "";
 
-	N1_u = N1 + 2;
-	N2_u = N2 + 1;
-	N1_v = N1 + 1;
-	N2_v = N2 + 2;
-
-	d_x = L / (N1 - 1);
-	d_y = H / (N2 - 1);
-
-	ldxdx = 1 / (d_x*d_x);
-	ldydy = 1 / (d_y*d_y);
+	this->init();
 }
 
 Param::Param(std::string WorkDir, std::string filename) : Param() {
@@ -87,6 +78,14 @@ Param::Param(std::string WorkDir, std::string filename) : Param() {
 
 	this->WorkDir = WorkDir;
 
+	this->init();
+
+}
+Param::Param(std::string WorkDir) : Param() {
+	this->WorkDir = WorkDir;
+}
+
+void Param::init() {
 	N1_u = N1 + 2;
 	N2_u = N2 + 1;
 	N1_v = N1 + 1;
@@ -98,9 +97,15 @@ Param::Param(std::string WorkDir, std::string filename) : Param() {
 	ldxdx = 1 / (d_x*d_x);
 	ldydy = 1 / (d_y*d_y);
 
-}
-Param::Param(std::string WorkDir) : Param() {
-	this->WorkDir = WorkDir;
+	x0[1] = 0.5 * L;
+	x0[2] = 0.5 * H;
+	if (BC == Line_Vortex) {
+		x0[1] = - 0.5 * L;
+		x0[2] = - 0.5 * H;
+	}
+
+	k[1] = M_PI / L;
+	k[2] = M_PI / H;
 }
 
 
@@ -111,6 +116,7 @@ boundary_conditions string_to_BC(std::string s) {
 	else if (s == "periodical"   || s == "2") BC = periodical;
 	else if (s == "Taylor_Green" || s == "3") BC = Taylor_Green;
 	else if (s == "Lamb_Oseen"   || s == "4") BC = Lamb_Oseen;
+	else if (s == "Line_Vortex"  || s == "4") BC = Line_Vortex;
 	else std::cout << "string_to_BC: unknown BC" << std::endl;
 	return BC;
 }
