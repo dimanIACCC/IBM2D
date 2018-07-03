@@ -136,22 +136,30 @@ void BC_exact_p(Matrix &p, Param par, double time) {
 
 	// Up-Down BC
 	for (size_t i = 0; i < Nx; ++i) {
-		GeomVec x_D = (x_p(i, 0     , par) + x_p(i, 1     , par)) * 0.5;
-		GeomVec x_U = (x_p(i, Ny - 1, par) + x_p(i, Ny - 2, par)) * 0.5;
+		//GeomVec x_D = (x_p(i, 0     , par) + x_p(i, 1     , par)) * 0.5;
+		//GeomVec x_U = (x_p(i, Ny - 1, par) + x_p(i, Ny - 2, par)) * 0.5;
+		GeomVec x_D =  x_p(i, 0     , par);
+		GeomVec x_U =  x_p(i, Ny - 1, par);
 		double p_D = exact_p(x_D, par, time);
 		double p_U = exact_p(x_U, par, time);
-		p[i][0     ] = (2 * p_D - p[i][1]);
-		p[i][Ny - 1] = (2 * p_U - p[i][Ny - 2]);
+		//p[i][0     ] = (2 * p_D - p[i][1]);
+		//p[i][Ny - 1] = (2 * p_U - p[i][Ny - 2]);
+		p[i][0     ] = p_D;
+		p[i][Ny - 1] = p_U;
 
 	}
 	// Left-Right BC
 	for (size_t j = 0; j < Ny; ++j) {
-		GeomVec x_L = (x_p(1     , j, par) + x_p(2     , j, par)) * 0.5;
-		GeomVec x_R = (x_p(Nx - 1, j, par) + x_p(Nx - 2, j, par)) * 0.5;
+		//GeomVec x_L = (x_p(0     , j, par) + x_p(1     , j, par)) * 0.5;
+		//GeomVec x_R = (x_p(Nx - 1, j, par) + x_p(Nx - 2, j, par)) * 0.5;
+		GeomVec x_L =  x_p(0     , j, par);
+		GeomVec x_R =  x_p(Nx - 1, j, par);
 		double p_L = exact_p(x_L, par, time);
 		double p_R = exact_p(x_R, par, time);
-		p[0     ][j] = (2 * p_L - p[2     ][j]);
-		p[Nx - 1][j] = (2 * p_R - p[Nx - 2][j]);
+		//p[0     ][j] = (2 * p_L - p[2     ][j]);
+		//p[Nx - 1][j] = (2 * p_R - p[Nx - 2][j]);
+		p[0     ][j] = p_L;
+		p[Nx - 1][j] = p_R;
 	}
 }
 

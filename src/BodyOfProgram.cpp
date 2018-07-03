@@ -16,8 +16,11 @@ void BodyOfProgram(Param par, std::list<Circle> solidList, Matrix U_n, Matrix V_
 	CreateMatrix(V_exact, par.N1_v, par.N2_v);
 	CreateMatrix(P_exact, par.N1 + 1, par.N2 + 1);
 	CreateMatrix(U      , par.N1_u, par.N2_u);
+	CreateMatrix(U_old  , par.N1_u, par.N2_u);
 	CreateMatrix(V      , par.N1_v, par.N2_v);
+	CreateMatrix(V_old  , par.N1_v, par.N2_v);
 	CreateMatrix(P      , par.N1 + 1, par.N2 + 1);
+	CreateMatrix(P_old  , par.N1 + 1, par.N2 + 1);
 	CreateMatrix(dU, par.N1_u, par.N2_u);
 	CreateMatrix(dV, par.N1_v, par.N2_v);
 	CreateMatrix(dP, par.N1 + 1, par.N2 + 1);
@@ -41,7 +44,7 @@ void BodyOfProgram(Param par, std::list<Circle> solidList, Matrix U_n, Matrix V_
 	if (par.BC == Taylor_Green || par.BC == Lamb_Oseen) {
 		history.open(filename);
 		history << "title = history" << std::endl;
-		history << "Variables = n error_U error_V error_P" << std::endl;
+		history << "Variables = n error_U_s error_V_s error_P_s error_U_d error_V_d error_P_d" << std::endl;
 	}
 
 	Output(P_n, U_n, V_n, Fx_n, Fy_n, -1, solidList, par);
@@ -55,35 +58,46 @@ void BodyOfProgram(Param par, std::list<Circle> solidList, Matrix U_n, Matrix V_
 		double eps_u = diff(U_n, U_new);												// calculate maximum difference between current and prior velocity fields
 		double eps_v = diff(V_n, V_new);
 
-		if (par.BC == Taylor_Green && par.N_step == 0) {
-			// if (N_step = 0) replace the solution by the exact one
-			fill_exact(U_n  , V_n  , P_n  , par, par.d_t * par.N_step);
-			fill_exact(U_new, V_new, P_new, par, par.d_t * (par.N_step + 1));
-		}
+		// single averaging
+		U = (U_n + U_new) * 0.5;
+		V = (V_n + V_new) * 0.5;
+		P = (P_n + P_new) * 0.5;
+
+		// step (n + 0.5)
+		fill_exact(U_exact, V_exact, P_exact, par, par.d_t*(par.N_step + 0.5));
+		dU = U - U_exact;
+		dV = V - V_exact;
+		dP = P - P_exact;
+		double max_dU_s = max(dU);
+		double max_dV_s = max(dV);
+		double max_dP_s = max(dP);
+
+		// double averaging
+		if (par.N_step == 0) { P = P_n              ;	U = U_n              ;	V = V_n              ; }
+		else                 { P = (P_old + P) * 0.5;	U = (U_old + U) * 0.5;	V = (V_old + V) * 0.5; }
+		P_old = P;
+		U_old = U;
+		V_old = V;
+
+		//step n
+		fill_exact(U_exact, V_exact, P_exact, par, par.d_t*(par.N_step));
+		dU = U - U_exact;
+		dV = V - V_exact;
+		dP = P - P_exact;
+		double max_dU_d = max(dU);
+		double max_dV_d = max(dV);
+		double max_dP_d = max(dP);
+
+		history << par.N_step << "  " << max_dU_s << "  " << max_dV_s << "  " << max_dP_s
+		                      << "  " << max_dU_d << "  " << max_dV_d << "  " << max_dP_d << std::endl;
 
 		if (par.N_step % par.output_step == 0 || par.N_step < 1000) {
-			U = (U_n + U_new) * 0.5;
-			V = (V_n + V_new) * 0.5;
-			P = (P_n + P_new) * 0.5;
+			Output_U(dU, "dU", par.N_step, par);
+			Output_P(dP, "dP", par.N_step, par);
+			//Output_P(P_exact, "P_exact", par.N_step, par);
+			//Output_P(P_n    , "P_n"    , par.N_step, par);
+			//Output_P(P_new  , "P_new"  , par.N_step, par);
 
-			if (par.BC == Taylor_Green || par.BC == Lamb_Oseen || par.BC == Line_Vortex) {
-
-				fill_exact(U_exact, V_exact, P_exact, par, par.d_t*(par.N_step + 0.5));
-
-				dU = U - U_exact;
-				dV = V - V_exact;
-				dP = P - P_exact;
-				double max_dU = max(dU);
-				double max_dV = max(dV);
-				double max_dP = max(dP);
-				history << par.N_step + 0.5 << "  " << max_dU << "  " << max_dV << "  " << max_dP << std::endl;
-				Output_U(dU, "dU", par.N_step, par);
-				//Output_V(dV, "dV", par.N_step, par);
-				Output_P(dP, "dP", par.N_step, par);
-				//Output_P(P_exact, "P_exact", par.N_step, par);
-				//Output_P(P_n    , "P_n"    , par.N_step, par);
-				//Output_P(P_new  , "P_new"  , par.N_step, par);
-			}
 			Output(P, U, V, Fx_new, Fy_new, par.N_step, solidList, par);
 			//Output_U(U, "U", par.N_step, par);
 			//Output_V(V, "V", par.N_step, par);
