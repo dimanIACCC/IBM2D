@@ -28,6 +28,7 @@ Param::Param() {
 	BC = u_inflow;
 	u_wall = 0;
 	SolidName_max = 0;
+	Lamb_Oseen_r0 = 0.1;
 	WorkDir = "";
 
 	this->init();

@@ -16,7 +16,7 @@ double dux_dy_Poiseuille(double y, double H) {           //    dux/dy for Poiseu
 
 double exact_u(GeomVec x, Param par, double time) {
 	if      (par.BC == Taylor_Green) return Taylor_Green_u(x, par.k , par.Re, time);
-	else if (par.BC == Lamb_Oseen  ) return Lamb_Oseen_u  (x, par.x0, par.Re, time);
+	else if (par.BC == Lamb_Oseen  ) return Lamb_Oseen_u  (x, par.x0, par.Re, time, par.Lamb_Oseen_r0);
 	else if (par.BC == Line_Vortex ) return Line_Vortex_u (x, par.x0, par.Re, time);
 	else if (par.BC == u_infinity  ) return 1.0;
 	else if (par.BC == u_inflow    ) return ux_Poiseuille(x[2], par.H);
@@ -26,7 +26,7 @@ double exact_u(GeomVec x, Param par, double time) {
 
 double exact_v(GeomVec x, Param par, double time) {
 	if      (par.BC == Taylor_Green) return Taylor_Green_v(x, par.k , par.Re, time);
-	else if (par.BC == Lamb_Oseen  ) return Lamb_Oseen_v  (x, par.x0, par.Re, time);
+	else if (par.BC == Lamb_Oseen  ) return Lamb_Oseen_v  (x, par.x0, par.Re, time, par.Lamb_Oseen_r0);
 	else if (par.BC == Line_Vortex ) return Line_Vortex_v (x, par.x0, par.Re, time);
 	else if (par.BC == u_infinity  ) return 0.0;
 	else if (par.BC == u_inflow    ) return 0.0;
@@ -36,7 +36,7 @@ double exact_v(GeomVec x, Param par, double time) {
 
 double exact_p(GeomVec x, Param par, double time) {
 	if      (par.BC == Taylor_Green) return Taylor_Green_p(x, par.k , par.Re, time);
-	else if (par.BC == Lamb_Oseen  ) return Lamb_Oseen_p  (x, par.x0, par.Re, time);
+	else if (par.BC == Lamb_Oseen  ) return Lamb_Oseen_p  (x, par.x0, par.Re, time, par.Lamb_Oseen_r0);
 	else if (par.BC == Line_Vortex ) return Line_Vortex_p (x, par.x0, par.Re, time);
 	else if (par.BC == u_infinity  ) return (par.L - x[1]) * dpdx_Poiseuille(par.H, par.Re);
 	else if (par.BC == u_inflow    ) return (par.L - x[1]) * dpdx_Poiseuille(par.H, par.Re);
@@ -65,45 +65,54 @@ double Taylor_Green_time_exp(GeomVec k, double Re, double time) {
 
 
 
-double Lamb_Oseen_omega(double r, double Re, double time) {
-	double r0 = 0.1;
+double Lamb_Oseen_omega(double r, double Re, double time, double r0) {
 	return (1 - exp(-r*r / (4 / Re * time + r0*r0))) / (2 * M_PI * r*r);
 }
 
-double Lamb_Oseen_u(GeomVec x, GeomVec x0, double Re, double time) {
+double Lamb_Oseen_u(GeomVec x, GeomVec x0, double Re, double time, double r0) {
 	GeomVec r = x - x0;
 	GeomVec omega;
-	omega[3] = Lamb_Oseen_omega(length(r), Re, time);
+	omega[3] = Lamb_Oseen_omega(length(r), Re, time, r0);
 	GeomVec uv = x_product(omega, r);
 	return uv[1];
 }
 
-double Lamb_Oseen_v(GeomVec x, GeomVec x0, double Re, double time) {
+double Lamb_Oseen_v(GeomVec x, GeomVec x0, double Re, double time, double r0) {
 	GeomVec r = x - x0;
 	GeomVec omega;
-	omega[3] = Lamb_Oseen_omega(length(r), Re, time);
+	omega[3] = Lamb_Oseen_omega(length(r), Re, time, r0);
 	GeomVec uv = x_product(omega, r);
 	return uv[2];
 }
 
-double Lamb_Oseen_p(GeomVec x, GeomVec x0, double Re, double time) {
+double Lamb_Oseen_p(GeomVec x, GeomVec x0, double Re, double time, double r0, bool exact) {
 
 	GeomVec dx = x - x0;
 	double r = length(dx);
-	int N = 1000;
-	double dr = r / N;
 
 	if (r < 1e-8) return 0;
 
-	double ri = dr * 0.5;
-	double p = 0;
-	for (int i = 0; i <= N; i++) {
-		double u = Lamb_Oseen_omega(ri, Re, time) * ri;
-		p += u * u / ri * dr;
-		ri += dr;
-	}
+	if (exact) {
+		double a = 4 / Re * time + r0*r0;
+		double rr_a = r*r / a;
+		double exponent_term = (1 - exp(-rr_a)) / r;
 
-	return p;
+		return ((ei(-rr_a) - ei(-2 * rr_a) + log(2)) / a - 0.5 * exponent_term * exponent_term) / (4 * M_PI*M_PI);
+	}
+	else {
+		int N = 2000;
+		double dr = r / N;
+
+		double ri = dr * 0.5;
+		double p = 0;
+		for (int i = 0; i <= N; i++) {
+			double u = Lamb_Oseen_omega(ri, Re, time, r0) * ri;
+			p += u * u / ri * dr;
+			ri += dr;
+		}
+
+		return p;
+	}
 }
 
 double Line_Vortex_u(GeomVec x, GeomVec x0, double Re, double time) {
@@ -133,6 +142,8 @@ double ei(double x) {
 	const double eu = 0.57721566490153286060651209008240243;            // Euler constant
 	double term;                                                        // Term of series
 	double result;
+
+	if (x < -20.) return 0.;
 
 	term = x;
 	result = term;

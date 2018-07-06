@@ -65,8 +65,8 @@ int main(int argc, char *argv[]) {
 
 	if (par.BC == Lamb_Oseen) {
 		for (auto& it : solidList) {
-			it.omega_n[3]   = Lamb_Oseen_omega(it.r, par.Re, 0.0    );
-			it.omega_new[3] = Lamb_Oseen_omega(it.r, par.Re, par.d_t);
+			it.omega_n[3]   = Lamb_Oseen_omega(it.r, par.Re, 0.0    , par.Lamb_Oseen_r0);
+			it.omega_new[3] = Lamb_Oseen_omega(it.r, par.Re, par.d_t, par.Lamb_Oseen_r0);
 		}
 	}
 

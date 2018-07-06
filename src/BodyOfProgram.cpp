@@ -58,6 +58,12 @@ void BodyOfProgram(Param par, std::list<Circle> solidList, Matrix U_n, Matrix V_
 		double eps_u = diff(U_n, U_new);												// calculate maximum difference between current and prior velocity fields
 		double eps_v = diff(V_n, V_new);
 
+		if (par.BC == Taylor_Green && par.N_step == 0) {
+			// if (N_step = 0) replace the solution by the exact one
+			fill_exact(U_n  , V_n  , P_n  , par, par.d_t * par.N_step);
+			fill_exact(U_new, V_new, P_new, par, par.d_t * (par.N_step + 1));
+		}
+
 		// single averaging
 		U = (U_n + U_new) * 0.5;
 		V = (V_n + V_new) * 0.5;

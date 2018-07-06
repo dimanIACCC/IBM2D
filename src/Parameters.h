@@ -40,6 +40,7 @@ public:
 	boundary_conditions BC;   // Boundary Conditions
 	GeomVec x0;               // Special point in test problems Lamb_Oseen and Line_Vortex
 	GeomVec k;                // Spatial frequencies for Taylor_Green vortices
+	double Lamb_Oseen_r0;     // initial radius of Lamb_Oseen vortex
 	double u_wall;            // velocity of the channel walls
 	int SolidName_max;        // Maximal Name of Solids
 	std::string WorkDir;      // WorkDir

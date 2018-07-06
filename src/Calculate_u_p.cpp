@@ -188,7 +188,7 @@ void Calculate_u_p(Matrix &U_n   , Matrix &U_new,
 			Solids_velocity_new(solidList, par);
 			if (par.BC == Lamb_Oseen) {
 				for (auto& it : solidList) {
-					it.omega_new[3] = Lamb_Oseen_omega(it.r, par.Re, par.d_t*(par.N_step + 1));
+					it.omega_new[3] = Lamb_Oseen_omega(it.r, par.Re, par.d_t*(par.N_step + 1), par.Lamb_Oseen_r0);
 				}
 			}
 			std::cout << "s iterations: " << s << std::endl;

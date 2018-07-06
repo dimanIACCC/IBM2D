@@ -163,3 +163,22 @@ void BC_exact_p(Matrix &p, Param par, double time) {
 	}
 }
 
+void Lamb_Oseen_p_test(Param par, double time) {
+
+	GeomVec x0 = par.x0;
+	GeomVec x = par.x0;
+
+
+	std::ofstream Ei_bug;
+	std::string filename = par.WorkDir + "/Ei_bug.plt";
+	Ei_bug.open(filename);
+	Ei_bug << "title = Ei_bug" << std::endl;
+	Ei_bug << "Variables = x P_integral P_Ei d_P" << std::endl;
+
+	for (size_t i = 0; i < 500; ++i) {
+		x[1] += 0.001;
+		double P_integral = Lamb_Oseen_p(x, x0, par.Re, time, par.Lamb_Oseen_r0, false);
+		double P_Ei       = Lamb_Oseen_p(x, x0, par.Re, time, par.Lamb_Oseen_r0, true);
+		Ei_bug << x[1] << " " << P_integral << " " << P_Ei << " " << P_integral - P_Ei << std::endl;;
+	}
+}

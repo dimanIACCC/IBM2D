@@ -13,3 +13,5 @@ void fill_exact_u(Matrix &u, Param par, double time);
 void fill_exact_v(Matrix &v, Param par, double time);
 void fill_exact_p(Matrix &p, Param par, double time);
 void BC_exact_p  (Matrix &p, Param par, double time);
+
+void Lamb_Oseen_p_test(Param par, double time);
