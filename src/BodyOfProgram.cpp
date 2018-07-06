@@ -16,9 +16,7 @@ void BodyOfProgram(Param par, std::list<Circle> solidList, Matrix U_n, Matrix V_
 	CreateMatrix(V_exact, par.N1_v, par.N2_v);
 	CreateMatrix(P_exact, par.N1 + 1, par.N2 + 1);
 	CreateMatrix(U      , par.N1_u, par.N2_u);
-	CreateMatrix(U_old  , par.N1_u, par.N2_u);
 	CreateMatrix(V      , par.N1_v, par.N2_v);
-	CreateMatrix(V_old  , par.N1_v, par.N2_v);
 	CreateMatrix(P      , par.N1 + 1, par.N2 + 1);
 	CreateMatrix(P_old  , par.N1 + 1, par.N2 + 1);
 	CreateMatrix(dU, par.N1_u, par.N2_u);
@@ -79,11 +77,11 @@ void BodyOfProgram(Param par, std::list<Circle> solidList, Matrix U_n, Matrix V_
 		double max_dP_s = max(dP);
 
 		// double averaging
-		if (par.N_step == 0) { P = P_n              ;	U = U_n              ;	V = V_n              ; }
-		else                 { P = (P_old + P) * 0.5;	U = (U_old + U) * 0.5;	V = (V_old + V) * 0.5; }
+		if (par.N_step == 0) P = P_n;
+		else                 P = (P_old + P) * 0.5;
+		U = U_n;
+		V = V_n;
 		P_old = P;
-		U_old = U;
-		V_old = V;
 
 		//step n
 		fill_exact(U_exact, V_exact, P_exact, par, par.d_t*(par.N_step));
