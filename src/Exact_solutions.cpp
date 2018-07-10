@@ -72,6 +72,8 @@ double Lamb_Oseen_omega(double r, double Re, double time, double r0) {
 double Lamb_Oseen_u(GeomVec x, GeomVec x0, double Re, double time, double r0) {
 	GeomVec r = x - x0;
 	GeomVec omega;
+	omega[1] = 0.;
+	omega[2] = 0.;
 	omega[3] = Lamb_Oseen_omega(length(r), Re, time, r0);
 	GeomVec uv = x_product(omega, r);
 	return uv[1];
@@ -80,6 +82,8 @@ double Lamb_Oseen_u(GeomVec x, GeomVec x0, double Re, double time, double r0) {
 double Lamb_Oseen_v(GeomVec x, GeomVec x0, double Re, double time, double r0) {
 	GeomVec r = x - x0;
 	GeomVec omega;
+	omega[1] = 0.;
+	omega[2] = 0.;
 	omega[3] = Lamb_Oseen_omega(length(r), Re, time, r0);
 	GeomVec uv = x_product(omega, r);
 	return uv[2];
