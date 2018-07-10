@@ -101,8 +101,8 @@ void Param::init() {
 	x0[1] = 0.5 * L;
 	x0[2] = 0.5 * H;
 	if (BC == Line_Vortex) {
-		x0[1] = - 0.5 * L;
-		x0[2] = - 0.5 * H;
+		x0[1] = -0.5 * L;
+		x0[2] = -0.5 * H;
 	}
 
 	k[1] = M_PI / L;
@@ -117,7 +117,7 @@ boundary_conditions string_to_BC(std::string s) {
 	else if (s == "periodical"   || s == "2") BC = periodical;
 	else if (s == "Taylor_Green" || s == "3") BC = Taylor_Green;
 	else if (s == "Lamb_Oseen"   || s == "4") BC = Lamb_Oseen;
-	else if (s == "Line_Vortex"  || s == "4") BC = Line_Vortex;
+	else if (s == "Line_Vortex"  || s == "5") BC = Line_Vortex;
 	else std::cout << "string_to_BC: unknown BC" << std::endl;
 	return BC;
 }

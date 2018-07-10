@@ -27,8 +27,9 @@ Matrix Operator_Ax(Template &A, Matrix &u, Param par, Direction Dir) {
 	size_t Ny = u[0].size();
 
 	CreateMatrix(result, Nx, Ny);
+	CreateMatrix(u_n, Nx, Ny);
 
-	Boundary_Conditions(u, par, Dir, -1);
+	Boundary_Conditions(u_n, u, par, Dir, -1.);
 
 	// For direction Du  (U, R, D, L)  are  (up, right, down, left)  neighbour elements in matrix u[i][j]
 	// For direction Dv  (U, R, D, L)  are  (up, right, down, left)  neighbour elements in transpose matrix (v[i][j])^T
@@ -84,7 +85,7 @@ Matrix CalculateB(Matrix &u_n, Matrix &v_n, Matrix &u_s, Matrix &v_s, Matrix &p,
 		}
 	}
 
-	Boundary_Conditions(u_s, par, Dir, par.N_step + 1);
+	Boundary_Conditions(u_n, u_s, par, Dir, par.d_t * (par.N_step + 0.5));
 
 	return result;
 }

@@ -15,9 +15,13 @@ void BodyOfProgram(Param par, std::list<Circle> solidList, Matrix U_n, Matrix V_
 	CreateMatrix(U_exact, par.N1_u, par.N2_u);
 	CreateMatrix(V_exact, par.N1_v, par.N2_v);
 	CreateMatrix(P_exact, par.N1 + 1, par.N2 + 1);
+	CreateMatrix(U_exact_n, par.N1_u, par.N2_u);
+	CreateMatrix(V_exact_n, par.N1_v, par.N2_v);
+	CreateMatrix(P_exact_n, par.N1 + 1, par.N2 + 1);
 	CreateMatrix(U      , par.N1_u, par.N2_u);
 	CreateMatrix(V      , par.N1_v, par.N2_v);
 	CreateMatrix(P      , par.N1 + 1, par.N2 + 1);
+	CreateMatrix(P_d    , par.N1 + 1, par.N2 + 1);
 	CreateMatrix(P_old  , par.N1 + 1, par.N2 + 1);
 	CreateMatrix(dU, par.N1_u, par.N2_u);
 	CreateMatrix(dV, par.N1_v, par.N2_v);
@@ -39,7 +43,7 @@ void BodyOfProgram(Param par, std::list<Circle> solidList, Matrix U_n, Matrix V_
 
 	std::ofstream history;
 	std::string filename = par.WorkDir + "/history.plt";
-	if (par.BC == Taylor_Green || par.BC == Lamb_Oseen) {
+	if (par.BC == Taylor_Green || par.BC == Lamb_Oseen || par.BC == Line_Vortex) {
 		history.open(filename);
 		history << "title = history" << std::endl;
 		history << "Variables = n error_U_s error_V_s error_P_s error_U_d error_V_d error_P_d" << std::endl;
@@ -56,7 +60,7 @@ void BodyOfProgram(Param par, std::list<Circle> solidList, Matrix U_n, Matrix V_
 		double eps_u = diff(U_n, U_new);												// calculate maximum difference between current and prior velocity fields
 		double eps_v = diff(V_n, V_new);
 
-		if (par.BC == Taylor_Green && par.N_step == 0) {
+		if ((par.BC == Taylor_Green || par.BC == Line_Vortex) && par.N_step == 0) {
 			// if (N_step = 0) replace the solution by the exact one
 			fill_exact(U_n  , V_n  , P_n  , par, par.d_t * par.N_step);
 			fill_exact(U_new, V_new, P_new, par, par.d_t * (par.N_step + 1));
@@ -72,33 +76,29 @@ void BodyOfProgram(Param par, std::list<Circle> solidList, Matrix U_n, Matrix V_
 		dU = U - U_exact;
 		dV = V - V_exact;
 		dP = P - P_exact;
-		double max_dU_s = max(dU);
-		double max_dV_s = max(dV);
-		double max_dP_s = max(dP);
+		double max_dU = max(dU);
+		double max_dV = max(dV);
+		double max_dP = max(dP);
 
 		// double averaging
-		if (par.N_step == 0) P = P_n;
-		else                 P = (P_old + P) * 0.5;
-		U = U_n;
-		V = V_n;
+		if (par.N_step == 0) P_d = P_n;
+		else                 P_d = (P_old + P) * 0.5;
 		P_old = P;
 
 		//step n
-		fill_exact(U_exact, V_exact, P_exact, par, par.d_t*(par.N_step));
-		dU = U - U_exact;
-		dV = V - V_exact;
-		dP = P - P_exact;
-		double max_dU_d = max(dU);
-		double max_dV_d = max(dV);
-		double max_dP_d = max(dP);
+		fill_exact(U_exact_n, V_exact_n, P_exact_n, par, par.d_t*(par.N_step));
+		double max_dU_n = max(U_n - U_exact_n);
+		double max_dV_n = max(V_n - V_exact_n);
+		double max_dP_d = max(P_d - P_exact_n);
 
-		history << par.N_step << "  " << max_dU_s << "  " << max_dV_s << "  " << max_dP_s
-		                      << "  " << max_dU_d << "  " << max_dV_d << "  " << max_dP_d << std::endl;
+		history << par.N_step << "  " << max_dU   / max(U_exact  ) << "  " << max_dV   / max(V_exact  ) << "  " << max_dP   / max(P_exact  )
+		                      << "  " << max_dU_n / max(U_exact_n) << "  " << max_dV_n / max(V_exact_n) << "  " << max_dP_d / max(P_exact_n) << std::endl;
 
 		if (par.N_step % par.output_step == 0 || par.N_step < 1000) {
 			Output_U(dU, "dU", par.N_step, par);
 			Output_P(dP, "dP", par.N_step, par);
 			//Output_P(P_exact, "P_exact", par.N_step, par);
+			//Output_U(U_exact, "U_exact", par.N_step, par);
 			//Output_P(P_n    , "P_n"    , par.N_step, par);
 			//Output_P(P_new  , "P_new"  , par.N_step, par);
 

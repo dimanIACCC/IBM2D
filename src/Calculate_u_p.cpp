@@ -58,6 +58,16 @@ void Calculate_u_p(Matrix &U_n   , Matrix &U_new,
 	output << "Variables = s ux uy omega f IntU tau IntUr" << std::endl;
 	output << "Variables = s  N_BiCGStab_u  N_BiCGStab_v  N_DeltaP" << std::endl;*/
 
+	if (par.BC == Taylor_Green) {
+		int i = par.N1 / 2;
+		int j = par.N2 / 2;
+		double p_fix = 2 * exact_p(x_p(i, j, par), par, par.d_t * (par.N_step + 0.5)) - 2 * P_n[i][j];
+
+		for (i = 0; i < P_new.size(); ++i)
+		for (j = 0; j < P_new[0].size(); ++j)
+			P_new[i][j] = P_n[i][j] + p_fix;
+	}
+
 	int s_max = 1000;
 	// start iterations for pressure and velocity to fulfill the conituity equation
 	for (int s = 0; s <= s_max; ++s) {													// cycle while (delta_P / P > eps_P)
@@ -67,7 +77,7 @@ void Calculate_u_p(Matrix &U_n   , Matrix &U_new,
 			CreateMatrix(B_v, par.N1_v, par.N2_v);										//
 
 			if (par.BC == Lamb_Oseen || par.BC == Line_Vortex) {
-				BC_exact_p(P_new, par, par.d_t * (par.N_step + 1));
+				BC_exact_p(P_n, P_new, par, par.d_t * (par.N_step + 0.5));
 			}
 
 			B_u = CalculateB(U_n, V_n, U_s, V_s, P_n, P_new, par, Du);                           // RHS for Navier-Stokes non-linear equation
@@ -136,15 +146,6 @@ void Calculate_u_p(Matrix &U_n   , Matrix &U_new,
 		#pragma endregion Pressure
 
 		#pragma region New P and U
-
-			if (par.BC == Taylor_Green) {
-				double time = par.d_t * (par.N_step + 1);
-
-				int i = par.N1 / 2;
-				int j = par.N2 / 2;
-				GeomVec xp = x_p(i, j, par);
-				P_new[i][j] = exact_p(xp, par, time);
-			}
 
 			P_new += Delta_P * relax;                                                                   // correction of pressure
 
