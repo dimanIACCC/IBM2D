@@ -60,12 +60,6 @@ void BodyOfProgram(Param par, std::list<Circle> solidList, Matrix U_n, Matrix V_
 		double eps_u = diff(U_n, U_new);												// calculate maximum difference between current and prior velocity fields
 		double eps_v = diff(V_n, V_new);
 
-		if ((par.BC == Taylor_Green || par.BC == Line_Vortex) && par.N_step == 0) {
-			// if (N_step = 0) replace the solution by the exact one
-			fill_exact(U_n  , V_n  , P_n  , par, par.d_t * par.N_step);
-			fill_exact(U_new, V_new, P_new, par, par.d_t * (par.N_step + 1));
-		}
-
 		// single averaging
 		U = (U_n + U_new) * 0.5;
 		V = (V_n + V_new) * 0.5;
@@ -97,10 +91,16 @@ void BodyOfProgram(Param par, std::list<Circle> solidList, Matrix U_n, Matrix V_
 		if (par.N_step % par.output_step == 0 || par.N_step < 1000) {
 			Output_U(dU, "dU", par.N_step, par);
 			Output_P(dP, "dP", par.N_step, par);
+
+			//Output_P(P      , "P"      , par.N_step, par);
 			//Output_P(P_exact, "P_exact", par.N_step, par);
-			//Output_U(U_exact, "U_exact", par.N_step, par);
 			//Output_P(P_n    , "P_n"    , par.N_step, par);
 			//Output_P(P_new  , "P_new"  , par.N_step, par);
+
+			//Output_U(U      , "U"      , par.N_step, par);
+			//Output_U(U_exact, "U_exact", par.N_step, par);
+			//Output_U(U_n    , "U_n"    , par.N_step, par);
+			//Output_U(U_new  , "U_new"  , par.N_step, par);
 
 			Output(P, U, V, Fx_new, Fy_new, par.N_step, solidList, par);
 			//Output_U(U, "U", par.N_step, par);

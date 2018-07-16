@@ -28,7 +28,7 @@ Param::Param() {
 	BC = u_inflow;
 	u_wall = 0;
 	SolidName_max = 0;
-	Lamb_Oseen_r0 = 0.1;
+	Lamb_Oseen_r0 = 0.2;
 	WorkDir = "";
 
 	this->init();
@@ -105,8 +105,8 @@ void Param::init() {
 		x0[2] = -0.5 * H;
 	}
 
-	k[1] = M_PI / L;
-	k[2] = M_PI / H;
+	k[1] = 2 * M_PI / L;
+	k[2] = 2 * M_PI / H;
 }
 
 

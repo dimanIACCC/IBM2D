@@ -76,7 +76,7 @@ void Calculate_u_p(Matrix &U_n   , Matrix &U_new,
 			CreateMatrix(B_u, par.N1_u, par.N2_u);										// create matrix filled by 0
 			CreateMatrix(B_v, par.N1_v, par.N2_v);										//
 
-			if (par.BC == Lamb_Oseen || par.BC == Line_Vortex) {
+			if (par.BC == Lamb_Oseen || par.BC == Line_Vortex || par.BC == Taylor_Green) {
 				BC_exact_p(P_n, P_new, par, par.d_t * (par.N_step + 0.5));
 			}
 
@@ -136,7 +136,7 @@ void Calculate_u_p(Matrix &U_n   , Matrix &U_new,
 
 			double Delta_P_max = Calculate_Press_correction(Delta_P, P_Right, par, N_DeltaP);       // Zeidel method for solving Poisson equation
 
-			double P_max = std::max(max(P_new), 1.e-4);
+			double P_max = std::max(max(P_new), 1.e-14);
 			double relax = std::min(0.05 * std::max(pow(P_max / Delta_P_max, 1), 1.), 1.5);						// coefficient of relaxation
 
 			std::cout  << "s = " << s << ", delta_P / P = " << Delta_P_max / P_max << ", relax = " << relax << std::endl;

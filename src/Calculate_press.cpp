@@ -39,14 +39,15 @@ double Calculate_Press_correction(Matrix &delta_p, Matrix &b_p, Param par, int &
 		}
 
 		// subtract constant pressure to make delta_p = 0 in the centre of the domain
-		if (par.BC == periodical || par.BC == Taylor_Green) {
+		//if (par.BC == periodical || par.BC == Taylor_Green) {
+		if (par.BC == periodical) {
 			p_fix = delta_p[par.N1 / 2][par.N2 / 2];
 			for (size_t i = 1; i < n1 - 1; ++i)
 			for (size_t j = 1; j < n2 - 1; ++j)
 				delta_p[i][j] -= p_fix;
 		}
 
-		if (par.BC == u_infinity || par.BC == u_inflow || par.BC == periodical || par.BC == Taylor_Green) {
+		if (par.BC == u_infinity || par.BC == u_inflow || par.BC == periodical) {
 
 			// Up-Down BC
 			for (size_t i = 0; i < n1; ++i) {
