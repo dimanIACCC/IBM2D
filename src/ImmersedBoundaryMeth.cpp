@@ -72,7 +72,7 @@ int main(int argc, char *argv[]) {
 
 	CreateMatrix(U_n, par.N1_u, par.N2_u);						// creation matrices for velocity
 	CreateMatrix(V_n, par.N1_v, par.N2_v);						// and pressure
-	CreateMatrix(P, par.N1 + 1, par.N2 + 1);					//
+	CreateMatrix(P  , par.N1_p, par.N2_p);					//
 	fill_exact(U_n, V_n, P, par, 0.0);                          // Initial conditions for velocity and pressure
 
 	BodyOfProgram(par, solidList, U_n, V_n, P);					// start solver
@@ -85,7 +85,7 @@ int main(int argc, char *argv[]) {
 }
 
 //this method is restoring calculated values to continue calculations
-void Awake(int& n0, Param& par, std::list<Circle>& solidList, Matrix& U_n, Matrix& V_n, Matrix& P) {
+void Awake(int& n0, Param& par, std::list<Circle>& solidList, Matrix& U_n, Matrix& V_n, Matrix& P_n) {
 	std::ifstream hibernation_source;
 	std::string line;
 	std::string PAR, VALUE;
@@ -134,27 +134,27 @@ void Awake(int& n0, Param& par, std::list<Circle>& solidList, Matrix& U_n, Matri
 				}
 			}
 		    else if (line == "U_n{") {
-				U_n.resize(par.N1);
-				for (int i = 0; i < par.N1; i++)U_n[i].resize(par.N2 + 1);
-				for (int i = 0; i < par.N1; i++)
-					for (int j = 0; j < par.N2 + 1; j++) hibernation_source >> U_n[i][j];
+				U_n.resize(par.N1_u);
+				for (int i = 0; i < par.N1_u; i++) U_n[i].resize(par.N2_u);
+				for (int i = 0; i < par.N1_u; i++)
+					for (int j = 0; j < par.N2_u; j++) hibernation_source >> U_n[i][j];
 
 
 				if (hibernation_source >> ch && ch != '}') std::cout << "Some troubles in U_n" << std::endl;
 			}
 			else if (line == "V_n{") {
-				V_n.resize(par.N1 + 1);
-				for (int i = 0; i < par.N1 + 1; i++)V_n[i].resize(par.N2);
-				for (int i = 0; i < par.N1 + 1; i++)
-					for (int j = 0; j < par.N2; j++) hibernation_source >> V_n[i][j];
+				V_n.resize(par.N1_v);
+				for (int i = 0; i < par.N1_v; i++) V_n[i].resize(par.N2_v);
+				for (int i = 0; i < par.N1_v; i++)
+					for (int j = 0; j < par.N2_v; j++) hibernation_source >> V_n[i][j];
 
 				if (hibernation_source >> ch && ch != '}') std::cout << "Some troubles in V_n" << std::endl;
 			}
-			else if (line == "P{") {
-				P.resize(par.N1 + 1);
-				for (int i = 0; i < par.N1 + 1; i++)P[i].resize(par.N2 + 1);
-				for (int i = 0; i < par.N1 + 1; i++)
-					for (int j = 0; j < par.N2 + 1; j++) hibernation_source >> P[i][j];
+			else if (line == "P_n{") {
+				P_n.resize(par.N1_p);
+				for (int i = 0; i < par.N1_p; i++) P_n[i].resize(par.N2_p);
+				for (int i = 0; i < par.N1_p; i++)
+					for (int j = 0; j < par.N2_p; j++) hibernation_source >> P_n[i][j];
 
 				if (hibernation_source >> ch && ch != '}') std::cout << "Some troubles in P" << std::endl;
 			}

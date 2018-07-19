@@ -20,13 +20,13 @@ void Calculate_u_p(Matrix &U_n   , Matrix &U_new,
 
 	CreateMatrix(U_s, par.N1_u, par.N2_u);
 	CreateMatrix(V_s, par.N1_v, par.N2_v);
-	CreateMatrix(P_Right, par.N1 + 1, par.N2 + 1);
-	CreateMatrix(Delta_P, par.N1 + 1, par.N2 + 1);
-	CreateMatrix(P      , par.N1 + 1, par.N2 + 1);
+	CreateMatrix(P_Right, par.N1_p, par.N2_p);
+	CreateMatrix(Delta_P, par.N1_p, par.N2_p);
+	CreateMatrix(P      , par.N1_p, par.N2_p);
 
-	CreateMatrix(Exx, par.N1 + 1, par.N2 + 1);
-	CreateMatrix(Eyy, par.N1 + 1, par.N2 + 1);
-	CreateMatrix(Exy, par.N1, par.N2);
+	CreateMatrix(Exx, par.N1_p, par.N2_p);
+	CreateMatrix(Eyy, par.N1_p, par.N2_p);
+	CreateMatrix(Exy, par.N1+1, par.N2+1);
 
 	int N_BiCGStab_u, N_BiCGStab_v, N_DeltaP;
 

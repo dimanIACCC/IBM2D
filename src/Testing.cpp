@@ -14,7 +14,7 @@ void DoTesting() {
 	solidList.push_back(c);
 	CreateMatrix(U_n, par.N1_u, par.N2_u);
 	CreateMatrix(V_n, par.N1_v, par.N2_v);
-	CreateMatrix(P, par.N1 + 1, par.N2 + 1);
+	CreateMatrix(P  , par.N1_p, par.N2_p);
 	fill_exact(U_n, V_n, P, par, 0.0); // Applying initial data
 
 

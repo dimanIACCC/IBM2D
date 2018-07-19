@@ -24,9 +24,9 @@ void Output_U(Matrix u, std::string filename, int n, Param par) {
 					xu = (x_u(i, 0, par) + x_u(i, 1, par))*0.5;
 					U = (u[i][0] + u[i][1])*0.5;
 				}
-				if (j == par.N2) {
-					xu = (x_u(i, par.N2, par) + x_u(i, par.N2 - 1, par))*0.5;
-					U = (u[i][par.N2] + u[i][par.N2 - 1])*0.5;
+				if (j == par.N2_u - 1) {
+					xu = (x_u(i, par.N2_u - 1, par) + x_u(i, par.N2_u - 2, par))*0.5;
+					U = (u[i][par.N2_u - 1] + u[i][par.N2_u - 2])*0.5;
 				}
 			}
 			output << xu[1] << ' ' << xu[2] << ' ' << U << std::endl;
@@ -61,9 +61,9 @@ void Output_V(Matrix v, std::string filename, int n, Param par) {
 					xv = (x_v(0, j, par) + x_v(1, j, par))*0.5;
 					V = (v[0][j] + v[1][j])*0.5;
 				}
-				if (i == par.N1) {
-					xv = (x_v(par.N1, j, par) + x_v(par.N1 - 1, j, par))*0.5;
-					V = (v[par.N1][j] + v[par.N1 - 1][j])*0.5;
+				if (i == par.N1_v - 1) {
+					xv = (x_v(par.N1_v - 1, j, par) + x_v(par.N1_v - 2, j, par))*0.5;
+					V = (v[par.N1_v - 1][j] + v[par.N1_v - 2][j])*0.5;
 				}
 			}
 			output << xv[1] << ' ' << xv[2] << ' '  << V << std::endl;
@@ -82,11 +82,11 @@ void Output(Matrix p, Matrix u, Matrix v, Matrix Fx, Matrix Fy, int n, std::list
 
 	output << "title = " << '"' << filename << '"' << std::endl;
 	output << "Variables = x y p u v fx fy tx ty" << std::endl;
-	output << "zone T=" << '"' << n << '"' << ",  i=" << par.N1 + 1 << ", j=" << par.N2 + 1 << ", f=point" << std::endl;
+	output << "zone T=" << '"' << n << '"' << ",  i=" << par.N1_p << ", j=" << par.N2_p << ", f=point" << std::endl;
 	output << "SolutionTime = " << n << std::endl;
 
-	for (int j = 0; j <= par.N2; ++j) {
-		for (int i = 0; i <= par.N1; ++i) {
+	for (int j = 0; j < par.N2_p; ++j) {
+		for (int i = 0; i < par.N1_p; ++i) {
 			GeomVec xp = x_p(i, j, par);
 
 			double u_, v_, Fx_, Fy_;
@@ -219,8 +219,8 @@ void Output_P(Matrix P, std::string filename, int n, Param par) {
 	output << "zone T=" << '"' << n << '"' << ",  i=" << P.size() << ", j=" << P[0].size() << ", f=point" << std::endl;
 	output << "SolutionTime = " << n << std::endl;
 
-	for (int j = 0; j <= par.N2; ++j) {
-		for (int i = 0; i <= par.N1; ++i) {
+	for (int j = 0; j < par.N2_p; ++j) {
+		for (int i = 0; i < par.N1_p; ++i) {
 			GeomVec xp = x_p(i, j, par);
 			output << xp[1] << " " << xp[2] << " " << P[i][j] << std::endl;
 		}
@@ -241,8 +241,8 @@ void Output_c(Matrix c, std::string filename, int n, Param par) {
 	output << "zone T=" << '"' << n << '"' << ",  i=" << c.size() << ", j=" << c[0].size() << ", f=point" << std::endl;
 	output << "SolutionTime = " << n << std::endl;
 
-	for (int j = 0; j < par.N2; ++j) {
-		for (int i = 0; i < par.N1; ++i) {
+	for (int j = 0; j < par.N2 + 1; ++j) {
+		for (int i = 0; i < par.N1 + 1; ++i) {
 			GeomVec xc = x_c(i, j, par);
 			output << xc[1] << " " << xc[2] << " " << c[i][j] << std::endl;
 		}
@@ -251,7 +251,7 @@ void Output_c(Matrix c, std::string filename, int n, Param par) {
 	output.close();
 }
 
-void MakeHibernationFile(int n, Param& par, std::list<Circle>& solidList, Matrix& U_n, Matrix& V_n, Matrix& P) {
+void MakeHibernationFile(int n, Param& par, std::list<Circle>& solidList, Matrix& U_n, Matrix& V_n, Matrix& P_n) {
 	std::ofstream output;
 	std::string filename = par.WorkDir + "hibernation.txt";
 	output.open(filename);
@@ -284,22 +284,22 @@ void MakeHibernationFile(int n, Param& par, std::list<Circle>& solidList, Matrix
 	output << "}" << std::endl;
 
 	output << "U_n{" << std::endl;
-	for (int i = 0; i < par.N1; i++) {
-		for (int j = 0; j < par.N2 + 1; j++) output << U_n[i][j] << ' ';
+	for (int i = 0; i < par.N1_u; i++) {
+		for (int j = 0; j < par.N2_u; j++) output << U_n[i][j] << ' ';
 		output << std::endl;
 	}
 	output << "}" << std::endl;
 
 	output << "V_n{" << std::endl;
-	for (int i = 0; i < par.N1 + 1; i++) {
-		for (int j = 0; j < par.N2; j++) output << V_n[i][j] << ' ';
+	for (int i = 0; i < par.N1_v; i++) {
+		for (int j = 0; j < par.N2_v; j++) output << V_n[i][j] << ' ';
 		output << std::endl;
 	}
 	output << "}" << std::endl;
 
-	output << "P{" << std::endl;
-	for (int i = 0; i < par.N1 + 1; i++) {
-		for (int j = 0; j < par.N2 + 1; j++) output << P[i][j] << ' ';
+	output << "P_n{" << std::endl;
+	for (int i = 0; i < par.N1_p; i++) {
+		for (int j = 0; j < par.N2_p; j++) output << P_n[i][j] << ' ';
 		output << std::endl;
 	}
 	output << "}" << std::endl;

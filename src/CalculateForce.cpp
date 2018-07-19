@@ -235,14 +235,14 @@ void CalculateForce(Matrix &Fx, Matrix &Fy, std::list<Circle> &iList, Matrix& u,
 	// copy force to non-used boundary nodes
 	if (par.BC == periodical) {
 		for (size_t j = 0; j < par.N2_u; ++j) {
-			Fx[0         ][j] = Fx[par.N1 - 1][j];
-			Fx[par.N1 + 1][j] = Fx[2         ][j];
-			Fx[1         ][j] = Fx[par.N1    ][j];
+			Fx[0         ][j] = Fx[par.N1    ][j];
+			Fx[par.N1 + 2][j] = Fx[2         ][j];
+			Fx[1         ][j] = Fx[par.N1 + 1][j];
 		}
 
 		for (size_t j = 0; j < par.N2_v; ++j) {
-			Fy[0     ][j] = Fy[par.N1 - 1][j];
-			Fy[par.N1][j] = Fy[1         ][j];
+			Fy[0         ][j] = Fy[par.N1    ][j];
+			Fy[par.N1 + 1][j] = Fy[1         ][j];
 		}
 	}
 
@@ -250,8 +250,8 @@ void CalculateForce(Matrix &Fx, Matrix &Fy, std::list<Circle> &iList, Matrix& u,
 
 void deformation_velocity(Matrix &u, Matrix &v, Matrix &Exx, Matrix &Eyy, Matrix &Exy, Param par) {
 
-	size_t n1 = par.N1 + 1;
-	size_t n2 = par.N2 + 1;
+	size_t n1 = par.N1_p;
+	size_t n2 = par.N2_p;
 
 	for (size_t i = 1; i < n1 - 1; ++i) {
 		for (size_t j = 1; j < n2 - 1; ++j) {
@@ -262,8 +262,8 @@ void deformation_velocity(Matrix &u, Matrix &v, Matrix &Exx, Matrix &Eyy, Matrix
 		}
 	}
 
-	n1 = par.N1;
-	n2 = par.N2;
+	n1 = par.N1 + 1;
+	n2 = par.N2 + 1;
 
 	for (size_t i = 0; i < n1; ++i) {
 		for (size_t j = 0; j < n2; ++j) {
@@ -278,11 +278,11 @@ void deformation_velocity(Matrix &u, Matrix &v, Matrix &Exx, Matrix &Eyy, Matrix
 
 void Solids_deformation_velocity_pressure(std::list<Circle> &Solids, Matrix &Exx, Matrix &Eyy, Matrix &Exy, Matrix &p, Param par) {
 
-	size_t np1 = par.N1 + 1;
-	size_t np2 = par.N2 + 1;
+	size_t np1 = par.N1_p;
+	size_t np2 = par.N2_p;
 
-	size_t nc1 = par.N1;
-	size_t nc2 = par.N2;
+	size_t nc1 = par.N1 + 1;
+	size_t nc2 = par.N2 + 1;
 
 	for (auto& solid : Solids) {
 

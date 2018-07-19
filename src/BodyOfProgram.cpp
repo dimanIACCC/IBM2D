@@ -6,7 +6,7 @@ void BodyOfProgram(Param par, std::list<Circle> solidList, Matrix U_n, Matrix V_
 #pragma region SetMatrices 
 	CreateMatrix(U_new, par.N1_u, par.N2_u);
 	CreateMatrix(V_new, par.N1_v, par.N2_v);
-	CreateMatrix(P_new, par.N1 + 1, par.N2 + 1);
+	CreateMatrix(P_new, par.N1_p, par.N2_p);
 	CreateMatrix(Fx_n  , par.N1_u, par.N2_u);
 	CreateMatrix(Fy_n  , par.N1_v, par.N2_v);
 	CreateMatrix(Fx_new, par.N1_u, par.N2_u);
@@ -14,18 +14,18 @@ void BodyOfProgram(Param par, std::list<Circle> solidList, Matrix U_n, Matrix V_
 
 	CreateMatrix(U_exact, par.N1_u, par.N2_u);
 	CreateMatrix(V_exact, par.N1_v, par.N2_v);
-	CreateMatrix(P_exact, par.N1 + 1, par.N2 + 1);
+	CreateMatrix(P_exact, par.N1_p, par.N2_p);
 	CreateMatrix(U_exact_n, par.N1_u, par.N2_u);
 	CreateMatrix(V_exact_n, par.N1_v, par.N2_v);
-	CreateMatrix(P_exact_n, par.N1 + 1, par.N2 + 1);
+	CreateMatrix(P_exact_n, par.N1_p, par.N2_p);
 	CreateMatrix(U      , par.N1_u, par.N2_u);
 	CreateMatrix(V      , par.N1_v, par.N2_v);
-	CreateMatrix(P      , par.N1 + 1, par.N2 + 1);
-	CreateMatrix(P_d    , par.N1 + 1, par.N2 + 1);
-	CreateMatrix(P_old  , par.N1 + 1, par.N2 + 1);
+	CreateMatrix(P      , par.N1_p, par.N2_p);
+	CreateMatrix(P_d    , par.N1_p, par.N2_p);
+	CreateMatrix(P_old  , par.N1_p, par.N2_p);
 	CreateMatrix(dU, par.N1_u, par.N2_u);
 	CreateMatrix(dV, par.N1_v, par.N2_v);
-	CreateMatrix(dP, par.N1 + 1, par.N2 + 1);
+	CreateMatrix(dP, par.N1_p, par.N2_p);
 
 	Template A_u;
 	Template A_v;

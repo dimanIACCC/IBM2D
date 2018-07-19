@@ -9,18 +9,18 @@ void Boundary_Conditions(Matrix &u, Param par, Direction Dir, double time) {
 	if (par.BC == u_inflow || par.BC == u_infinity || par.BC == periodical) {
 		for (size_t i = 0; i < Nx; ++i) {
 			if (Dir == Du) {
-				u[i][0     ] = 2 * par.u_wall - u[i][1];
-				u[i][par.N2] = 2 * par.u_wall - u[i][par.N2 - 1];
+				u[i][0           ] = 2 * par.u_wall - u[i][1];
+				u[i][par.N2_u - 1] = 2 * par.u_wall - u[i][par.N2_u - 2];
 
 				// zero derivative of the horizontal velocity
 				if (par.BC == u_infinity) {
-					u[i][0] = u[i][1];
-					u[i][par.N2] = u[i][par.N2 - 1];
+					u[i][0           ] = u[i][1           ];
+					u[i][par.N2_u - 1] = u[i][par.N2_u - 2];
 				}
 			}
 			else if (Dir == Dv) {
-				u[i][0] = 2 * u[i][1] - u[i][2];
-				u[i][par.N2 + 1] = 2 * u[i][par.N2] - u[i][par.N2 - 1];
+				u[i][0           ] = 2 * u[i][1           ] - u[i][2           ];
+				u[i][par.N2_v - 1] = 2 * u[i][par.N2_v - 2] - u[i][par.N2_v - 3];
 			}
 		}
 	}
@@ -29,10 +29,10 @@ void Boundary_Conditions(Matrix &u, Param par, Direction Dir, double time) {
 	if (par.BC == u_infinity || par.BC == u_inflow) {
 		for (size_t j = 0; j < Ny; ++j) {
 			if (Dir == Du) {
-				u[par.N1 + 1][j] = u[par.N1 - 1][j];
+				u[par.N1_u - 1][j] = u[par.N1_u - 2][j];
 			}
 			else if (Dir == Dv) {
-				u[par.N1][j] = u[par.N1 - 1][j];
+				u[par.N1_v - 1][j] = u[par.N1_v - 2][j];
 			}
 		}
 	}
@@ -41,13 +41,13 @@ void Boundary_Conditions(Matrix &u, Param par, Direction Dir, double time) {
 	if (par.BC == periodical) {
 		for (size_t j = 0; j < Ny; ++j) {
 			if (Dir == Du) {
-				u[0][j] = u[par.N1 - 1][j];
-				u[par.N1 + 1][j] = u[2][j];
-				u[par.N1][j] = u[1][j];
+				u[0         ][j] = u[par.N1][j];
+				u[par.N1 + 2][j] = u[2     ][j];
+				u[par.N1 + 1][j] = u[1     ][j];
 			}
 			else if (Dir == Dv) {
-				u[0][j] = u[par.N1 - 1][j];
-				u[par.N1][j] = u[1][j];
+				u[0         ][j] = u[par.N1][j];
+				u[par.N1 + 1][j] = u[1     ][j];
 			}
 		}
 	}

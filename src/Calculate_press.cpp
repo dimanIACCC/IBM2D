@@ -97,13 +97,11 @@ double Calculate_Press_correction(Matrix &delta_p, Matrix &b_p, Param par, int &
 Matrix Calculate_Press_Right(Matrix &u, Matrix &v, Param par){
 	double d = 0.0;
 
-	size_t n1 = par.N1 + 1;
-	size_t n2 = par.N2 + 1;
-	CreateMatrix(result, n1, n2);
+	CreateMatrix(result, par.N1_p, par.N2_p);
 
 
-	for (size_t i = 1; i < n1 - 1; ++i){
-		for (size_t j = 1; j < n2 - 1; ++j){
+	for (size_t i = 1; i < par.N1_p - 1; ++i){
+		for (size_t j = 1; j < par.N2_p - 1; ++j){
 
 			double d = (1.0 / par.d_x) * (u[i + 1][j] - u[i][j])
 			         + (1.0 / par.d_y) * (v[i][j + 1] - v[i][j]);
@@ -113,19 +111,19 @@ Matrix Calculate_Press_Right(Matrix &u, Matrix &v, Param par){
 		}
 
 	}
-	result[0][0] = 0.0;
-	result[n1 - 1][0] = 0.0;
-	result[0][n2 - 1] = 0.0;
-	result[n1 - 1][n2 - 1] = 0.0;
+	result[0           ][0           ] = 0.0;
+	result[par.N1_p - 1][0           ] = 0.0;
+	result[0           ][par.N2_p - 1] = 0.0;
+	result[par.N1_p - 1][par.N2_p - 1] = 0.0;
 
 
-	for (size_t i = 1; i < n1 - 1; ++i){
-		result[i][0] = 0.0;
-		result[i][n2 - 1] = 0.0;
+	for (size_t i = 1; i < par.N1_p - 1; ++i){
+		result[i][0           ] = 0.0;
+		result[i][par.N2_p - 1] = 0.0;
 	}
-	for (size_t j = 1; j < n2 - 1; ++j){
-		result[0][j] = 0.0;
-		result[n1 - 1][j] = 0.0;
+	for (size_t j = 1; j < par.N2_p - 1; ++j){
+		result[0           ][j] = 0.0;
+		result[par.N1_p - 1][j] = 0.0;
 	}
 
 	return result;

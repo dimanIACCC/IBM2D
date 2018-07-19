@@ -87,13 +87,15 @@ Param::Param(std::string WorkDir) : Param() {
 }
 
 void Param::init() {
-	N1_u = N1 + 2;
-	N2_u = N2 + 1;
-	N1_v = N1 + 1;
-	N2_v = N2 + 2;
+	N1_u = N1 + 3;
+	N2_u = N2 + 2;
+	N1_v = N1 + 2;
+	N2_v = N2 + 3;
+	N1_p = N1 + 2;
+	N2_p = N2 + 2;
 
-	d_x = L / (N1 - 1);
-	d_y = H / (N2 - 1);
+	d_x = L / N1;
+	d_y = H / N2;
 
 	ldxdx = 1 / (d_x*d_x);
 	ldydy = 1 / (d_y*d_y);
@@ -128,10 +130,6 @@ GeomVec x_p(int i, int j, Param par) {
 	result[1] = (i - 0.5) * par.d_x;
 	result[2] = (j - 0.5) * par.d_y;
 	result[3] = 0.0;
-	//if (i == 0     ) result[1] = 0.0;
-	//if (j == 0     ) result[2] = 0.0;
-	//if (i == par.N1) result[1] = (i - 1) * par.d_x;
-	//if (j == par.N2) result[2] = (j - 1) * par.d_y;
 	return result;
 }
 
@@ -141,8 +139,6 @@ GeomVec x_u(int i, int j, Param par) {
 	result[1] = (i - 1.0) * par.d_x;
 	result[2] = (j - 0.5) * par.d_y;
 	result[3] = 0.0;
-	//if (j == 0     ) result[2] = 0.0;
-	//if (j == par.N2) result[2] = (j - 1) * par.d_y;
 	return result;
 }
 
@@ -152,8 +148,6 @@ GeomVec x_v(int i, int j, Param par) {
 	result[1] = (i - 0.5) * par.d_x;
 	result[2] = (j - 1.0) * par.d_y;
 	result[3] = 0.0;
-	//if (i == 0) result[1] = 0.0;
-	//if (i == par.N1) result[1] = (i - 1) * par.d_x;
 	return result;
 }
 
@@ -234,15 +228,15 @@ double Heaviside(double x) {
 
 int i_real_u(int i, Param par) {
 	int i_real = i;
-	if (i_real < 1     ) i_real += par.N1 - 1;
-	if (i_real > par.N1) i_real -= par.N1 - 1;
-	if (i_real == 1    ) i_real  = par.N1;
+	if (i_real < 1         ) i_real += par.N1;
+	if (i_real > par.N1 + 1) i_real -= par.N1;
+	if (i_real == 1        ) i_real  = par.N1 + 1;
 	return i_real;
 }
 
 int i_real_v(int i, Param par) {
 	int i_real = i;
-	if (i_real < 1         ) i_real += par.N1 - 1;
-	if (i_real > par.N1 - 1) i_real -= par.N1 - 1;
+	if (i_real < 1         ) i_real += par.N1;
+	if (i_real > par.N1    ) i_real -= par.N1;
 	return i_real;
 }
