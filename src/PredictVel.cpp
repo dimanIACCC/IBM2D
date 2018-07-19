@@ -27,9 +27,8 @@ Matrix Operator_Ax(Template &A, Matrix &u, Param par, Direction Dir) {
 	size_t Ny = u[0].size();
 
 	CreateMatrix(result, Nx, Ny);
-	CreateMatrix(u_n, Nx, Ny);
 
-	Boundary_Conditions(u_n, u, par, Dir, -1.);
+	Boundary_Conditions(u, par, Dir, -1.);
 
 	// For direction Du  (U, R, D, L)  are  (up, right, down, left)  neighbour elements in matrix u[i][j]
 	// For direction Dv  (U, R, D, L)  are  (up, right, down, left)  neighbour elements in transpose matrix (v[i][j])^T
@@ -82,10 +81,23 @@ Matrix CalculateB(Matrix &u_n, Matrix &v_n, Matrix &u_s, Matrix &v_s, Matrix &p,
 			                               - pressure_term
 			                               + diffusion_term_n / (2.0*par.Re)
 			                               + u_n[i][j] / par.d_t;
+
+			/*int iii = 10, jjj = 3;
+			std::cout << std::setprecision(18);
+			if ((Dir == Du && i == iii && j == jjj) || (Dir == Dv && i == jjj && j == Nx / 2 + 1 - iii)) {
+				std::cout << "Direction = " << Dir << std::endl;
+				std::cout << "(i,j)      = (" << i << ", " << j << ")" << std::endl;
+				std::cout << "convection = " << std::setw(22) << std::fixed << - (alpha  * advective_term_n + (1.0 - alpha) * advective_term_s) << std::endl;
+				std::cout << "pressure   = " << std::setw(22) << std::fixed << - pressure_term << std::endl;
+				std::cout << "diffusion  = " << std::setw(22) << std::fixed << diffusion_term_n / (2.0*par.Re) << std::endl;
+				std::cout << "u_n / dt   = " << std::setw(22) << std::fixed << u_n[i][j] / par.d_t << std::endl;
+				std::cout << "result     = " << std::setw(22) << std::fixed << result[i][j] << std::endl;
+				std::cout << std::endl;
+			}*/
 		}
 	}
 
-	Boundary_Conditions(u_n, u_s, par, Dir, par.d_t * (par.N_step + 0.5));
+	Boundary_Conditions(u_s, par, Dir, par.d_t * (par.N_step + 1));
 
 	return result;
 }

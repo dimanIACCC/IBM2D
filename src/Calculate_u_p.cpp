@@ -77,7 +77,7 @@ void Calculate_u_p(Matrix &U_n   , Matrix &U_new,
 			CreateMatrix(B_v, par.N1_v, par.N2_v);										//
 
 			if (par.BC == Lamb_Oseen || par.BC == Line_Vortex || par.BC == Taylor_Green) {
-				BC_exact_p(P_n, P_new, par, par.d_t * (par.N_step + 0.5));
+				BC_exact_p(P_new, par, par.d_t * (par.N_step + 1));
 			}
 
 			B_u = CalculateB(U_n, V_n, U_s, V_s, P_n, P_new, par, Du);                           // RHS for Navier-Stokes non-linear equation
