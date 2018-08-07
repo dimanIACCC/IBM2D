@@ -10,6 +10,7 @@
 #include <list>
 #include <chrono>
 #include <iomanip>
+#include <omp.h>
 
 const bool Debug = true;
 

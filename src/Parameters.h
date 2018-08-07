@@ -57,7 +57,7 @@ GeomVec x_u(int i, int j, Param par); // coordinates of (i,j)-th node for veloci
 GeomVec x_v(int i, int j, Param par); // coordinates of (i,j)-th node for velocity v mesh
 GeomVec x_c(int i, int j, Param par); // coordinates of (i,j)-th node for corners    mesh
 
-double DeltaFunction(double x, double y, Param par);
+double DeltaFunction(double x, double y, Param &par);
 double FunctionD(double r);
 void GetInfluenceArea(int &i_min, int &i_max, int &j_min, int &j_max, size_t Ni, size_t Nj, GeomVec x, int size, Param par);
 double Volume_Frac(GeomVec xc, double r, GeomVec x, double dx, double dy);

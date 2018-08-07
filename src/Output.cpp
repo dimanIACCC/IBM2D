@@ -201,7 +201,7 @@ void PushLog(std::ostream& log, int n, double eps_u, double eps_v) {
 	s_time.erase(7, 1);
 	s_time.erase(0, 4);
 	s_time.erase(s_time.size() - 6, 5);
-	log << "n = " << std::setw(6) << n << "\t eps_u = " << std::fixed << eps_u << "\t eps_v = " << std::fixed << eps_v << "\t" << s_time;
+	log       << "n = " << std::setw(6) << n << "\t eps_u = " << std::fixed << eps_u << "\t eps_v = " << std::fixed << eps_v << "\t" << s_time;
 	std::cout << "n = " << std::setw(6) << n << "\t eps_u = " << std::fixed << eps_u << "\t eps_v = " << std::fixed << eps_v << "\t" << s_time;
 }
 
@@ -245,6 +245,25 @@ void Output_c(Matrix c, std::string filename, int n, Param par) {
 		for (int i = 0; i < par.N1 + 1; ++i) {
 			GeomVec xc = x_c(i, j, par);
 			output << xc[1] << " " << xc[2] << " " << c[i][j] << std::endl;
+		}
+	}
+
+	output.close();
+}
+
+void Output_Matrix(Matrix A, std::string WorkDir, std::string Variable, int n) {
+	std::ofstream output;
+	std::string filename = WorkDir + Variable + std::to_string(n) + ".plt";
+
+	output.open(filename);
+
+	output << "title = " << '"' << Variable << '"' << std::endl;
+	output << "Variables = i j " << Variable << std::endl;
+	output << "zone T=" << '"' << n << '"' << ",  i=" << A[0].size() << ", j=" << A.size() << ", f=point" << std::endl;
+
+	for (int i = 0; i < A.size(); ++i) {
+		for (int j = 0; j < A[0].size(); ++j) {
+			output << i << ' ' << j << ' ' << A[i][j] << std::endl;
 		}
 	}
 

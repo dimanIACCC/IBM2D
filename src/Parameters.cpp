@@ -161,8 +161,8 @@ GeomVec x_c(int i, int j, Param par) {
 	return result;
 }
 
-double DeltaFunction(double x, double y, Param par) {
-	return FunctionD(x / par.d_x) * FunctionD(y / par.d_y) / (par.d_x*par.d_y);
+double DeltaFunction(double x, double y, Param &par) {
+	return FunctionD(x / par.d_x) * FunctionD(y / par.d_y);
 }
 
 double FunctionD(double r) {

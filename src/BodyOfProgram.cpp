@@ -46,7 +46,7 @@ void BodyOfProgram(Param par, std::list<Circle> solidList, Matrix U_n, Matrix V_
 	if (par.BC == Taylor_Green || par.BC == Lamb_Oseen || par.BC == Line_Vortex) {
 		history.open(filename);
 		history << "title = history" << std::endl;
-		history << "Variables = n error_U_s error_V_s error_P_s error_U_d error_V_d error_P_d" << std::endl;
+		history << "Variables = n error_P error_U error_V" << std::endl;
 	}
 
 	Output(P_n, U_n, V_n, Fx_n, Fy_n, -1, solidList, par);
@@ -85,8 +85,7 @@ void BodyOfProgram(Param par, std::list<Circle> solidList, Matrix U_n, Matrix V_
 		double max_dV_n = max(V_n - V_exact_n);
 		double max_dP_d = max(P_d - P_exact_n);
 
-		history << par.N_step << "  " << max_dU   / max(U_exact  ) << "  " << max_dV   / max(V_exact  ) << "  " << max_dP   / max(P_exact  )
-		                      << "  " << max_dU_n / max(U_exact_n) << "  " << max_dV_n / max(V_exact_n) << "  " << max_dP_d / max(P_exact_n) << std::endl;
+		history << par.N_step << "  " << max_dP / max(P_exact) << "  " << max_dU_n / max(U_exact_n) << "  " << max_dV_n / max(V_exact_n) << std::endl;
 
 		if (par.N_step % par.output_step == 0 || par.N_step < 1000) {
 			Output_U(dU, "dU", par.N_step, par);

@@ -47,18 +47,18 @@ void Calculate_u_p(Matrix &U_n   , Matrix &U_new,
 	V_s = V_n;
 	P_new = P_n;
 
-	std::clock_t begin, end;
+	std::clock_t begin, end, time_velocity, time_pressure, time_force;
 
 	// output of iterations information
-	/*std::ofstream output;
-	std::string filename = par.WorkDir + "/iterations" + std::to_string(N_step) + ".plt";
+	std::ofstream output;
+	std::string filename = par.WorkDir + "/iterations" + std::to_string(par.N_step) + ".plt";
 	output.open(filename);
 
-	output << "title = iterations_step" << N_step << std::endl;
-	output << "Variables = s ux uy omega f IntU tau IntUr" << std::endl;
-	output << "Variables = s  N_BiCGStab_u  N_BiCGStab_v  N_DeltaP" << std::endl;*/
+	output << "title = iterations_step" << par.N_step << std::endl;
+	//output << "Variables = s ux uy omega f IntU tau IntUr" << std::endl;
+	output << "Variables = s  N_BiCGStab_u  N_BiCGStab_v  N_DeltaP time_velocity time_pressure time_force" << std::endl;
 
-	if (par.BC == Taylor_Green) {
+	/*if (par.BC == Taylor_Green) {
 		int i = par.N1 / 2;
 		int j = par.N2 / 2;
 		double p_fix = 2 * exact_p(x_p(i, j, par), par, par.d_t * (par.N_step + 0.5)) - 2 * P_n[i][j];
@@ -66,19 +66,16 @@ void Calculate_u_p(Matrix &U_n   , Matrix &U_new,
 		for (i = 0; i < P_new.size(); ++i)
 		for (j = 0; j < P_new[0].size(); ++j)
 			P_new[i][j] = P_n[i][j] + p_fix;
-	}
+	}*/
 
 	int s_max = 1000;
 	// start iterations for pressure and velocity to fulfill the conituity equation
-	for (int s = 0; s <= s_max; ++s) {													// cycle while (delta_P / P > eps_P)
-		begin = std::clock();
+	for (int s = 1; s <= s_max; ++s) {													// cycle while (delta_P / P > eps_P)
+
 		#pragma region Velocity
+		begin = std::clock();
 			CreateMatrix(B_u, par.N1_u, par.N2_u);										// create matrix filled by 0
 			CreateMatrix(B_v, par.N1_v, par.N2_v);										//
-
-			if (par.BC == Lamb_Oseen || par.BC == Line_Vortex || par.BC == Taylor_Green) {
-				BC_exact_p(P_new, par, par.d_t * (par.N_step + 1));
-			}
 
 			B_u = CalculateB(U_n, V_n, U_s, V_s, P_n, P_new, par, Du);                           // RHS for Navier-Stokes non-linear equation
 			B_v = CalculateB(V_n, U_n, V_s, U_s, P_n, P_new, par, Dv);
@@ -98,14 +95,14 @@ void Calculate_u_p(Matrix &U_n   , Matrix &U_new,
 				}
 			}
 
-			end = std::clock();
-			//std::cout << "time of Velocity     : " << end - begin << " " << std::endl;
+		end = std::clock();
+		time_velocity = end - begin;
 		#pragma endregion Velocity
 
 			//Output(P_new, U_new, V_new, Fx_new, Fy_new, s, solidList, par);
 
 		#pragma region Force
-			begin = std::clock();
+		begin = std::clock();
 
 			// apply force from immersed particles for several times to fulfill no-slip BC
 			for (auto& solid : solidList) {
@@ -120,8 +117,8 @@ void Calculate_u_p(Matrix &U_n   , Matrix &U_new,
 				solid.tau_new = solid.tau;
 			}
 
-			end = std::clock();
-			//std::cout << "time of Force        : " << end - begin << " " << std::endl;
+		end = std::clock();
+		time_force = end - begin;
 		#pragma endregion Force
 
 			for (auto& it : solidList) {
@@ -130,19 +127,26 @@ void Calculate_u_p(Matrix &U_n   , Matrix &U_new,
 
 
 		#pragma region Pressure
-			begin = std::clock();
+		begin = std::clock();
 
 			P_Right = Calculate_Press_Right(U_new, V_new, par);                                     // calculating P_Right = 1/dt ( {U_i,j - U_i-1,j}/{h_x} + {V_i,j - V_i,j-1}/{h_x} )
 
 			double Delta_P_max = Calculate_Press_correction(Delta_P, P_Right, par, N_DeltaP);       // Zeidel method for solving Poisson equation
 
+			if (s > 0) {
+				Output_Matrix(U_new  , par.WorkDir, "u_predict", s);
+				Output_Matrix(V_new  , par.WorkDir, "v_predict", s);
+				Output_Matrix(Delta_P, par.WorkDir, "Delta_P"  , s);
+			}
+
 			double P_max = std::max(max(P_new), 1.e-14);
 			double relax = std::min(0.05 * std::max(pow(P_max / Delta_P_max, 1), 1.), 1.5);						// coefficient of relaxation
+			relax = 1.;
 
 			std::cout  << "s = " << s << ", delta_P / P = " << Delta_P_max / P_max << ", relax = " << relax << std::endl;
 
-			end = std::clock();
-			//std::cout << "time of Pressure     : " << end - begin << " " << std::endl;
+		end = std::clock();
+		time_pressure = end - begin;
 		#pragma endregion Pressure
 
 		#pragma region New P and U
@@ -166,6 +170,16 @@ void Calculate_u_p(Matrix &U_n   , Matrix &U_new,
 				}
 			}
 
+			if (par.BC == Lamb_Oseen || par.BC == Line_Vortex || par.BC == Taylor_Green) {
+				BC_exact_p(P_new, par, par.d_t * (par.N_step + 1));
+			}
+
+			if (s > 0) {
+				Output_Matrix(U_new, par.WorkDir, "u_corrected", s);
+				Output_Matrix(V_new, par.WorkDir, "v_corrected", s);
+				Output_Matrix(P_new, par.WorkDir, "p_corrected", s);
+			}
+
 		#pragma endregion New P and U
 
 		// code for solid u and omega_new iterations
@@ -182,8 +196,8 @@ void Calculate_u_p(Matrix &U_n   , Matrix &U_new,
 		}*/
 
 
-		// output of the iterations number
-		// output << s << "   " << N_BiCGStab_u  << "   " << N_BiCGStab_v << "   " << N_DeltaP << std::endl;
+		//output of the iterations number
+		output << s << "   " << N_BiCGStab_u  << "   " << N_BiCGStab_v << "   " << N_DeltaP << "  " << time_velocity << "  " << time_pressure << "  " << time_force << std::endl;
 
 		if (Delta_P_max / P_max < par.eps_P) {
 			Solids_velocity_new(solidList, par);
@@ -192,8 +206,13 @@ void Calculate_u_p(Matrix &U_n   , Matrix &U_new,
 					it.omega_new[3] = Lamb_Oseen_omega(it.r, par.Re, par.d_t*(par.N_step + 1), par.Lamb_Oseen_r0);
 				}
 			}
-			std::cout << "s iterations: " << s << std::endl;
+			// std::cout << "s iterations: " << s << std::endl;
 			// if (key_solid == true)
+
+			Output_Matrix(U_new, par.WorkDir, "u_finish", s);
+			Output_Matrix(V_new, par.WorkDir, "v_finish", s);
+			Output_Matrix(P_new, par.WorkDir, "p_finish", s);
+
 			break;
 		}
 
