@@ -44,7 +44,7 @@ void CalculateForce(Matrix &Fx, Matrix &Fy, std::list<Circle> &iList, Matrix& u,
 
 	std::list<Circle>::iterator solid;
 
-#pragma omp parallel private(solid)
+#pragma omp parallel private(solid) num_threads(4)
 	{
 		for (solid = iList.begin(); solid != iList.end(); solid++) {
 		#pragma omp single nowait

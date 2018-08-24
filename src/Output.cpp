@@ -257,12 +257,31 @@ void Output_Matrix(Matrix A, std::string WorkDir, std::string Variable, int n) {
 
 	output.open(filename);
 
-	output << "title = " << '"' << Variable << '"' << std::endl;
+	output << std::setprecision(15);
 	output << "Variables = i j " << Variable << std::endl;
-	output << "zone T=" << '"' << n << '"' << ",  i=" << A[0].size() << ", j=" << A.size() << ", f=point" << std::endl;
+	output << "Zone T=" << '"' << "Flow" << '"' << ",  I =  " << A[0].size() << ", J =  " << A.size() << ", Datapacking = Point" << std::endl;
 
 	for (int i = 0; i < A.size(); ++i) {
 		for (int j = 0; j < A[0].size(); ++j) {
+			output << i << ' ' << j << ' ' << A[i][j] << std::endl;
+		}
+	}
+
+	output.close();
+}
+
+void Output_Matrix_mid(Matrix A, std::string WorkDir, std::string Variable, int n) {
+	std::ofstream output;
+	std::string filename = WorkDir + Variable + std::to_string(n) + ".plt";
+
+	output.open(filename);
+
+	output << std::setprecision(15);
+	output << "Variables = i j " << Variable << std::endl;
+	output << "Zone T=" << '"' << "Flow" << '"' << ",  I =  " << A[0].size() - 2 << ", J =  " << A.size() - 2 << ", Datapacking = Point" << std::endl;
+
+	for (int i = 1; i < A.size() - 1; ++i) {
+		for (int j = 1; j < A[0].size() - 1; ++j) {
 			output << i << ' ' << j << ' ' << A[i][j] << std::endl;
 		}
 	}

@@ -6,8 +6,8 @@
 #include "Output.h"
 #include "Boundary_initial_conditions.h"
 
-void Calculate_A(Template &A, Param par, double Re, Direction Dir);
+void Calculate_A(Template &A, Param par, double Re);
 Matrix Operator_Ax(Template &A, Matrix &x, Param par, Direction Dir);
 
 Matrix CalculateB(Matrix &u_n, Matrix &v_n, Matrix &u_prev, Matrix &v_prev, Matrix &p, Matrix &p_new, Param par, Direction Dir);
-double advective_term(Matrix &u, Matrix &v, size_t i, size_t j, double d_x, double d_y, Direction Dir);
+double advective_term(Matrix &ul, Matrix &vl, Matrix &ur, Matrix &vr, size_t i, size_t j, double d_x, double d_y, Direction Dir);

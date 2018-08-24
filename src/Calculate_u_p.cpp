@@ -131,19 +131,31 @@ void Calculate_u_p(Matrix &U_n   , Matrix &U_new,
 
 			P_Right = Calculate_Press_Right(U_new, V_new, par);                                     // calculating P_Right = 1/dt ( {U_i,j - U_i-1,j}/{h_x} + {V_i,j - V_i,j-1}/{h_x} )
 
-			double Delta_P_max = Calculate_Press_correction(Delta_P, P_Right, par, N_DeltaP);       // Zeidel method for solving Poisson equation
+			if (s == 1) {
+				if (par.BC == Lamb_Oseen || par.BC == Line_Vortex || par.BC == Taylor_Green) {
+					BC_exact_p(Delta_P, par, par.d_t * (par.N_step + 1));
+				}
 
-			if (s > 0) {
-				Output_Matrix(U_new  , par.WorkDir, "u_predict", s);
-				Output_Matrix(V_new  , par.WorkDir, "v_predict", s);
-				Output_Matrix(Delta_P, par.WorkDir, "Delta_P"  , s);
+				Delta_P = Delta_P - P_n;
+			}
+			else {
+				for (size_t i = 0; i < Delta_P.size(); ++i) {
+					for (size_t j = 0; j < Delta_P[0].size(); ++j) {
+						Delta_P[i][j] = 0.0;
+					}
+				}
 			}
 
+			double Delta_P_max = Calculate_Press_correction(Delta_P, P_Right, par, N_DeltaP);       // Zeidel method for solving Poisson equation
+
 			double P_max = std::max(max(P_new), 1.e-14);
-			double relax = std::min(0.05 * std::max(pow(P_max / Delta_P_max, 1), 1.), 1.5);						// coefficient of relaxation
+			double relax = std::min(0.05 * std::max(pow(P_max / Delta_P_max, 1), 1.), 1.0);						// coefficient of relaxation
 			relax = 1.;
 
-			std::cout  << "s = " << s << ", delta_P / P = " << Delta_P_max / P_max << ", relax = " << relax << std::endl;
+			std::cout  << "s = "
+				<< std::setw(3) << s << ", delta_P / P = "
+				<< std::setprecision(6) << std::scientific << Delta_P_max / P_max << ", relax = "
+				<< std::fixed << relax << std::endl;
 
 		end = std::clock();
 		time_pressure = end - begin;
@@ -170,15 +182,9 @@ void Calculate_u_p(Matrix &U_n   , Matrix &U_new,
 				}
 			}
 
-			if (par.BC == Lamb_Oseen || par.BC == Line_Vortex || par.BC == Taylor_Green) {
+			/*if (par.BC == Lamb_Oseen || par.BC == Line_Vortex || par.BC == Taylor_Green) {
 				BC_exact_p(P_new, par, par.d_t * (par.N_step + 1));
-			}
-
-			if (s > 0) {
-				Output_Matrix(U_new, par.WorkDir, "u_corrected", s);
-				Output_Matrix(V_new, par.WorkDir, "v_corrected", s);
-				Output_Matrix(P_new, par.WorkDir, "p_corrected", s);
-			}
+			}*/
 
 		#pragma endregion New P and U
 

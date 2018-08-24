@@ -29,8 +29,8 @@ void BodyOfProgram(Param par, std::list<Circle> solidList, Matrix U_n, Matrix V_
 
 	Template A_u;
 	Template A_v;
-	Calculate_A(A_u, par, par.Re, Du);
-	Calculate_A(A_v, par, par.Re, Dv);
+	Calculate_A(A_u, par, par.Re);
+	Calculate_A(A_v, par, par.Re);
 #pragma endregion SetMatrices
 
 
