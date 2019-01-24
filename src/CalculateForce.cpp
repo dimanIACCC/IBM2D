@@ -1,4 +1,4 @@
-#include "stdafx.h"
+﻿#include "stdafx.h"
 #include "CalculateForce.h"
 #include "Output.h"
 
@@ -10,7 +10,7 @@ void Multidirect_Forcing_Method(Matrix &Fx, Matrix &Fy, Matrix &u, Matrix &v, st
 	Solids_zero_force(solidList);
 	Fx = Fx * 0.;
 	Fy = Fy * 0.;
-	int f_max = 10;
+	int f_max = 0;
 	// correct force and velocity $f_max$ times
 	for (int f = 0; f <= f_max; ++f) {
 		for (auto& it : solidList) {

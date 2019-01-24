@@ -46,9 +46,6 @@ Matrix CalculateB(Matrix &u_n, Matrix &v_n, Matrix &u_s, Matrix &v_s, Matrix &p,
 	if      (Dir == Du) { d_u = par.d_x;	d_v = par.d_y;}
 	else if (Dir == Dv) { d_u = par.d_y;	d_v = par.d_x;}
 
-	double d_uu = 1.0 / (d_u*d_u);
-	double d_vv = 1.0 / (d_v*d_v);
-
 	double alpha = 0.5;
 
 	CreateMatrix(result, Nx, Ny);

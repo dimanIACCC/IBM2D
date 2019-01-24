@@ -50,8 +50,8 @@ Circle::Circle(double x, double y, double ux, double uy, double omega, double rh
 		Nodes[i].x = Nodes[i].xn;
 	}
 	for (int i = Nn2; i < 2*Nn2; ++i) {
-		Nodes[i].xn[1] = cos(i * 2.0 * M_PI / Nn2) * r * 0.75;
-		Nodes[i].xn[2] = sin(i * 2.0 * M_PI / Nn2) * r * 0.75;
+		Nodes[i].xn[1] = cos(i * 2.0 * M_PI / Nn2) * r * 0.95;
+		Nodes[i].xn[2] = sin(i * 2.0 * M_PI / Nn2) * r * 0.95;
 		Nodes[i].n[1] = cos(i * 2.0 * M_PI / Nn2);
 		Nodes[i].n[2] = sin(i * 2.0 * M_PI / Nn2);
 		Nodes[i].x = Nodes[i].xn;

@@ -161,13 +161,18 @@ void Calculate_u_p(Matrix &U_n   , Matrix &U_new,
 		time_pressure = end - begin;
 		#pragma endregion Pressure
 
+		/*if (s < 3) {
+			Output_Matrix(U_new  , par.WorkDir, "u_predict", s);
+			Output_Matrix(Delta_P, par.WorkDir, "Delta_P"  , s);
+		}*/
+
 		#pragma region New P and U
 
 			P_new += Delta_P * relax;                                                                   // correction of pressure
 
 			//Output_P(P_Right, "P_Right_s", s, par);
 
-			if (par.N_step < 0)
+			if (par.BC == periodical && par.N_step == 0)
 				P_n = P_new;
 
 			for (size_t i = 1; i < U_new.size() - 1; ++i) {
@@ -181,6 +186,11 @@ void Calculate_u_p(Matrix &U_n   , Matrix &U_new,
 					V_new[i][j] -= relax * par.d_t * (Delta_P[i][j] - Delta_P[i][j - 1]) / par.d_y;		// correction of predicted velocity V_new
 				}
 			}
+
+			/*if (s < 3) {
+				Output_Matrix(U_new, par.WorkDir, "u_correct", s);
+				Output_Matrix(P_new, par.WorkDir, "p_correct", s);
+			}*/
 
 			/*if (par.BC == Lamb_Oseen || par.BC == Line_Vortex || par.BC == Taylor_Green) {
 				BC_exact_p(P_new, par, par.d_t * (par.N_step + 1));
@@ -215,9 +225,9 @@ void Calculate_u_p(Matrix &U_n   , Matrix &U_new,
 			// std::cout << "s iterations: " << s << std::endl;
 			// if (key_solid == true)
 
-			Output_Matrix(U_new, par.WorkDir, "u_finish", s);
-			Output_Matrix(V_new, par.WorkDir, "v_finish", s);
-			Output_Matrix(P_new, par.WorkDir, "p_finish", s);
+			//Output_Matrix(U_new, par.WorkDir, "u_finish", s);
+			//Output_Matrix(V_new, par.WorkDir, "v_finish", s);
+			//Output_Matrix(P_new, par.WorkDir, "p_finish", s);
 
 			break;
 		}
