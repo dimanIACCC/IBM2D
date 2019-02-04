@@ -1,16 +1,16 @@
-//circle{
-   x = 4.5
-   y =        1.5
+circle{
+   x = 5
+   y =        7.5
    moving = 0
-   r = 0.3
+   r = 0.5
    Poiseuille = 0
    rho = 1e9
 }
 //circle{
-   x = 1.5
-   y =        1.5
+   x = 5
+   y =        7.5
    moving = 0
-   r = 0.3
+   r = 0.25
    Poiseuille = 0
    rho = 1e9
 }

@@ -26,24 +26,17 @@ double Calculate_Press_correction(Matrix &delta_p, Matrix &b_p, Param par, int &
 
 				p_tmp = A * (dx2 * (delta_p[i + 1][j] + delta_p[i - 1][j])
 				           + dy2 * (delta_p[i][j + 1] + delta_p[i][j - 1]) - b_p[i][j]);
-
+				
 				if (fabs(p_tmp) > delta_p_max) {
 					delta_p_max = fabs(p_tmp);
 				}
 				if (fabs(p_tmp - delta_p[i][j]) > eps){
-					eps = fabs(p_tmp - delta_p[i][j] - p_fix);
+					eps = fabs(p_tmp - delta_p[i][j]);
 				}
 
 				delta_p[i][j] = p_tmp;
-			}
-		}
 
-		// subtract constant pressure to make delta_p = 0 in the centre of the domain
-		if (par.BC == periodical) {
-			p_fix = delta_p[par.N1 / 2][par.N2 / 2];
-			for (size_t i = 1; i < n1 - 1; ++i)
-			for (size_t j = 1; j < n2 - 1; ++j)
-				delta_p[i][j] -= p_fix;
+			}
 		}
 
 		if (par.BC == u_infinity || par.BC == u_inflow || par.BC == periodical) {
@@ -63,6 +56,9 @@ double Calculate_Press_correction(Matrix &delta_p, Matrix &b_p, Param par, int &
 				}
 			}
 
+			if (par.BC == periodical) {
+				delta_p[n1 - 1][1] = 0.0; // down corner
+			}
 		}
 
 		// Periodical Left-Right BC
