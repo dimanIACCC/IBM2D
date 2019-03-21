@@ -4,8 +4,12 @@
 #include "Parameters.h"
 #include "Matrix.h"
 #include "Output.h"
+#include "helmholtz.h"
 
+double Pressure_correction_solve    (Matrix &p, Matrix &rhs, Param par, int &N_DeltaP);
+double Pressure_correction_solve_SOR(Matrix &delta_p, Matrix &rhs, Param par, int &N_DeltaP);    // solve the Poisson equation:  -Laplace delta_p = rhs
 
-double Calculate_Press_correction(Matrix& delta_p, Matrix &b_p, Param par, int &N_out);    // solve the Poisson equation:  Laplace delta_p = b_p
+Matrix Pressure_RHS(Matrix& u, Matrix& v, Param par);                            // right-hand part of the Poisson equation
 
-Matrix Calculate_Press_Right(Matrix& u, Matrix& v, Param par);                            // right-hand part of the Poisson equation
+void Matrix_to_DoubleArray(Matrix &M, double* D);
+void DoubleArray_to_Matrix(double* D, Matrix &M);

@@ -16,9 +16,7 @@ That project is devoted to numerical simulation of disperse flows in the channel
 #include "PredictVel.h"
 #include "Testing.h"
 #include "BodyOfProgram.h"
-
-
-
+//#include "CSR.h"
 
 
 #pragma warning(disable : 4244)//for GetInfluenceArea
@@ -26,6 +24,8 @@ That project is devoted to numerical simulation of disperse flows in the channel
 void Awake(int& n0, Param& par, std::list<Circle>& solidList, Matrix& U_n, Matrix& V_n, Matrix& P);
 
 int main(int argc, char *argv[]) {
+
+	//solve_pardiso();
 
 	fs::path WorkDir = L"Result/";
 	std::list<Circle> solidList; // list of immersed solids

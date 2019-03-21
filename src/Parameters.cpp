@@ -16,6 +16,7 @@ Param::Param() {
 	rho = 10;
 	r = 0.5;
 	output_step = 50;
+	DeltaP_method = 0;
 	N_max = 5000000;
 	N_Zeidel = 500000;
 	Zeidel_eps = 1e-5;
@@ -29,6 +30,7 @@ Param::Param() {
 	u_wall = 0;
 	SolidName_max = 0;
 	Lamb_Oseen_r0 = 0.2;
+	N_Force = 0;
 	WorkDir = "";
 
 	this->init();
@@ -56,15 +58,17 @@ Param::Param(std::string WorkDir, std::string filename) : Param() {
 				else if (PAR == "r")            r = stod(VALUE);
 				else if (PAR == "output_step")  output_step = stoi(VALUE);
 				else if (PAR == "N_max")        N_max = stoi(VALUE);
-				else if (PAR == "N_Zeidel")     N_Zeidel = stoi(VALUE);
-				else if (PAR == "Zeidel_eps")   Zeidel_eps = stod(VALUE);
-				else if (PAR == "eps_P")        eps_P = stod(VALUE);
+				else if (PAR == "DeltaP_method")        DeltaP_method = stoi(VALUE);
+				else if (PAR == "N_Zeidel")             N_Zeidel = stoi(VALUE);
+				else if (PAR == "Zeidel_eps")           Zeidel_eps = stod(VALUE);
+				else if (PAR == "eps_P")                eps_P = stod(VALUE);
 				else if (PAR == "InelasticCollision")   InelasticCollision = bool(stoi(VALUE));
 				else if (PAR == "k_dist")               k_dist = (stod(VALUE));
 				else if (PAR == "AddSolids_N")          AddSolids_N = stoi(VALUE);
 				else if (PAR == "AddSolids_start")      AddSolids_start = stoi(VALUE);
 				else if (PAR == "AddSolids_interval")   AddSolids_interval = stoi(VALUE);
 				else if (PAR == "BC")                   BC = string_to_BC(VALUE);
+				else if (PAR == "N_Force")              N_Force = stoi(VALUE);
 				else    std::cout << "unknown parameter " << PAR << std::endl;
 			}
 			else {

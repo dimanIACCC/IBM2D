@@ -29,7 +29,8 @@ public:
 	double rho;               // default density of Solid
 	double r;                 // default radius of Circle
 	int output_step = 0;      // frequency of output
-	int N_max;                // number of total iterations
+	int N_max;                // number of steps
+	int DeltaP_method;        // method for pressure correction equation
 	int N_Zeidel;             // number of iterations in Zeidel method
 	double Zeidel_eps;        // tolerance for Zeidel method
 	double eps_P;             // tolerance for Pressure correction
@@ -44,6 +45,7 @@ public:
 	double Lamb_Oseen_r0;     // initial radius of Lamb_Oseen vortex
 	double u_wall;            // velocity of the channel walls
 	int SolidName_max;        // Maximal Name of Solids
+	int N_Force;              // number of iterations for force
 	std::string WorkDir;      // WorkDir
 	Param();
 	Param(std::string WorkDir);

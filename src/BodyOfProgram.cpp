@@ -55,7 +55,15 @@ void BodyOfProgram(Param par, std::list<Circle> solidList, Matrix U_n, Matrix V_
 		MakeHibernationFile(par.N_step-1, par, solidList, U_n, V_n, P_n);              // writting hibernation file for prior time step
 		Add_Solids(solidList, par);                                                     // add solids if the conditions are fulfilled
 
+		//if (par.N_step == 1000) {
+		//	par.d_t /= 10.0; //workaround
+		//	Calculate_A(A_u, par, par.Re);
+		//	Calculate_A(A_v, par, par.Re);
+		//}
+
 		Calculate_u_p(U_n, U_new, V_n, V_new, P_n, P_new, Fx_n, Fx_new, Fy_n, Fy_new, A_u, A_v, solidList, par);  // calculate velocity and pressure at the new time step
+
+		// Output_eq_terms("eq_terms", par.N_step, U_n, V_n, U_new, V_new, P_n, P_new, Fx_new, par, Du);
 
 		double eps_u = diff(U_n, U_new);												// calculate maximum difference between current and prior velocity fields
 		double eps_v = diff(V_n, V_new);
@@ -88,8 +96,8 @@ void BodyOfProgram(Param par, std::list<Circle> solidList, Matrix U_n, Matrix V_
 		history << par.N_step << "  " << max_dP / max(P_exact) << "  " << max_dU_n / max(U_exact_n) << "  " << max_dV_n / max(V_exact_n) << std::endl;
 
 		if (par.N_step % par.output_step == 0 || par.N_step < 1000) {
-			Output_U(dU, "dU", par.N_step, par);
-			Output_P(dP, "dP", par.N_step, par);
+			//Output_U(dU, "dU", par.N_step, par);
+			//Output_P(dP, "dP", par.N_step, par);
 
 			//Output_P(P      , "P"      , par.N_step, par);
 			//Output_P(P_exact, "P_exact", par.N_step, par);

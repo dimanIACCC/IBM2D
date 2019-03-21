@@ -11,7 +11,7 @@ void Output_U(Matrix u, std::string filename, int n, Param par) {
 	output.open(filename);
 
 	output << "title = " << '"' << filename << '"' << std::endl;
-	output << "Variables = x y u" << std::endl;
+	output << "Variables = i j x y u" << std::endl;
 	output << "zone T=" << '"' << n << '"' << ",  i=" << u.size() << ", j=" << u[0].size() << ", f=point" << std::endl;
 	output << "SolutionTime = " << n << std::endl;
 
@@ -29,7 +29,7 @@ void Output_U(Matrix u, std::string filename, int n, Param par) {
 					U = (u[i][par.N2_u - 1] + u[i][par.N2_u - 2])*0.5;
 				}
 			}
-			output << xu[1] << ' ' << xu[2] << ' ' << U << std::endl;
+			output << i << ' ' << j << ' ' << xu[1] << ' ' << xu[2] << ' ' << U << std::endl;
 		}
 	}
 
@@ -48,7 +48,7 @@ void Output_V(Matrix v, std::string filename, int n, Param par) {
 	output.open(filename);
 
 	output << "title = " << '"' << filename << '"' << std::endl;
-	output << "Variables = x y v" << std::endl;
+	output << "Variables = i j x y v" << std::endl;
 	output << "zone T=" << '"' << n << '"' << ",  i=" << v.size() << ", j=" << v[0].size() << ", f=point" << std::endl;
 	output << "SolutionTime = " << n << std::endl;
 
@@ -66,7 +66,7 @@ void Output_V(Matrix v, std::string filename, int n, Param par) {
 					V = (v[par.N1_v - 1][j] + v[par.N1_v - 2][j])*0.5;
 				}
 			}
-			output << xv[1] << ' ' << xv[2] << ' '  << V << std::endl;
+			output << i << ' ' << j << ' ' << xv[1] << ' ' << xv[2] << ' '  << V << std::endl;
 		}
 	}
 

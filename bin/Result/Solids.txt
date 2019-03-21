@@ -6,11 +6,3 @@ circle{
    Poiseuille = 0
    rho = 1e9
 }
-//circle{
-   x = 5
-   y =        7.5
-   moving = 0
-   r = 0.25
-   Poiseuille = 0
-   rho = 1e9
-}

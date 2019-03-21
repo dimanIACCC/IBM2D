@@ -36,7 +36,7 @@ Matrix Operator_Ax(Template &A, Matrix &u, Param par, Direction Dir) {
 }
 
 // RHS of Navier-Stokes equation
-Matrix CalculateB(Matrix &u_n, Matrix &v_n, Matrix &u_s, Matrix &v_s, Matrix &p, Matrix &p_new, Param par, Direction Dir) {
+Matrix CalculateB(Matrix &u_n, Matrix &v_n, Matrix &u_s, Matrix &v_s, Matrix &p, Matrix &p_new, Matrix &F, Param &par, Direction Dir) {
 
 	size_t Nx = u_n.size();
 	size_t Ny = u_n[0].size();
@@ -45,8 +45,6 @@ Matrix CalculateB(Matrix &u_n, Matrix &v_n, Matrix &u_s, Matrix &v_s, Matrix &p,
 
 	if      (Dir == Du) { d_u = par.d_x;	d_v = par.d_y;}
 	else if (Dir == Dv) { d_u = par.d_y;	d_v = par.d_x;}
-
-	double alpha = 0.5;
 
 	CreateMatrix(result, Nx, Ny);
 
@@ -62,24 +60,15 @@ Matrix CalculateB(Matrix &u_n, Matrix &v_n, Matrix &u_s, Matrix &v_s, Matrix &p,
 			                                (p    [i][j] - L(p    , i, j, Dir)) / d_u
 			                              + (p_new[i][j] - L(p_new, i, j, Dir)) / d_u
 			                             );
+			double Laplace_F = par.d_t / (2.0*par.Re) * (par.ldxdx * (F[i + 1][j] - 2.0 * F[i][j] + F[i - 1][j])
+			                                           + par.ldydy * (F[i][j + 1] - 2.0 * F[i][j] + F[i][j - 1]) ) ;
 
 			result[i][j] = - advective_term_s
 			               - pressure_term
 			               + diffusion_term_n / (2.0*par.Re)
+			               + Laplace_F
 			               + u_n[i][j] / par.d_t;
 
-			/*int iii = 10, jjj = 3;
-			std::cout << std::setprecision(18);
-			if ((Dir == Du && i == iii && j == jjj) || (Dir == Dv && i == jjj && j == Nx / 2 + 1 - iii)) {
-				std::cout << "Direction = " << Dir << std::endl;
-				std::cout << "(i,j)      = (" << i << ", " << j << ")" << std::endl;
-				std::cout << "convection = " << std::setw(22) << std::fixed << - (alpha  * advective_term_n + (1.0 - alpha) * advective_term_s) << std::endl;
-				std::cout << "pressure   = " << std::setw(22) << std::fixed << - pressure_term << std::endl;
-				std::cout << "diffusion  = " << std::setw(22) << std::fixed << diffusion_term_n / (2.0*par.Re) << std::endl;
-				std::cout << "u_n / dt   = " << std::setw(22) << std::fixed << u_n[i][j] / par.d_t << std::endl;
-				std::cout << "result     = " << std::setw(22) << std::fixed << result[i][j] << std::endl;
-				std::cout << std::endl;
-			}*/
 		}
 	}
 
@@ -93,4 +82,53 @@ double advective_term(Matrix &ul, Matrix &vl, Matrix &ur, Matrix &vr, size_t i, 
 	double result = ul[i][j] * (R(ur, i, j, Dir) - L(ur, i, j, Dir)) / (2.0*d_x)
 	                + v_help * (U(ur, i, j, Dir) - D(ur, i, j, Dir)) / (2.0*d_y);
 	return result;
+}
+
+void Output_eq_terms(std::string filename, int n, Matrix &u_n, Matrix &v_n, Matrix &u_s, Matrix &v_s, Matrix &p, Matrix &p_new, Matrix &F, Param par, Direction Dir) {
+
+	size_t Nx = u_n.size();
+	size_t Ny = u_n[0].size();
+
+	double d_u, d_v;
+
+	if      (Dir == Du) { d_u = par.d_x;	d_v = par.d_y; }
+	else if (Dir == Dv) { d_u = par.d_y;	d_v = par.d_x; }
+
+
+	std::ofstream output;
+	filename = par.WorkDir + filename + std::to_string(n) + ".plt";
+
+	output.open(filename);
+
+	output << "title = " << '"' << filename << '"' << std::endl;
+	output << "Variables = i j advection diffusion pressure Laplace_F du_dt" << std::endl;
+	output << "zone T=" << '"' << n << '"' << ",  i=" << Nx-2 << ", j=" << Ny-2 << ", f=point" << std::endl;
+	output << "SolutionTime = " << n << std::endl;
+
+	for (size_t j = 1; j < (Ny - 1); ++j) {
+		for (size_t i = 1; i < (Nx - 1); ++i) {
+			double advective_term_s = 0.25 * (advective_term(u_n, v_n, u_n, v_n, i, j, d_u, d_v, Dir)
+			                                + advective_term(u_s, v_s, u_s, v_s, i, j, d_u, d_v, Dir)
+			                                + advective_term(u_n, v_n, u_s, v_s, i, j, d_u, d_v, Dir)
+			                                + advective_term(u_s, v_s, u_n, v_n, i, j, d_u, d_v, Dir));
+			double diffusion_term_n = par.ldxdx * (u_n[i + 1][j] - 2.0 * u_n[i][j] + u_n[i - 1][j])
+			                        + par.ldydy * (u_n[i][j + 1] - 2.0 * u_n[i][j] + u_n[i][j - 1]);
+			double pressure_term = 0.5 * (
+			                               (p    [i][j] - L(p    , i, j, Dir)) / d_u
+			                             + (p_new[i][j] - L(p_new, i, j, Dir)) / d_u
+			                             );
+			double Laplace_F =  par.ldxdx * (F[i + 1][j] - 2.0 * F[i][j] + F[i - 1][j])
+			                  + par.ldydy * (F[i][j + 1] - 2.0 * F[i][j] + F[i][j - 1]);
+
+			output << i << ' '
+			       << j << ' '
+				   << advective_term_s << ' '
+			       << diffusion_term_n / (2.0*par.Re) << ' '
+			       << pressure_term << ' '
+			       << Laplace_F * par.d_t / (2.0*par.Re) << ' '
+			       << (u_s[i][j] - u_n[i][j]) / par.d_t << ' '
+			       << std::endl;
+		}
+	}
+
 }

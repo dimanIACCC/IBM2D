@@ -41,7 +41,8 @@ GeomVec Circle_Equation(GeomVec xc, double r, double theta) {
 Circle::Circle(double x, double y, double ux, double uy, double omega, double rho, int Nn, bool moving, int name, double r) :
      SolidBody(       x,        y,        ux,        uy,        omega,        rho,     Nn,      moving,      name) {
 	this->r = r;
-	int Nn2 = Nn / 2;
+	int N_Solid_Layers = 1;
+	int Nn2 = Nn / N_Solid_Layers;
 	for (int i = 0; i < Nn2; ++i){
 		Nodes[i].xn[1] = cos(i * 2.0 * M_PI / Nn2) * r;
 		Nodes[i].xn[2] = sin(i * 2.0 * M_PI / Nn2) * r;
@@ -49,13 +50,13 @@ Circle::Circle(double x, double y, double ux, double uy, double omega, double rh
 		Nodes[i].n[2]  = sin(i * 2.0 * M_PI / Nn2);
 		Nodes[i].x = Nodes[i].xn;
 	}
-	for (int i = Nn2; i < 2*Nn2; ++i) {
+	/*for (int i = Nn2; i < 2*Nn2; ++i) {
 		Nodes[i].xn[1] = cos(i * 2.0 * M_PI / Nn2) * r * 0.95;
 		Nodes[i].xn[2] = sin(i * 2.0 * M_PI / Nn2) * r * 0.95;
 		Nodes[i].n[1] = cos(i * 2.0 * M_PI / Nn2);
 		Nodes[i].n[2] = sin(i * 2.0 * M_PI / Nn2);
 		Nodes[i].x = Nodes[i].xn;
-	}
+	}*/
 	/*for (int i = 2*Nn2; i < 3*Nn2; ++i) {
 		Nodes[i].xn[1] = cos(i * 2.0 * M_PI / Nn2) * r * 0.5;
 		Nodes[i].xn[2] = sin(i * 2.0 * M_PI / Nn2) * r * 0.5;
@@ -111,7 +112,7 @@ void SolidBody::log_init(std::string WorkDir) {
 	output.open(filename);
 
 	output << "title = " << '"' << "Solid" << name << '"' << std::endl;
-	output << "Variables = x y u v fx fy omega tau n Fx_hd Fy_hd IntX IntY IntTau tau_hd" << std::endl;
+	output << "Variables = x y u v fx fy omega tau n Fx_hd Fy_hd Fx_L Fy_L IntTau tau_hd" << std::endl;
 }
 
 void SolidBody::log(std::string WorkDir, int n) {
@@ -123,15 +124,15 @@ void SolidBody::log(std::string WorkDir, int n) {
 	       << 0.5*(xc_n[2] + xc_new[2]) << "   "
 	       << 0.5*(uc_n[1] + uc_new[1]) << "   "
 	       << 0.5*(uc_n[2] + uc_new[2]) << "   "
-	       << 0.5*(f_n[1] + f_new[1]) << "   "
-	       << 0.5*(f_n[2] + f_new[2]) << "   "
+	       << f_new[1] << "   "
+	       << f_new[2] << "   "
 	       << 0.5*(omega_n[3] + omega_new[3]) << "   "
 	       << 0.5*(tau_n[3] + tau_new[3])     << "   "
 	       <<  n        << "   "
-	       << F_hd[1] << "   "
-	       << F_hd[2] << "   "
-	       << integralV_du_dt[1] << "   "
-	       << integralV_du_dt[2] << "   "
+	       << -F_hd[1] << "   "
+	       << -F_hd[2] << "   "
+	       << f_L[1] << "   "
+	       << f_L[2] << "   "
 	       << integralV_dur_dt[3] << "   "
 	       << tau_hd[3] << "   "
 	       << std::endl;
@@ -315,6 +316,7 @@ void Solids_zero_force(std::list<Circle>& Solids) {
 		std::fill(it.f.begin(), it.f.end(), 0.0);
 		std::fill(it.tau.begin(), it.tau.end(), 0.0);
 		it.Fr_all = 0.;
+		std::fill(it.f_L.begin(), it.f_L.end(), 0.0);
 		for (size_t k = 0; k < it.Nn; ++k) {
 			std::fill(it.Nodes[k].f.begin(), it.Nodes[k].f.end(), 0.0);
 		}
@@ -334,8 +336,8 @@ void Solids_velocity_new(std::list<Circle>& Solids, Param par) {
 			//it.uc_new    = (1 - alpha) * it.uc_s    + alpha * (it.uc_n    + d_uc);
 			//it.omega_new = (1 - alpha) * it.omega_s + alpha * (it.omega_n + d_omega);
 
-			it.uc_new    = it.uc_n    - 0.5 * (it.f_n   + it.f_new  ) * par.d_t * 1 / (it.rho - 1) / it.V;  // fluid density equals 1
-			it.omega_new = it.omega_n - 0.5 * (it.tau_n + it.tau_new) * par.d_t * 1 / (it.rho - 1) / it.I;  // angular moment I is normalized with density
+			it.uc_new    = it.uc_n    - it.f_new   * par.d_t / (it.rho - 1) / it.V;  // fluid density equals 1
+			it.omega_new = it.omega_n - it.tau_new * par.d_t / (it.rho - 1) / it.I;  // angular moment I is normalized with density
 
 			//it.uc_new    = it.uc_n    + it.F_hd   / it.rho / it.V * par.d_t;  // fluid density equals 1
 			//it.omega_new = it.omega_n + it.tau_hd / it.rho / it.I * par.d_t;  // angular moment I is normalized with density

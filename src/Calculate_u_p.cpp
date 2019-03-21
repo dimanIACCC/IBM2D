@@ -20,7 +20,7 @@ void Calculate_u_p(Matrix &U_n   , Matrix &U_new,
 
 	CreateMatrix(U_s, par.N1_u, par.N2_u);
 	CreateMatrix(V_s, par.N1_v, par.N2_v);
-	CreateMatrix(P_Right, par.N1_p, par.N2_p);
+	CreateMatrix(P_RHS  , par.N1_p, par.N2_p);
 	CreateMatrix(Delta_P, par.N1_p, par.N2_p);
 	CreateMatrix(P      , par.N1_p, par.N2_p);
 
@@ -37,12 +37,6 @@ void Calculate_u_p(Matrix &U_n   , Matrix &U_new,
 		solid.omega = solid.omega_n;
 	}
 
-	Multidirect_Forcing_Method(Fx_n, Fy_n, U_n, V_n, solidList, par);
-	for (auto& solid : solidList) {
-		solid.f_n = solid.f;
-		solid.tau_n = solid.tau;
-	}
-
 	U_s = U_n;
 	V_s = V_n;
 	P_new = P_n;
@@ -52,11 +46,11 @@ void Calculate_u_p(Matrix &U_n   , Matrix &U_new,
 	// output of iterations information
 	std::ofstream output;
 	std::string filename = par.WorkDir + "/iterations" + std::to_string(par.N_step) + ".plt";
-	output.open(filename);
+	//output.open(filename);
 
-	output << "title = iterations_step" << par.N_step << std::endl;
+	//output << "title = iterations_step" << par.N_step << std::endl;
 	//output << "Variables = s ux uy omega f IntU tau IntUr" << std::endl;
-	output << "Variables = s  N_BiCGStab_u  N_BiCGStab_v  N_DeltaP time_velocity time_pressure time_force" << std::endl;
+	//output << "Variables = s  N_BiCGStab_u  N_BiCGStab_v  N_DeltaP time_velocity time_pressure time_force" << std::endl;
 
 	/*if (par.BC == Taylor_Green) {
 		int i = par.N1 / 2;
@@ -77,8 +71,8 @@ void Calculate_u_p(Matrix &U_n   , Matrix &U_new,
 			CreateMatrix(B_u, par.N1_u, par.N2_u);										// create matrix filled by 0
 			CreateMatrix(B_v, par.N1_v, par.N2_v);										//
 
-			B_u = CalculateB(U_n, V_n, U_s, V_s, P_n, P_new, par, Du);                           // RHS for Navier-Stokes non-linear equation
-			B_v = CalculateB(V_n, U_n, V_s, U_s, P_n, P_new, par, Dv);
+			B_u = CalculateB(U_n, V_n, U_s, V_s, P_n, P_new, Fx_new, par, Du);                           // RHS for Navier-Stokes non-linear equation
+			B_v = CalculateB(V_n, U_n, V_s, U_s, P_n, P_new, Fy_new, par, Dv);
 
 			U_new = U_s;
 			V_new = V_s;
@@ -99,7 +93,7 @@ void Calculate_u_p(Matrix &U_n   , Matrix &U_new,
 		time_velocity = end - begin;
 		#pragma endregion Velocity
 
-			//Output(P_new, U_new, V_new, Fx_new, Fy_new, s, solidList, par);
+		//Output(P_new, U_new, V_new, Fx_new, Fy_new, s, solidList, par);
 
 		#pragma region Force
 		begin = std::clock();
@@ -119,6 +113,8 @@ void Calculate_u_p(Matrix &U_n   , Matrix &U_new,
 
 		end = std::clock();
 		time_force = end - begin;
+
+
 		#pragma endregion Force
 
 			for (auto& it : solidList) {
@@ -129,13 +125,16 @@ void Calculate_u_p(Matrix &U_n   , Matrix &U_new,
 		#pragma region Pressure
 		begin = std::clock();
 
-			P_Right = Calculate_Press_Right(U_new, V_new, par);                                     // calculating P_Right = 1/dt ( {U_i,j - U_i-1,j}/{h_x} + {V_i,j - V_i,j-1}/{h_x} )
+			P_RHS = Pressure_RHS(U_new, V_new, par);                                     // calculating P_RHS = 1/dt ( {U_i,j - U_i-1,j}/{h_x} + {V_i,j - V_i,j-1}/{h_x} )
 
-			double Delta_P_max = Calculate_Press_correction(Delta_P, P_Right, par, N_DeltaP);       // Zeidel method for solving Poisson equation
+			double Delta_P_max = Pressure_correction_solve(Delta_P, P_RHS, par, N_DeltaP);     // solve pressure correction equation  -Laplace Delta_P = P_RHS
+
+			//Output_P(Delta_P, "helmholtz", s, par);
+			//std::cin.get();
 
 			double P_max = std::max(max(P_new), 1.e-14);
 			double relax = std::min(0.05 * std::max(pow(P_max / Delta_P_max, 1), 1.), 1.0);						// coefficient of relaxation
-			//relax = 1.;
+			relax = 1.; // workaround
 
 			std::cout  << "s = "
 				<< std::setw(3) << s << ", delta_P / P = "
@@ -155,20 +154,19 @@ void Calculate_u_p(Matrix &U_n   , Matrix &U_new,
 
 			P_new += Delta_P * relax;                                                                   // correction of pressure
 
-			//Output_P(P_Right, "P_Right_s", s, par);
+			//Output_P(P_RHS, "P_RHS_s", s, par);
 
-			if (par.BC == periodical || par.BC == u_inflow || par.BC == u_infinity && par.N_step < 3)
-				P_n = P_new;
+			//if (s>30) P_n = P_new;   //workaround
 
 			for (size_t i = 1; i < U_new.size() - 1; ++i) {
 				for (size_t j = 1; j < U_new[0].size() - 1; ++j) {
-					U_new[i][j] -= relax * par.d_t * (Delta_P[i][j] - Delta_P[i - 1][j]) / par.d_x;		// correction of predicted velocity U_new
+					U_new[i][j] -= relax * par.d_t * (Delta_P[i][j] - Delta_P[i - 1][j]) / par.d_x / 2.;		// correction of predicted velocity U_new
 				}
 			}
 
 			for (size_t i = 1; i < V_new.size() - 1; ++i) {
 				for (size_t j = 1; j < V_new[0].size() - 1; ++j) {
-					V_new[i][j] -= relax * par.d_t * (Delta_P[i][j] - Delta_P[i][j - 1]) / par.d_y;		// correction of predicted velocity V_new
+					V_new[i][j] -= relax * par.d_t * (Delta_P[i][j] - Delta_P[i][j - 1]) / par.d_y / 2.;		// correction of predicted velocity V_new
 				}
 			}
 
@@ -220,6 +218,8 @@ void Calculate_u_p(Matrix &U_n   , Matrix &U_new,
 		U_s = U_new;
 		V_s = V_new;
 	}
+
+	//std::cin.get();
 
 	// Calculation of the strain rate, pressure and HydroDynamic (HD) force in Lagrange mesh
 	deformation_velocity(U_new, V_new, Exx, Eyy, Exy, par);
