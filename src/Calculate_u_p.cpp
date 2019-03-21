@@ -152,11 +152,13 @@ void Calculate_u_p(Matrix &U_n   , Matrix &U_new,
 
 		#pragma region New P and U																
 
-			P_new += Delta_P * relax;                                                                   // correction of pressure
-
-			//Output_P(P_RHS, "P_RHS_s", s, par);
-
-			//if (s>30) P_n = P_new;   //workaround
+			if ((par.BC == periodical || par.BC == u_inflow || par.BC == u_infinity && par.N_step < 10) || s > 50) {
+				P_new += Delta_P * (relax / 2.);   // 1st order approximation for pressure
+				P_n = P_new;                       //
+			}
+			else {
+				P_new += Delta_P * relax;          // 2nd order approximation for pressure
+			}
 
 			for (size_t i = 1; i < U_new.size() - 1; ++i) {
 				for (size_t j = 1; j < U_new[0].size() - 1; ++j) {
