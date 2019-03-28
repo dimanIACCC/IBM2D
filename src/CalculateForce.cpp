@@ -57,10 +57,10 @@ void CalculateForce(Matrix &Fx, Matrix &Fy, std::list<Circle> &iList, Matrix& u,
 
 					int i_max, i_min;
 					int j_max, j_min;
-					GeomVec xs = solid->xc + solid->Nodes[k].x;
+					GeomVec xs = solid->x + solid->Nodes[k].x;
 
 					//calculating fluid velocity uf in Lagrange nodes by using near Euler nodes and discrete delta function
-					GetInfluenceArea(i_min, i_max, j_min, j_max, par.N1_u - 1, par.N2_u - 1, solid->xc + solid->Nodes[k].x, 3, par);
+					GetInfluenceArea(i_min, i_max, j_min, j_max, par.N1_u - 1, par.N2_u - 1, solid->x + solid->Nodes[k].x, 3, par);
 					solid->Nodes[k].uf[1] = 0.0;
 					for (int i = i_min; i <= i_max; ++i) {
 						for (int j = j_min; j <= j_max; ++j) {
@@ -74,7 +74,7 @@ void CalculateForce(Matrix &Fx, Matrix &Fy, std::list<Circle> &iList, Matrix& u,
 						}
 					}
 
-					GetInfluenceArea(i_min, i_max, j_min, j_max, par.N1_v - 1, par.N2_v - 1, solid->xc + solid->Nodes[k].x, 3, par);
+					GetInfluenceArea(i_min, i_max, j_min, j_max, par.N1_v - 1, par.N2_v - 1, solid->x + solid->Nodes[k].x, 3, par);
 					solid->Nodes[k].uf[2] = 0.0;
 					for (int i = i_min; i <= i_max; ++i) {
 						for (int j = j_min; j <= j_max; ++j) {
@@ -123,12 +123,12 @@ void CalculateForce(Matrix &Fx, Matrix &Fy, std::list<Circle> &iList, Matrix& u,
 					int iy_max, iy_min;
 					int jy_max, jy_min;
 
-					GetInfluenceArea(ix_min, ix_max, jx_min, jx_max, par.N1_u - 1, par.N2_u - 1, solid->xc + solid->Nodes[k].x, 3, par);
-					GetInfluenceArea(iy_min, iy_max, jy_min, jy_max, par.N1_v - 1, par.N2_v - 1, solid->xc + solid->Nodes[k].x, 3, par);
+					GetInfluenceArea(ix_min, ix_max, jx_min, jx_max, par.N1_u - 1, par.N2_u - 1, solid->x + solid->Nodes[k].x, 3, par);
+					GetInfluenceArea(iy_min, iy_max, jy_min, jy_max, par.N1_v - 1, par.N2_v - 1, solid->x + solid->Nodes[k].x, 3, par);
 
 					//calculating velocities us of the solid boundary
 					double ds = solid->ds(k);
-					GeomVec xs = solid->xc + solid->Nodes[k].x;
+					GeomVec xs = solid->x + solid->Nodes[k].x;
 
 					double dn = sqrt(par.d_x*par.d_x * solid->Nodes[k].n[1] * solid->Nodes[k].n[1]
 					               + par.d_y*par.d_y * solid->Nodes[k].n[2] * solid->Nodes[k].n[2]) / par.d_x / par.d_y;
@@ -182,8 +182,8 @@ void CalculateForce(Matrix &Fx, Matrix &Fy, std::list<Circle> &iList, Matrix& u,
 				int iy_max, iy_min;
 				int jy_max, jy_min;
 
-				GetInfluenceArea(ix_min, ix_max, jx_min, jx_max, par.N1_u - 1, par.N2_u - 1, solid->xc, int(solid->r / par.d_x) + 3, par);
-				GetInfluenceArea(iy_min, iy_max, jy_min, jy_max, par.N1_v - 1, par.N2_v - 1, solid->xc, int(solid->r / par.d_x) + 3, par);
+				GetInfluenceArea(ix_min, ix_max, jx_min, jx_max, par.N1_u - 1, par.N2_u - 1, solid->x, int(solid->r / par.d_x) + 3, par);
+				GetInfluenceArea(iy_min, iy_max, jy_min, jy_max, par.N1_v - 1, par.N2_v - 1, solid->x, int(solid->r / par.d_x) + 3, par);
 
 				// summarizing force for Euler nodes and for solids
 				for (int i = ix_min; i <= ix_max; ++i) {
@@ -191,7 +191,7 @@ void CalculateForce(Matrix &Fx, Matrix &Fy, std::list<Circle> &iList, Matrix& u,
 						int i_real = i_real_u(i, par);
 						Fx[i_real][j] += Fx_temp[i_real][j];
 						solid->f[1] += Fx_temp[i_real][j] * par.d_x * par.d_y;
-						GeomVec r = x_u(i, j, par) - solid->xc;
+						GeomVec r = x_u(i, j, par) - solid->x;
 						GeomVec f;
 						f[1] = Fx_temp[i_real][j];
 						f[2] = 0.0;
@@ -204,7 +204,7 @@ void CalculateForce(Matrix &Fx, Matrix &Fy, std::list<Circle> &iList, Matrix& u,
 						int i_real = i_real_v(i, par);
 						Fy[i_real][j] += Fy_temp[i_real][j];
 						solid->f[2] += Fy_temp[i_real][j] * par.d_x * par.d_y;
-						GeomVec r = x_v(i, j, par) - solid->xc;
+						GeomVec r = x_v(i, j, par) - solid->x;
 						GeomVec f;
 						f[1] = 0.0;
 						f[2] = Fy_temp[i_real][j];
@@ -275,7 +275,7 @@ void Solids_deformation_velocity_pressure(std::list<Circle> &Solids, Matrix &Exx
 			int j_max, j_min;
 
 
-			GetInfluenceArea(i_min, i_max, j_min, j_max, np1 - 1, np2 - 1, solid.xc + solid.Nodes[k].x, 4, par);
+			GetInfluenceArea(i_min, i_max, j_min, j_max, np1 - 1, np2 - 1, solid.x + solid.Nodes[k].x, 4, par);
 			solid.Nodes[k].Eps(1, 1) = 0.0;
 			solid.Nodes[k].Eps(2, 2) = 0.0;
 			solid.Nodes[k].p         = 0.0;
@@ -285,7 +285,7 @@ void Solids_deformation_velocity_pressure(std::list<Circle> &Solids, Matrix &Exx
 					if (i_real <  1      ) i_real += np1 - 2;
 					if (i_real >  np1 - 2) i_real -= np1 - 2;
 					GeomVec xp = x_p(i_real, j, par);
-					GeomVec xs = solid.xc + solid.Nodes[k].x;
+					GeomVec xs = solid.x + solid.Nodes[k].x;
 					solid.Nodes[k].Eps(1, 1) += Exx[i_real][j] * DeltaFunction(xp[1] - xs[1], xp[2] - xs[2], par);
 					solid.Nodes[k].Eps(2, 2) += Eyy[i_real][j] * DeltaFunction(xp[1] - xs[1], xp[2] - xs[2], par);
 					solid.Nodes[k].p         +=   p[i_real][j] * DeltaFunction(xp[1] - xs[1], xp[2] - xs[2], par);
@@ -300,7 +300,7 @@ void Solids_deformation_velocity_pressure(std::list<Circle> &Solids, Matrix &Exx
 				}
 			}
 
-			GetInfluenceArea(i_min, i_max, j_min, j_max, nc1 - 1, nc2 - 1, solid.xc + solid.Nodes[k].x, 4, par);
+			GetInfluenceArea(i_min, i_max, j_min, j_max, nc1 - 1, nc2 - 1, solid.x + solid.Nodes[k].x, 4, par);
 			solid.Nodes[k].Eps(1, 2) = 0.0;
 			for (int i = i_min; i <= i_max; ++i) {
 				for (int j = j_min; j <= j_max; ++j) {
@@ -309,7 +309,7 @@ void Solids_deformation_velocity_pressure(std::list<Circle> &Solids, Matrix &Exx
 					if (i_real >  nc1 - 1) i_real -= nc1 - 1;
 					if (i_real == 0      ) i_real  = nc1 - 1;
 					GeomVec xc = x_c(i_real, j, par);
-					GeomVec xs = solid.xc + solid.Nodes[k].x;
+					GeomVec xs = solid.x + solid.Nodes[k].x;
 					solid.Nodes[k].Eps(1, 2) += Exy[i_real][j] * DeltaFunction(xc[1] - xs[1], xc[2] - xs[2], par);
 					if (par.BC == periodical) {
 						solid.Nodes[k].Eps(1, 2) += Exy[i_real][j] * DeltaFunction(xc[1] - xs[1] - par.L, xc[2] - xs[2], par);

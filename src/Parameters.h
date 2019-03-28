@@ -51,6 +51,7 @@ public:
 	Param(std::string WorkDir);
 	Param(std::string WorkDir, std::string filename);
 	void init();
+	void read_line(std::string);
 };
 
 boundary_conditions string_to_BC(std::string s);

@@ -100,11 +100,11 @@ void Output(Matrix p, Matrix u, Matrix v, Matrix Fx, Matrix Fy, int n, std::list
 		output << "zone T = circle" << ",  i=" << solid.Nn + 2 << ", f=point" << std::endl;
 		output << "SolutionTime = " << par.N_step << std::endl;
 
-		output << solid.xc_new[1] << " "
-		       << solid.xc_new[2] << " "
+		output << solid.x_n[1] << " "
+		       << solid.x_n[2] << " "
 		       << 0 << " "
-		       << solid.uc_new[1] << " "
-		       << solid.uc_new[2] << " "
+		       << solid.u_n[1] << " "
+		       << solid.u_n[2] << " "
 		       << solid.f[1] << " "
 		       << solid.f[2] << " "
 		       << solid.F_hd[1] << " "
@@ -112,8 +112,8 @@ void Output(Matrix p, Matrix u, Matrix v, Matrix Fx, Matrix Fy, int n, std::list
 		       << std::endl;
 		for (int i = 0; i < solid.Nn; ++i) {
 
-			output << solid.Nodes[i].x[1] + solid.xc_new[1] << " "
-			       << solid.Nodes[i].x[2] + solid.xc_new[2] << " "
+			output << solid.Nodes[i].x_n[1] + solid.x_n[1] << " "
+			       << solid.Nodes[i].x_n[2] + solid.x_n[2] << " "
 			       << solid.Nodes[i].p << " "
 			       << solid.Nodes[i].uf[1] << " "
 			       << solid.Nodes[i].uf[2] << " "
@@ -124,8 +124,8 @@ void Output(Matrix p, Matrix u, Matrix v, Matrix Fx, Matrix Fy, int n, std::list
 			       << std::endl;
 
 		}
-		output << solid.Nodes[0].x[1] + solid.xc_new[1] << " "
-		       << solid.Nodes[0].x[2] + solid.xc_new[2] << " "
+		output << solid.Nodes[0].x_n[1] + solid.x_n[1] << " "
+		       << solid.Nodes[0].x_n[2] + solid.x_n[2] << " "
 		       << solid.Nodes[0].p << " "
 		       << solid.Nodes[0].uf[1] << " "
 		       << solid.Nodes[0].uf[2] << " "
@@ -289,97 +289,3 @@ void Output_Matrix_mid(Matrix A, std::string WorkDir, std::string Variable, int 
 	output.close();
 }
 
-void MakeHibernationFile(int n, Param& par, std::list<Circle>& solidList, Matrix& U_n, Matrix& V_n, Matrix& P_n) {
-	std::ofstream output;
-	std::string filename = par.WorkDir + "hibernation.txt";
-	output.open(filename);
-	output << "n = " << n << std::endl;
-	output << "par{" << std::endl;
-	output << "Re = " << par.Re << std::endl;
-	output << "L = " << par.L << std::endl;
-	output << "H = " << par.H << std::endl;
-	output << "N1 = " << par.N1 << std::endl;
-	output << "N2 = " << par.N2 << std::endl;
-	output << "d_t = " << par.d_t << std::endl;
-	output << "Nn = " << par.Nn << std::endl;
-	output << "rho = " << par.rho << std::endl;
-	output << "r = " << par.r << std::endl;
-	output << "output_step = " << par.output_step << std::endl;
-	output << "N_max = " << par.N_max << std::endl;
-	output << "N_Zeidel = " << par.N_Zeidel << std::endl;
-	output << "Zeidel_eps = " << par.Zeidel_eps << std::endl;
-	output << "InelasticCollision = " << par.InelasticCollision << std::endl;
-	output << "k_dist = " << par.k_dist << std::endl;
-	output << "AddSolids_N = " << par.AddSolids_N << std::endl;
-	output << "AddSolids_start = " << par.AddSolids_start << std::endl;
-	output << "AddSolids_interval = " << par.AddSolids_interval << std::endl;
-	output << "BC = " << par.BC << std::endl;
-	output << "output_step = " << par.output_step << std::endl;
-	//output << "WorkDir = " << par.WorkDir << std::endl;
-	output << "SolidName_max = " << par.SolidName_max << std::endl;
-	output << "d_x = " << par.d_x << std::endl;
-	output << "d_y = " << par.d_y << std::endl;
-	output << "}" << std::endl;
-
-	output << "U_n{" << std::endl;
-	for (int i = 0; i < par.N1_u; i++) {
-		for (int j = 0; j < par.N2_u; j++) output << U_n[i][j] << ' ';
-		output << std::endl;
-	}
-	output << "}" << std::endl;
-
-	output << "V_n{" << std::endl;
-	for (int i = 0; i < par.N1_v; i++) {
-		for (int j = 0; j < par.N2_v; j++) output << V_n[i][j] << ' ';
-		output << std::endl;
-	}
-	output << "}" << std::endl;
-
-	output << "P_n{" << std::endl;
-	for (int i = 0; i < par.N1_p; i++) {
-		for (int j = 0; j < par.N2_p; j++) output << P_n[i][j] << ' ';
-		output << std::endl;
-	}
-	output << "}" << std::endl;
-
-	output << "<Solidlist>" << std::endl;
-	for (auto one = solidList.begin(); one != solidList.end(); one++) {
-		output << "<Solid>" << std::endl;
-		output << "moving = " << one->moving << std::endl;
-		output << "xc_n = " << std::endl << one->xc_n << std::endl;
-		output << "uc_new = " << std::endl << one->uc_new << std::endl;
-		output << "uc_n = " << std::endl << one->uc_n << std::endl;
-		output << "omega_new = " << std::endl << one->omega_new << std::endl;
-		output << "omega_n = " << std::endl << one->omega_n << std::endl;
-		output << "f = " << std::endl << one->f << std::endl;
-		output << "Fr = " << one->Fr << std::endl;
-		output << "Fr_all = " << one->Fr_all << std::endl;
-		output << "F_hd = " << std::endl << one->F_hd << std::endl;
-		output << "tau_hd = " << std::endl << one->tau_hd << std::endl;
-		output << "S = " << one->S << std::endl;
-		output << "tau = " << std::endl << one->tau << std::endl;
-		output << "I = " << one->I << std::endl;
-		output << "rho = " << one->rho << std::endl;
-		output << "V = " << one->V << std::endl;
-		output << "Nn = " << one->Nn << std::endl;
-		output << "name = " << one->name << std::endl;
-		output << "r = " << one->r << std::endl;
-		output << "n_moving" << one->n_moving << std::endl;
-		output << "<Nodes>" << std::endl;
-		for (int j = 0; j < par.Nn; j++) {
-			output << "Node{" << std::endl;
-			output << "xn = " << std::endl << one->Nodes[j].xn << std::endl;
-			output << "uf = " << std::endl << one->Nodes[j].uf << std::endl;
-			output << "f = " << std::endl << one->Nodes[j].f << std::endl;
-			output << "f_tmp = " << std::endl << one->Nodes[j].f_tmp << std::endl;
-			output << "n = " << std::endl << one->Nodes[j].n << std::endl;
-			output << "Eps = " << std::endl << one->Nodes[j].Eps << std::endl;
-			output << "p = " << one->Nodes[j].p << std::endl;
-			output << "}" << std::endl;
-		}
-		output << "<\\Nodes>" << std::endl;
-		output << "<\\Solid>" << std::endl;
-	}
-	output << "<\\Solidlist>" << std::endl;
-	output.close();
-}

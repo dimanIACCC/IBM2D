@@ -30,10 +30,9 @@ void Calculate_u_p(Matrix &U_n   , Matrix &U_new,
 
 	int N_BiCGStab_u, N_BiCGStab_v, N_DeltaP;
 
-	// if (N_step == 0)
 	for (auto& solid : solidList) {
-		solid.xc = solid.xc_n;
-		solid.uc = solid.uc_n;
+		solid.x = solid.x_n;
+		solid.u = solid.u_n;
 		solid.omega = solid.omega_n;
 	}
 
@@ -98,22 +97,18 @@ void Calculate_u_p(Matrix &U_n   , Matrix &U_new,
 		#pragma region Force
 		begin = std::clock();
 
-			// apply force from immersed particles for several times to fulfill no-slip BC
-			for (auto& solid : solidList) {
-				solid.xc = solid.xc_new;
-				solid.uc = solid.uc_new;
-				solid.omega = solid.omega_new;
-			}
-
+		// apply force from immersed particles for several times to fulfill no-slip BC
 			Multidirect_Forcing_Method(Fx_new, Fy_new, U_new, V_new, solidList, par);
 			for (auto& solid : solidList) {
-				solid.f_new = solid.f;
-				solid.tau_new = solid.tau;
+				solid.f_new   = solid.f;
 			}
 
 		end = std::clock();
 		time_force = end - begin;
 
+		//Output_U(Fx_new, "U", par.N_step, par);
+		//Output_V(Fy_new, "V", par.N_step, par);
+		//std::cin.get();
 
 		#pragma endregion Force
 
@@ -187,13 +182,13 @@ void Calculate_u_p(Matrix &U_n   , Matrix &U_new,
 		/*bool key_solid = false;
 		for (auto& it : solidList) {
 
-			double eps_uc = length(it.uc_new - it.uc_s) / (length(it.uc_new) + 1e-4);
-			double eps_omega = length(it.omega_new - it.omega_s) / std::max( length(it.omega_new), length(it.uc_new)/it.r );
+			double eps_uc = length(it.u - it.u_s) / (length(it.u) + 1e-4);
+			double eps_omega = length(it.omega_new - it.omega_s) / std::max( length(it.omega_new), length(it.u)/it.r );
 
 			double eps_max = 5e-6;
 			if (eps_uc < eps_max && eps_omega < eps_max) key_solid = true;
 
-			//output << s << "   " << it.uc_new[1] << "   " << it.uc_new[2] << "   " << it.omega_new[3] << "   " << it.f[1] << "   " << it.integralV_du_dt[1] << "   " << it.tau[3] << "   " << it.integralV_dur_dt[3] << "   " << std::endl;
+			//output << s << "   " << it.u[1] << "   " << it.u[2] << "   " << it.omega_new[3] << "   " << it.f[1] << "   " << it.integralV_du_dt[1] << "   " << it.tau[3] << "   " << it.integralV_dur_dt[3] << "   " << std::endl;
 		}*/
 
 
@@ -204,7 +199,7 @@ void Calculate_u_p(Matrix &U_n   , Matrix &U_new,
 			Solids_velocity_new(solidList, par);
 			if (par.BC == Lamb_Oseen) {
 				for (auto& it : solidList) {
-					it.omega_new[3] = Lamb_Oseen_omega(it.r, par.Re, par.d_t*(par.N_step + 1), par.Lamb_Oseen_r0);
+					it.omega[3] = Lamb_Oseen_omega(it.r, par.Re, par.d_t*(par.N_step + 1), par.Lamb_Oseen_r0);
 				}
 			}
 			// std::cout << "s iterations: " << s << std::endl;
@@ -223,6 +218,9 @@ void Calculate_u_p(Matrix &U_n   , Matrix &U_new,
 
 	//std::cin.get();
 
+	Fx_n = Fx_new;
+	Fy_n = Fy_new;
+
 	// Calculation of the strain rate, pressure and HydroDynamic (HD) force in Lagrange mesh
 	deformation_velocity(U_new, V_new, Exx, Eyy, Exy, par);
 	//Output_P(Exx, "Exx", -1, par);
@@ -237,9 +235,9 @@ void Calculate_u_p(Matrix &U_n   , Matrix &U_new,
 void Zero_velocity_in_Solids(Matrix &u, Param par, std::list<Circle> iList) {
 
 	for (auto solid : iList) {
-		for (int i = ((solid.xc_new[1] - solid.r) / par.d_x + 1); i < (solid.xc_new[1] + solid.r) / par.d_x + 1; i++)
-			for (int j = (solid.xc_new[2] - solid.r) / par.d_y + 1; j < (solid.xc_new[2] + solid.r) / par.d_y + 1; j++) {
-				double distance = sqrt(pow(par.d_x*i - solid.xc_new[1], 2) + pow(par.d_y*j - solid.xc_new[2], 2));
+		for (int i = ((solid.x[1] - solid.r) / par.d_x + 1); i < (solid.x[1] + solid.r) / par.d_x + 1; i++)
+			for (int j = (solid.x[2] - solid.r) / par.d_y + 1; j < (solid.x[2] + solid.r) / par.d_y + 1; j++) {
+				double distance = sqrt(pow(par.d_x*i - solid.x[1], 2) + pow(par.d_y*j - solid.x[2], 2));
 				if (distance <= solid.r) u[i][j] = 0;
 			}
 	}

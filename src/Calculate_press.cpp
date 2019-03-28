@@ -5,8 +5,8 @@ double Pressure_correction_solve_SOR(Matrix &delta_p, Matrix &rhs, Param par, in
 	double eps;
 	double delta_p_max;
 
-	double rxx1 = 1.0 / (par.d_x*par.d_x);
-	double ryy1 = 1.0 / (par.d_y*par.d_y);
+	double rxx1 = par.ldxdx;
+	double ryy1 = par.ldydy;
 	double rp   = 1.0 / (2.0 * (rxx1 + ryy1));
 
 	double p_tmp, p_fix = 0;
@@ -174,6 +174,13 @@ double Pressure_correction_solve(Matrix &delta_p, Matrix &rhs, Param par, int &N
 		Helmholtz_MKL(f_mkl, ax, bx, ay, by, bd_ax, bd_bx, bd_ay, bd_by, nx, ny, BCtype, q, par.d_x, par.d_y);
 
 		DoubleArray_to_Matrix(f_mkl, delta_p);
+
+		mkl_free(bd_ax);
+		mkl_free(bd_bx);
+		mkl_free(bd_ay);
+		mkl_free(bd_by);
+		mkl_free(f_mkl);
+		MKL_Free_Buffers();
 
 		if (par.DeltaP_method == 2) { //Hybrid variant MKL + SOR with second order approximation of boundary conditions
 			return Pressure_correction_solve_SOR(delta_p, rhs, par, N_DeltaP);       // SOR method for solving Poisson equation

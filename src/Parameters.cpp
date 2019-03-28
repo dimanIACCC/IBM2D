@@ -11,7 +11,7 @@ Param::Param() {
 	N1 = 101;
 	N2 = 21;
 	d_t = 0.00125;
-	N_step = -1;
+	N_step = 0;
 	Nn = 50;
 	rho = 10;
 	r = 0.5;
@@ -44,36 +44,7 @@ Param::Param(std::string WorkDir, std::string filename) : Param() {
 	input.open(WorkDir + filename);
 	if (input.is_open()) {
 		while (getline(input, line)) { // read line from file to string $line$
-			std::string PAR, VALUE;
-			GetParValue(line, PAR, VALUE);
-			if (VALUE.size() > 0) {
-				if      (PAR == "Re")           Re = stod(VALUE);
-				else if (PAR == "L")            L = stod(VALUE);
-				else if (PAR == "H")            H = stod(VALUE);
-				else if (PAR == "N1")           N1 = stoi(VALUE);
-				else if (PAR == "N2")           N2 = stoi(VALUE);
-				else if (PAR == "d_t")          d_t = stod(VALUE);
-				else if (PAR == "Nn")           Nn = stoi(VALUE);
-				else if (PAR == "rho")          rho = stod(VALUE);
-				else if (PAR == "r")            r = stod(VALUE);
-				else if (PAR == "output_step")  output_step = stoi(VALUE);
-				else if (PAR == "N_max")        N_max = stoi(VALUE);
-				else if (PAR == "DeltaP_method")        DeltaP_method = stoi(VALUE);
-				else if (PAR == "N_Zeidel")             N_Zeidel = stoi(VALUE);
-				else if (PAR == "Zeidel_eps")           Zeidel_eps = stod(VALUE);
-				else if (PAR == "eps_P")                eps_P = stod(VALUE);
-				else if (PAR == "InelasticCollision")   InelasticCollision = bool(stoi(VALUE));
-				else if (PAR == "k_dist")               k_dist = (stod(VALUE));
-				else if (PAR == "AddSolids_N")          AddSolids_N = stoi(VALUE);
-				else if (PAR == "AddSolids_start")      AddSolids_start = stoi(VALUE);
-				else if (PAR == "AddSolids_interval")   AddSolids_interval = stoi(VALUE);
-				else if (PAR == "BC")                   BC = string_to_BC(VALUE);
-				else if (PAR == "N_Force")              N_Force = stoi(VALUE);
-				else    std::cout << "unknown parameter " << PAR << std::endl;
-			}
-			else {
-				std::cout << filename << ": no value inputed" << std::endl;
-			}
+			read_line(line);
 		}
 	}
 	else {
@@ -115,6 +86,42 @@ void Param::init() {
 	k[2] = 2 * M_PI / H;
 }
 
+
+void Param::read_line(std::string line) {
+	std::string PAR, VALUE;
+	GetParValue(line, PAR, VALUE);
+	if (VALUE.size() > 0) {
+		if      (PAR == "Re")           Re = stod(VALUE);
+		else if (PAR == "L")            L = stod(VALUE);
+		else if (PAR == "H")            H = stod(VALUE);
+		else if (PAR == "N1")           N1 = stoi(VALUE);
+		else if (PAR == "N2")           N2 = stoi(VALUE);
+		else if (PAR == "d_t")          d_t = stod(VALUE);
+		else if (PAR == "Nn")           Nn = stoi(VALUE);
+		else if (PAR == "rho")          rho = stod(VALUE);
+		else if (PAR == "r")            r = stod(VALUE);
+		else if (PAR == "output_step")  output_step = stoi(VALUE);
+		else if (PAR == "N_max")        N_max = stoi(VALUE);
+		else if (PAR == "DeltaP_method")        DeltaP_method = stoi(VALUE);
+		else if (PAR == "N_Zeidel")             N_Zeidel = stoi(VALUE);
+		else if (PAR == "Zeidel_eps")           Zeidel_eps = stod(VALUE);
+		else if (PAR == "eps_P")                eps_P = stod(VALUE);
+		else if (PAR == "InelasticCollision")   InelasticCollision = bool(stoi(VALUE));
+		else if (PAR == "k_dist")               k_dist = (stod(VALUE));
+		else if (PAR == "AddSolids_N")          AddSolids_N = stoi(VALUE);
+		else if (PAR == "AddSolids_start")      AddSolids_start = stoi(VALUE);
+		else if (PAR == "AddSolids_interval")   AddSolids_interval = stoi(VALUE);
+		else if (PAR == "BC")                   BC = string_to_BC(VALUE);
+		else if (PAR == "N_Force")              N_Force = stoi(VALUE);
+		else if (PAR == "N_step")               N_step = stoi(VALUE);
+		else if (PAR == "SolidName_max")        SolidName_max = stoi(VALUE);
+		else    std::cout << "unknown parameter " << PAR << std::endl;
+	}
+	else {
+		std::cout << line << ": no value inputed" << std::endl;
+	}
+
+}
 
 boundary_conditions string_to_BC(std::string s) {
 	boundary_conditions BC;

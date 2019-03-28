@@ -8,7 +8,7 @@
 class Node
 {
 public:
-	GeomVec x, xn;    // coordinates
+	GeomVec x, x_n;// coordinates
 	GeomVec uf;       // velocity of the fluid in the Node
 	GeomVec us;       // velocity of the SolidBody in the Node
 	GeomVec f, f_tmp; // force and temporary force in iterations
@@ -22,16 +22,16 @@ class SolidBody
 {
 public:
 	bool moving;
-	GeomVec xc, xc_n, xc_new;        // coordinates of the mass center
-	GeomVec uc, uc_n, uc_new, uc_s;  // velocity of the mass center
-	GeomVec omega, omega_n, omega_new, omega_s;  // angular velocity
+	GeomVec x_n, x;          // coordinates of the mass center
+	GeomVec u_n, u;          // velocity of the mass center
+	GeomVec omega, omega_n;  // angular velocity
 	GeomVec f, f_n, f_new;      // force applied to the whole SolidBody
 	GeomVec f_L;                // force from Lagrange mesh
 	double Fr, Fr_all;      // average radial Force applied to SolidBody
 	GeomVec F_hd;   // Force calculated from hydrodynamics
 	GeomVec tau_hd; // torque, moment of force calculated from hydrodynamics
 	double S;       // length of contour for radial Force averaging
-	GeomVec tau, tau_n, tau_new;    // torque, moment of force applied to the whole SolidBody
+	GeomVec tau;    // torque, moment of force applied to the whole SolidBody
 	double I;       // moment of inertia
 	double rho;     // density
 	double V;       // volume
@@ -41,7 +41,7 @@ public:
 	size_t Nn;                    // Number of Nodes
 	int name;                     // integer name of the solid
 	int n_moving;					//step which is the first moving for solid
-	SolidBody(double x, double y, double ux, double uy, double omega, double rho, int Nn, bool moving, int &name);
+	SolidBody(double x, double y, double ux, double uy, double omega, double rho, int Nn, bool moving, int name);
 	~SolidBody();
 	void velocities();      // calculates the velocities in all Nodes of the SolidBody
 	double ds(size_t i);

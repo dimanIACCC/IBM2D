@@ -24,35 +24,24 @@
 
 #include "helmholtz.h"
 
+DFTI_DESCRIPTOR_HANDLE xhandle = 0;
+
 void Helmholtz_MKL(double*f, double &ax, double &bx, double &ay, double &by, 
                    double*bd_ax, double*bd_bx, double*bd_ay, double*bd_by, MKL_INT &nx, MKL_INT &ny, char *BCtype, double q, double hx, double hy)
 {
 	MKL_INT stat, ipar[128];
 	double *dpar = NULL;
 
-	DFTI_DESCRIPTOR_HANDLE xhandle = 0;
-
 	dpar = (double*)mkl_malloc((13 * nx / 2 + 7) * sizeof(double), 64);
 
 	for (MKL_INT i = 0; i<128; i++) ipar[i] = 0;
 
-	/* Initializing simple data structures of Poisson Library for 2D Helmholtz Solver */
 	d_init_Helmholtz_2D(&ax, &bx, &ay, &by, &nx, &ny, BCtype, &q, ipar, dpar, &stat);
 	ipar[2] = 0;      // Disable warning for Neumann BC
-	if (stat != 0) goto end;
-	/* Initializing complex data structures of Poisson Library for 2D Helmholtz Solver */
 	d_commit_Helmholtz_2D(f, bd_ax, bd_bx, bd_ay, bd_by, &xhandle, ipar, dpar, &stat);
-	if (stat != 0) goto end;
-	/* Computing the approximate solution of 2D Helmholtz problem */
 	d_Helmholtz_2D(f, bd_ax, bd_bx, bd_ay, bd_by, &xhandle, ipar, dpar, &stat);
-	if (stat != 0) goto end;
-	/* Cleaning the memory used by xhandle */
 	free_Helmholtz_2D(&xhandle, ipar, &stat);
-	if (stat != 0) goto end;
-	/* Now we can use xhandle to solve another 2D Helmholtz problem */
 
-end:
-	/* Free Intel(R) MKL memory if any was allocated */
 	mkl_free(dpar);
 	//mkl_free(f);
 
