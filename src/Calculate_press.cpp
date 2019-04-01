@@ -138,14 +138,13 @@ double Pressure_correction_solve(Matrix &delta_p, Matrix &rhs, Param par, int &N
 	else if (par.DeltaP_method >= 1) { //MKL solver with first order approximation of boundary conditions
 
 		char* BCtype = "DDDD";
-
-		if (par.BC == u_inflow || par.BC == u_infinity) BCtype = "NDNN";
-		if (par.BC == periodical)                       BCtype = "PPNN";
-
-		double q = 0.;
-
 		MKL_INT nx = par.N1 + 1;
 		MKL_INT ny = par.N2 + 1;
+
+		if (par.BC == u_inflow || par.BC == u_infinity) BCtype = "NDNN";
+		if (par.BC == periodical)                      {BCtype = "PPNN"; nx = par.N1;}
+
+		double q = 0.;
 
 		//Boundaries
 		double ax = 0.;
@@ -160,7 +159,7 @@ double Pressure_correction_solve(Matrix &delta_p, Matrix &rhs, Param par, int &N
 		bd_ay = (double*)mkl_malloc((nx + 1) * sizeof(double), 64);
 		bd_by = (double*)mkl_malloc((nx + 1) * sizeof(double), 64);
 
-		Matrix_to_DoubleArray(rhs, f_mkl);
+		Matrix_to_DoubleArray(rhs, f_mkl, par.BC);
 
 		for (MKL_INT iy = 0; iy <= ny; iy++) {
 			bd_ax[iy] = 0.;
@@ -173,12 +172,8 @@ double Pressure_correction_solve(Matrix &delta_p, Matrix &rhs, Param par, int &N
 
 		Helmholtz_MKL(f_mkl, ax, bx, ay, by, bd_ax, bd_bx, bd_ay, bd_by, nx, ny, BCtype, q, par.d_x, par.d_y);
 
-		DoubleArray_to_Matrix(f_mkl, delta_p);
+		DoubleArray_to_Matrix(f_mkl, delta_p, par.BC);
 
-		mkl_free(bd_ax);
-		mkl_free(bd_bx);
-		mkl_free(bd_ay);
-		mkl_free(bd_by);
 		mkl_free(f_mkl);
 		MKL_Free_Buffers();
 
@@ -190,26 +185,33 @@ double Pressure_correction_solve(Matrix &delta_p, Matrix &rhs, Param par, int &N
 
 } //Pressure_correction_solve
 
-void Matrix_to_DoubleArray(Matrix &M, double* D) {
+void Matrix_to_DoubleArray(Matrix &M, double* D, boundary_conditions BC) {
 
 	int Nx = M.size();
 	int Ny = M[0].size();
 
 	for (int i = 0; i < Nx; i++) {
 		for (int j = 0; j < Ny; j++) {
-			D[i + j*Nx] = M[i][j];
+			if (BC == periodical) {
+				if (i == Nx - 1); else  D[i + j*(Nx - 1)] = M[i][j];
+			}
+			else D[i + j*Nx] = M[i][j];
 		}
 	}
 }
 
-void DoubleArray_to_Matrix(double* D, Matrix &M) {
+void DoubleArray_to_Matrix(double* D, Matrix &M, boundary_conditions BC) {
 
 	int Nx = M.size();
 	int Ny = M[0].size();
 
 	for (int i = 0; i < Nx; i++) {
 		for (int j = 0; j < Ny; j++) {
-			M[i][j] = D[i + j*Nx];
+			if (BC == periodical) {
+				if (i == Nx-1) M[i][j] = D[1 + j*(Nx - 1)];
+				else           M[i][j] = D[i + j*(Nx - 1)];
+			}
+			else M[i][j] = D[i + j*Nx];
 		}
 	}
 }

@@ -145,6 +145,9 @@ void Calculate_u_p(Matrix &U_n   , Matrix &U_new,
 			Output_Matrix(Delta_P, par.WorkDir, "Delta_P"  , s);
 		}*/
 
+		//if (s == 0)
+		//	Output(Delta_P, U_new, V_new, Fx_new, Fy_new, par.N_step, solidList, par);
+
 		#pragma region New P and U																
 
 			if ((par.BC == periodical || par.BC == u_inflow || par.BC == u_infinity && par.N_step < 10) || s > 50) {
@@ -183,12 +186,12 @@ void Calculate_u_p(Matrix &U_n   , Matrix &U_new,
 		for (auto& it : solidList) {
 
 			double eps_uc = length(it.u - it.u_s) / (length(it.u) + 1e-4);
-			double eps_omega = length(it.omega_new - it.omega_s) / std::max( length(it.omega_new), length(it.u)/it.r );
+			double eps_omega = length(it.omega - it.omega_s) / std::max( length(it.omega), length(it.u)/it.r );
 
 			double eps_max = 5e-6;
 			if (eps_uc < eps_max && eps_omega < eps_max) key_solid = true;
 
-			//output << s << "   " << it.u[1] << "   " << it.u[2] << "   " << it.omega_new[3] << "   " << it.f[1] << "   " << it.integralV_du_dt[1] << "   " << it.tau[3] << "   " << it.integralV_dur_dt[3] << "   " << std::endl;
+			//output << s << "   " << it.u[1] << "   " << it.u[2] << "   " << it.omega[3] << "   " << it.f[1] << "   " << it.integralV_du_dt[1] << "   " << it.tau[3] << "   " << it.integralV_dur_dt[3] << "   " << std::endl;
 		}*/
 
 
@@ -203,13 +206,12 @@ void Calculate_u_p(Matrix &U_n   , Matrix &U_new,
 				}
 			}
 			// std::cout << "s iterations: " << s << std::endl;
-			// if (key_solid == true)
+			//if (key_solid == true)
+			break;
 
 			//Output_Matrix(U_new, par.WorkDir, "u_finish", s);
 			//Output_Matrix(V_new, par.WorkDir, "v_finish", s);
 			//Output_Matrix(P_new, par.WorkDir, "p_finish", s);
-
-			break;
 		}
 
 		U_s = U_new;

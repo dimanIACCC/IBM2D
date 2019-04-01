@@ -79,6 +79,7 @@ void Output(Matrix p, Matrix u, Matrix v, Matrix Fx, Matrix Fy, int n, std::list
 	std::string filename = par.WorkDir + "step" + std::to_string(n) + ".plt";
 
 	output.open(filename);
+	output << std::setprecision(15);
 
 	output << "title = " << '"' << filename << '"' << std::endl;
 	output << "Variables = x y p u v fx fy tx ty" << std::endl;

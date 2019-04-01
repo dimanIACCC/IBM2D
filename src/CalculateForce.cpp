@@ -60,7 +60,7 @@ void CalculateForce(Matrix &Fx, Matrix &Fy, std::list<Circle> &iList, Matrix& u,
 					GeomVec xs = solid->x + solid->Nodes[k].x;
 
 					//calculating fluid velocity uf in Lagrange nodes by using near Euler nodes and discrete delta function
-					GetInfluenceArea(i_min, i_max, j_min, j_max, par.N1_u - 1, par.N2_u - 1, solid->x + solid->Nodes[k].x, 3, par);
+					GetInfluenceArea(i_min, i_max, j_min, j_max, par.N1_u - 1, par.N2_u - 1, xs, 3, par);
 					solid->Nodes[k].uf[1] = 0.0;
 					for (int i = i_min; i <= i_max; ++i) {
 						for (int j = j_min; j <= j_max; ++j) {
@@ -74,7 +74,7 @@ void CalculateForce(Matrix &Fx, Matrix &Fy, std::list<Circle> &iList, Matrix& u,
 						}
 					}
 
-					GetInfluenceArea(i_min, i_max, j_min, j_max, par.N1_v - 1, par.N2_v - 1, solid->x + solid->Nodes[k].x, 3, par);
+					GetInfluenceArea(i_min, i_max, j_min, j_max, par.N1_v - 1, par.N2_v - 1, xs, 3, par);
 					solid->Nodes[k].uf[2] = 0.0;
 					for (int i = i_min; i <= i_max; ++i) {
 						for (int j = j_min; j <= j_max; ++j) {
@@ -123,13 +123,12 @@ void CalculateForce(Matrix &Fx, Matrix &Fy, std::list<Circle> &iList, Matrix& u,
 					int iy_max, iy_min;
 					int jy_max, jy_min;
 
-					GetInfluenceArea(ix_min, ix_max, jx_min, jx_max, par.N1_u - 1, par.N2_u - 1, solid->x + solid->Nodes[k].x, 3, par);
-					GetInfluenceArea(iy_min, iy_max, jy_min, jy_max, par.N1_v - 1, par.N2_v - 1, solid->x + solid->Nodes[k].x, 3, par);
+					GeomVec xs = solid->x + solid->Nodes[k].x;
+					GetInfluenceArea(ix_min, ix_max, jx_min, jx_max, par.N1_u - 1, par.N2_u - 1, xs, 3, par);
+					GetInfluenceArea(iy_min, iy_max, jy_min, jy_max, par.N1_v - 1, par.N2_v - 1, xs, 3, par);
 
 					//calculating velocities us of the solid boundary
 					double ds = solid->ds(k);
-					GeomVec xs = solid->x + solid->Nodes[k].x;
-
 					double dn = sqrt(par.d_x*par.d_x * solid->Nodes[k].n[1] * solid->Nodes[k].n[1]
 					               + par.d_y*par.d_y * solid->Nodes[k].n[2] * solid->Nodes[k].n[2]) / par.d_x / par.d_y;
 					// calculating force force_temp for Euler nodes caused by k-th solid

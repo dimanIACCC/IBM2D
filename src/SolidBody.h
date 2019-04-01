@@ -23,8 +23,8 @@ class SolidBody
 public:
 	bool moving;
 	GeomVec x_n, x;          // coordinates of the mass center
-	GeomVec u_n, u;          // velocity of the mass center
-	GeomVec omega, omega_n;  // angular velocity
+	GeomVec u_n, u, u_s;          // velocity of the mass center
+	GeomVec omega, omega_n, omega_s;  // angular velocity
 	GeomVec f, f_n, f_new;      // force applied to the whole SolidBody
 	GeomVec f_L;                // force from Lagrange mesh
 	double Fr, Fr_all;      // average radial Force applied to SolidBody

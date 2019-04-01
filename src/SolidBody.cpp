@@ -90,7 +90,7 @@ Circle::~Circle()
 
 void SolidBody::velocities() {
 	for (int i = 0; i < Nn; ++i) {
-		Nodes[i].us = u + x_product(omega, Nodes[i].x);
+		Nodes[i].us = u_n + x_product(omega_n, Nodes[i].x_n);
 	}
 }
 
@@ -327,8 +327,8 @@ void Solids_zero_force(std::list<Circle>& Solids) {
 void Solids_velocity_new(std::list<Circle>& Solids, Param par) {
 	for (auto& it : Solids) {
 		if (it.moving) {
-			//it.u_s     = it.u;
-			//it.omega_s = it.omega;
+			it.u_s     = it.u;
+			it.omega_s = it.omega;
 
 			//GeomVec d_uc    = par.d_t * (it.integralV_du_dt  - it.f  ) / it.V / it.rho * 1;  // fluid density equals 1
 			//GeomVec d_omega = par.d_t * (it.integralV_dur_dt - it.tau) / it.I / it.rho * 1;  // angular moment I is normalized with density
@@ -343,9 +343,9 @@ void Solids_velocity_new(std::list<Circle>& Solids, Param par) {
 			//it.u     = it.u_n     + it.F_hd   / it.rho / it.V * par.d_t;  // fluid density equals 1
 			//it.omega = it.omega_n + it.tau_hd / it.rho / it.I * par.d_t;  // angular moment I is normalized with density
 
-			it.x = it.x_n + 0.5 * (it.u_n + it.u) * par.d_t;
+			it.x = it.x_n + 0.5 * (it.u_n + it.u_n) * par.d_t;
 			for (size_t k = 0; k < it.Nn; ++k) {
-				it.Nodes[k].x = rotate_Vector_around_vector(it.Nodes[k].x_n, 0.5 * (it.omega_n + it.omega) * par.d_t); //rotate
+				it.Nodes[k].x = rotate_Vector_around_vector(it.Nodes[k].x_n, 0.5 * (it.omega_n + it.omega_n) * par.d_t); //rotate
 			}
 
 		}

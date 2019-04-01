@@ -11,5 +11,5 @@ double Pressure_correction_solve_SOR(Matrix &delta_p, Matrix &rhs, Param par, in
 
 Matrix Pressure_RHS(Matrix& u, Matrix& v, Param par);                            // right-hand part of the Poisson equation
 
-void Matrix_to_DoubleArray(Matrix &M, double* D);
-void DoubleArray_to_Matrix(double* D, Matrix &M);
+void Matrix_to_DoubleArray(Matrix &M, double* D, boundary_conditions BC);
+void DoubleArray_to_Matrix(double* D, Matrix &M, boundary_conditions BC);

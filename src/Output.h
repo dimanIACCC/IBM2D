@@ -19,4 +19,3 @@ void Output_P(Matrix dp, std::string filename, int n, Param par);
 void Output_c(Matrix c , std::string filename, int n, Param par);
 void Output_Matrix(Matrix A, std::string WorkDir, std::string Variable, int n);
 void Output_Matrix_mid(Matrix A, std::string WorkDir, std::string Variable, int n);
-void MakeHibernationFile(int n, Param& par, std::list<Circle>& solidList, Matrix& U_n, Matrix& V_n, Matrix& P);
