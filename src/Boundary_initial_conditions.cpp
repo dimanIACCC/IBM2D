@@ -90,7 +90,9 @@ void Boundary_Conditions(Matrix &u, Param par, Direction Dir, double time) {
 	}
 }
 
-void fill_exact(Matrix &u, Matrix &v, Matrix &p, Param par, double time) {
+void fill_exact(Matrix &u, Matrix &v, Matrix &p, Param &par, double time) {
+	par.grad_p_x = 0.;
+	if (par.BC == u_inflow || par.BC == periodical) par.grad_p_x = dpdx_Poiseuille(par.H, par.Re);
 	fill_exact_u(u, par, time);
 	fill_exact_v(v, par, time);
 	fill_exact_p(p, par, time);

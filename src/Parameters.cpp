@@ -135,7 +135,7 @@ boundary_conditions string_to_BC(std::string s) {
 	return BC;
 }
 
-GeomVec x_p(int i, int j, Param par) {
+GeomVec x_p(int i, int j, Param &par) {
 	GeomVec result;
 	result[0] = 0.0;
 	result[1] = (i - 0.5) * par.d_x;
@@ -144,7 +144,7 @@ GeomVec x_p(int i, int j, Param par) {
 	return result;
 }
 
-GeomVec x_u(int i, int j, Param par) {
+GeomVec x_u(int i, int j, Param &par) {
 	GeomVec result;
 	result[0] = 0.0;
 	result[1] = (i - 1.0) * par.d_x;
@@ -153,7 +153,7 @@ GeomVec x_u(int i, int j, Param par) {
 	return result;
 }
 
-GeomVec x_v(int i, int j, Param par) {
+GeomVec x_v(int i, int j, Param &par) {
 	GeomVec result;
 	result[0] = 0.0;
 	result[1] = (i - 0.5) * par.d_x;
@@ -162,7 +162,7 @@ GeomVec x_v(int i, int j, Param par) {
 	return result;
 }
 
-GeomVec x_c(int i, int j, Param par) {
+GeomVec x_c(int i, int j, Param &par) {
 	GeomVec result;
 	result[0] = 0.0;
 	result[1] = i * par.d_x;
@@ -172,7 +172,7 @@ GeomVec x_c(int i, int j, Param par) {
 	return result;
 }
 
-double DeltaFunction(double x, double y, Param &par) {
+double DeltaFunction(double &x, double &y, Param &par) {
 	return FunctionD(x / par.d_x) * FunctionD(y / par.d_y);
 }
 
@@ -237,7 +237,7 @@ double Heaviside(double x) {
 	return result;
 }
 
-int i_real_u(int i, Param par) {
+int i_real_u(int &i, Param &par) {
 	int i_real = i;
 	if (i_real < 1         ) i_real += par.N1;
 	if (i_real > par.N1 + 1) i_real -= par.N1;
@@ -245,7 +245,7 @@ int i_real_u(int i, Param par) {
 	return i_real;
 }
 
-int i_real_v(int i, Param par) {
+int i_real_v(int &i, Param &par) {
 	int i_real = i;
 	if (i_real < 1         ) i_real += par.N1;
 	if (i_real > par.N1    ) i_real -= par.N1;

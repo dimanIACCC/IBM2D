@@ -16,6 +16,7 @@ void Output_U(Matrix u, std::string filename, int n, Param par) {
 	output << "SolutionTime = " << n << std::endl;
 
 	for (int j = 0; j < u[0].size(); ++j) {
+	//for (int j = u[0].size()-1 ; j >=0; --j) {
 		for (int i = 0; i < u.size(); ++i) {
 			GeomVec xu = x_u(i, j, par);
 			double U = u[i][j];
@@ -53,6 +54,7 @@ void Output_V(Matrix v, std::string filename, int n, Param par) {
 	output << "SolutionTime = " << n << std::endl;
 
 	for (int j = 0; j < v[0].size(); ++j) {
+	//for (int j = v[0].size() - 1; j >= 0; --j) {
 		for (int i = 0; i < v.size(); ++i) {
 			GeomVec xv = x_v(i, j, par);
 			double V = v[i][j];
@@ -87,13 +89,14 @@ void Output(Matrix p, Matrix u, Matrix v, Matrix Fx, Matrix Fy, int n, std::list
 	output << "SolutionTime = " << n << std::endl;
 
 	for (int j = 0; j < par.N2_p; ++j) {
+	//for (int j = par.N2_p - 1 ; j >= 0; --j) {
 		for (int i = 0; i < par.N1_p; ++i) {
 			GeomVec xp = x_p(i, j, par);
 
 			double u_, v_, Fx_, Fy_;
 			u_ = (u[i][j] + u[i + 1][j]) * 0.5;		Fx_ = (Fx[i][j] + Fx[i + 1][j]) * 0.5;
 			v_ = (v[i][j] + v[i][j + 1]) * 0.5;		Fy_ = (Fy[i][j] + Fy[i][j + 1]) * 0.5;
-			output << xp[1] << " " << xp[2] << " " << p[i][j] << " " << u_ << " " << v_ << " " << Fx_ << " " << Fy_ << " " << 0 << " " << 0 << std::endl;
+			output << xp[1] << " " << xp[2] << " " << p[i][j] + par.grad_p_x * (par.L - xp[1]) << " " << u_ << " " << v_ << " " << Fx_ << " " << Fy_ << " " << 0 << " " << 0 << std::endl;
 		}
 	}
 
@@ -215,15 +218,17 @@ void Output_P(Matrix P, std::string filename, int n, Param par) {
 
 	output.open(filename);
 
+	output << std::setprecision(15);
 	output << "title = " << '"' << filename << '"' << std::endl;
-	output << "Variables = x y p" << std::endl;
+	output << "Variables = i j x y p" << std::endl;
 	output << "zone T=" << '"' << n << '"' << ",  i=" << P.size() << ", j=" << P[0].size() << ", f=point" << std::endl;
 	output << "SolutionTime = " << n << std::endl;
 
 	for (int j = 0; j < par.N2_p; ++j) {
+	//for (int j = par.N2_p-1; j >=0; --j) {
 		for (int i = 0; i < par.N1_p; ++i) {
 			GeomVec xp = x_p(i, j, par);
-			output << xp[1] << " " << xp[2] << " " << P[i][j] << std::endl;
+			output << i << " " << j << " " << xp[1] << " " << xp[2] << " " << P[i][j] << std::endl;
 		}
 	}
 
@@ -263,7 +268,8 @@ void Output_Matrix(Matrix A, std::string WorkDir, std::string Variable, int n) {
 	output << "Zone T=" << '"' << "Flow" << '"' << ",  I =  " << A[0].size() << ", J =  " << A.size() << ", Datapacking = Point" << std::endl;
 
 	for (int i = 0; i < A.size(); ++i) {
-		for (int j = 0; j < A[0].size(); ++j) {
+		//for (int j = 0; j < A[0].size(); ++j) {
+		for (int j = A[0].size()-1; j >= 0; --j) {
 			output << i << ' ' << j << ' ' << A[i][j] << std::endl;
 		}
 	}
@@ -284,6 +290,27 @@ void Output_Matrix_mid(Matrix A, std::string WorkDir, std::string Variable, int 
 	for (int i = 1; i < A.size() - 1; ++i) {
 		for (int j = 1; j < A[0].size() - 1; ++j) {
 			output << i << ' ' << j << ' ' << A[i][j] << std::endl;
+		}
+	}
+
+	output.close();
+}
+
+void Output_2DArray(double* A, int Nx, int Ny, std::string WorkDir, std::string Variable, int n) {
+	std::ofstream output;
+	std::string filename = WorkDir + Variable + std::to_string(n) + ".plt";
+
+	output.open(filename);
+
+	output << std::setprecision(15);
+	output << "Variables = i j " << Variable << std::endl;
+	output << "Zone T=" << '"' << "Array" << '"' << ",  I =  " << Ny << ", J =  " << Nx << ", Datapacking = Point" << std::endl;
+
+	for (int i = 0; i < Nx; ++i) {
+		//for (int j = 0; j < Ny; ++j) {
+		for (int j = Ny - 1; j >= 0; --j) {
+			//for (int j = Ny-1; j >= 0; --j) {
+			output << i << ' ' << j << ' ' << A[i + j*Nx] << std::endl;
 		}
 	}
 

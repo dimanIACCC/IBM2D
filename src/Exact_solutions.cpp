@@ -38,9 +38,9 @@ double exact_p(GeomVec x, Param par, double time) {
 	if      (par.BC == Taylor_Green) return Taylor_Green_p(x, par.k , par.Re, time);
 	else if (par.BC == Lamb_Oseen  ) return Lamb_Oseen_p  (x, par.x0, par.Re, time, par.Lamb_Oseen_r0);
 	else if (par.BC == Line_Vortex ) return Line_Vortex_p (x, par.x0, par.Re, time);
-	else if (par.BC == u_infinity  ) return (par.L - x[1]) * dpdx_Poiseuille(par.H, par.Re);
-	else if (par.BC == u_inflow    ) return (par.L - x[1]) * dpdx_Poiseuille(par.H, par.Re);
-	else if (par.BC == periodical  ) return (par.L - x[1]) * dpdx_Poiseuille(par.H, par.Re);
+	else if (par.BC == u_infinity  ) return 0.;
+	else if (par.BC == u_inflow    ) return 0.;
+	else if (par.BC == periodical  ) return 0.;   // (par.L - x[1]) * dpdx_Poiseuille(par.H, par.Re);
 	else { std::cout << "exact_p: unknown BC" << std::endl; return 0.; }
 }
 

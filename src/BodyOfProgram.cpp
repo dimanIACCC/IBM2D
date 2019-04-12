@@ -52,7 +52,7 @@ void BodyOfProgram(Param par, std::list<Circle> solidList, Matrix U_n, Matrix V_
 	for ( ; par.N_step <= par.N_max; ++par.N_step) {                                 // main cycle of time iterations
 		if (par.N_step % 1000 == 0)
 			MakeHibernationFile(par, solidList, U_n, V_n, P_n);              // writting hibernation file for prior time step
-		if (par.N_step % par.output_step == 0 || par.N_step < 1000)
+		if (par.N_step % par.output_step == 0 || par.N_step < 1)
 			Output(P_n, U_n, V_n, Fx_n, Fy_n, par.N_step, solidList, par);
 
 		Add_Solids(solidList, par);                                                     // add solids if the conditions are fulfilled

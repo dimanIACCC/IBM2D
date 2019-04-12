@@ -28,7 +28,7 @@ void Calculate_u_p(Matrix &U_n   , Matrix &U_new,
 	CreateMatrix(Eyy, par.N1_p, par.N2_p);
 	CreateMatrix(Exy, par.N1+1, par.N2+1);
 
-	int N_BiCGStab_u, N_BiCGStab_v, N_DeltaP;
+	int N_BiCGStab_u=0, N_BiCGStab_v=0, N_DeltaP=0;
 
 	for (auto& solid : solidList) {
 		solid.x = solid.x_n;
@@ -47,9 +47,9 @@ void Calculate_u_p(Matrix &U_n   , Matrix &U_new,
 	std::string filename = par.WorkDir + "/iterations" + std::to_string(par.N_step) + ".plt";
 	//output.open(filename);
 
-	//output << "title = iterations_step" << par.N_step << std::endl;
+	output << "title = iterations_step" << par.N_step << std::endl;
 	//output << "Variables = s ux uy omega f IntU tau IntUr" << std::endl;
-	//output << "Variables = s  N_BiCGStab_u  N_BiCGStab_v  N_DeltaP time_velocity time_pressure time_force" << std::endl;
+	output << "Variables = s  N_BiCGStab_u  N_BiCGStab_v  N_DeltaP time_velocity time_pressure time_force" << std::endl;
 
 	/*if (par.BC == Taylor_Green) {
 		int i = par.N1 / 2;
@@ -70,29 +70,43 @@ void Calculate_u_p(Matrix &U_n   , Matrix &U_new,
 			CreateMatrix(B_u, par.N1_u, par.N2_u);										// create matrix filled by 0
 			CreateMatrix(B_v, par.N1_v, par.N2_v);										//
 
-			B_u = CalculateB(U_n, V_n, U_s, V_s, P_n, P_new, Fx_new, par, Du);                           // RHS for Navier-Stokes non-linear equation
-			B_v = CalculateB(V_n, U_n, V_s, U_s, P_n, P_new, Fy_new, par, Dv);
+			make_uv_RHS(B_u, B_v, U_n, V_n, U_s, V_s, P_n, par.grad_p_x, 0.0,
+				par.N1, par.N2, par.d_x, par.d_y, par.d_t, par.Re);
+
+			//B_u = CalculateB(U_n, V_n, U_s, V_s, P_n, P_new, Fx_new, par, Du);                           // RHS for Navier-Stokes non-linear equation
+			//B_v = CalculateB(V_n, U_n, V_s, U_s, P_n, P_new, Fy_new, par, Dv);
+
+			//Output_U(B_u, "B_u", s, par);
+			//Output_V(B_v, "B_v", s, par);
+			//std::cin.get();
 
 			U_new = U_s;
 			V_new = V_s;
 
-			#pragma omp parallel sections num_threads(2)
-			{
-				#pragma omp section
-				{
-					BiCGStab(U_new, A_u, B_u, par, Du, N_BiCGStab_u);                   // solving A_u * U_new = B_u
-				}
-				#pragma omp section
-				{
-					BiCGStab(V_new, A_v, B_v, par, Dv, N_BiCGStab_v);                   // solving A_v * V_new = B_v
-				}
-			}
+			//#pragma omp parallel sections num_threads(2)
+			//{
+			//	#pragma omp section
+			//	{
+			//		BiCGStab(U_new, A_u, B_u, par, Du, N_BiCGStab_u);                   // solving A_u * U_new = B_u
+			//	}
+			//	#pragma omp section
+			//	{
+			//		BiCGStab(V_new, A_v, B_v, par, Dv, N_BiCGStab_v);                   // solving A_v * V_new = B_v
+			//	}
+			//}
+
+			predict_uv(U_n, V_n, U_new, V_new,
+				P_new, B_u, B_v, par.N1, par.N2, par.d_x, par.d_y, par.d_t, par.Re, par);
+			//Output_U(U_new, "U_new", s, par);
+			//Output_V(V_new, "V_new", s, par);
+			//std::cin.get();
 
 		end = std::clock();
 		time_velocity = end - begin;
 		#pragma endregion Velocity
 
 		//Output(P_new, U_new, V_new, Fx_new, Fy_new, s, solidList, par);
+		//std::cin.get();
 
 		#pragma region Force
 		begin = std::clock();
@@ -101,13 +115,15 @@ void Calculate_u_p(Matrix &U_n   , Matrix &U_new,
 			Multidirect_Forcing_Method(Fx_new, Fy_new, U_new, V_new, solidList, par);
 			for (auto& solid : solidList) {
 				solid.f_new   = solid.f;
+				//std::cout << std::endl << s << ": " << solid.f_new << std::endl;
+				//std::cin.get();
 			}
 
 		end = std::clock();
 		time_force = end - begin;
 
-		//Output_U(Fx_new, "U", par.N_step, par);
-		//Output_V(Fy_new, "V", par.N_step, par);
+		//Output_U(U_new, "UF", s, par);
+		//Output_V(V_new, "VF", s, par);
 		//std::cin.get();
 
 		#pragma endregion Force
@@ -122,7 +138,22 @@ void Calculate_u_p(Matrix &U_n   , Matrix &U_new,
 
 			P_RHS = Pressure_RHS(U_new, V_new, par);                                     // calculating P_RHS = 1/dt ( {U_i,j - U_i-1,j}/{h_x} + {V_i,j - V_i,j-1}/{h_x} )
 
-			double Delta_P_max = Pressure_correction_solve(Delta_P, P_RHS, par, N_DeltaP);     // solve pressure correction equation  -Laplace Delta_P = P_RHS
+			//Output_P(P_RHS, "P_RHS", s, par);
+			//std::cin.get();
+
+			double q = 0.;
+			char* BCtype = "DDDD";
+			MKL_INT nx = par.N1 + 1;
+			MKL_INT ny = par.N2 + 1;
+
+			if (par.BC == u_inflow || par.BC == u_infinity) BCtype = "NDNN";
+			if (par.BC == periodical) { BCtype = "PPNN"; nx = par.N1; }
+
+			double Delta_P_max = Pressure_correction_solve(Delta_P, P_RHS, par, q, nx, ny, BCtype, N_DeltaP);     // solve pressure correction equation  -Laplace Delta_P = P_RHS
+
+			if (par.BC == periodical)
+				for (int j = 0; j < par.N2_p; j++) Delta_P[par.N1_p-1][j] = Delta_P[1][j];
+
 
 			//Output_P(Delta_P, "helmholtz", s, par);
 			//std::cin.get();
@@ -170,10 +201,12 @@ void Calculate_u_p(Matrix &U_n   , Matrix &U_new,
 				}
 			}
 
-			/*if (s < 3) {
-				Output_Matrix(U_new, par.WorkDir, "u_correct", s);
-				Output_Matrix(P_new, par.WorkDir, "p_correct", s);
-			}*/
+			//if (s < 3) {
+				//Output_U(U_new, "u_correct", s, par);
+				//Output_V(V_new, "v_correct", s, par);
+				//Output_P(P_new, "p_correct", s, par);
+				//std::cin.get();
+			//}
 
 			if (par.BC == Lamb_Oseen || par.BC == Line_Vortex || par.BC == Taylor_Green) {
 				BC_exact_p(P_new, par, par.d_t * (par.N_step + 1));
@@ -218,6 +251,8 @@ void Calculate_u_p(Matrix &U_n   , Matrix &U_new,
 		V_s = V_new;
 	}
 
+	//Output_U(Fx_new, "Fx", par.N_step, par);
+	//Output_V(Fy_new, "Fy", par.N_step, par);
 	//std::cin.get();
 
 	Fx_n = Fx_new;

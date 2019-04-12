@@ -34,6 +34,7 @@ public:
 	int N_Zeidel;             // number of iterations in Zeidel method
 	double Zeidel_eps;        // tolerance for Zeidel method
 	double eps_P;             // tolerance for Pressure correction
+	double grad_p_x;          // pressure gradient in x direction
 	bool InelasticCollision;  // Inelastic - true, elastic - false
 	double k_dist;            // coefficient for minimal distance between Solids
 	int AddSolids_N;          // number of added Solids
@@ -55,15 +56,15 @@ public:
 };
 
 boundary_conditions string_to_BC(std::string s);
-GeomVec x_p(int i, int j, Param par); // coordinates of (i,j)-th node for pressure p mesh
-GeomVec x_u(int i, int j, Param par); // coordinates of (i,j)-th node for velocity u mesh
-GeomVec x_v(int i, int j, Param par); // coordinates of (i,j)-th node for velocity v mesh
-GeomVec x_c(int i, int j, Param par); // coordinates of (i,j)-th node for corners    mesh
+GeomVec x_p(int i, int j, Param &par); // coordinates of (i,j)-th node for pressure p mesh
+GeomVec x_u(int i, int j, Param &par); // coordinates of (i,j)-th node for velocity u mesh
+GeomVec x_v(int i, int j, Param &par); // coordinates of (i,j)-th node for velocity v mesh
+GeomVec x_c(int i, int j, Param &par); // coordinates of (i,j)-th node for corners    mesh
 
-double DeltaFunction(double x, double y, Param &par);
+double DeltaFunction(double &x, double &y, Param &par);
 double FunctionD(double r);
 void GetInfluenceArea(int &i_min, int &i_max, int &j_min, int &j_max, size_t Ni, size_t Nj, GeomVec x, int size, Param par);
 double Volume_Frac(GeomVec xc, double r, GeomVec x, double dx, double dy);
 double Heaviside(double x);
-int i_real_u(int i, Param par);
-int i_real_v(int i, Param par);
+int i_real_u(int &i, Param &par);
+int i_real_v(int &i, Param &par);
