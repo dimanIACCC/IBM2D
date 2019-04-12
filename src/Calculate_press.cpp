@@ -123,6 +123,10 @@ Matrix Pressure_RHS(Matrix &u, Matrix &v, Param par){
 	for (size_t j = 1; j < par.N2_p - 1; ++j){
 		result[0           ][j] = 0.0;
 		result[par.N1_p - 1][j] = 0.0;
+		if (par.BC == periodical) {
+			result[0][j] = result[par.N1_p - 2][j];
+			result[par.N1_p - 1][j] = result[1][j];
+		}
 	}
 
 	return result;
@@ -132,8 +136,10 @@ Matrix Pressure_RHS(Matrix &u, Matrix &v, Param par){
 // subroutine to solve Pressure correction equation
 double Pressure_correction_solve(Matrix &delta_p, Matrix &rhs, Param par, int &N_DeltaP) {
 
+	double dp_max;
+
 	if (par.DeltaP_method == 0) { //SOR method
-		return Pressure_correction_solve_SOR(delta_p, rhs, par, N_DeltaP);       // SOR method for solving Poisson equation
+		dp_max = Pressure_correction_solve_SOR(delta_p, rhs, par, N_DeltaP);       // SOR method for solving Poisson equation
 	}
 	else if (par.DeltaP_method >= 1) { //MKL solver with first order approximation of boundary conditions
 
@@ -174,14 +180,17 @@ double Pressure_correction_solve(Matrix &delta_p, Matrix &rhs, Param par, int &N
 
 		DoubleArray_to_Matrix(f_mkl, delta_p, par.BC);
 
+		//Output_P(delta_p, "dp", 555, par);
+
 		mkl_free(f_mkl);
 		MKL_Free_Buffers();
 
 		if (par.DeltaP_method == 2) { //Hybrid variant MKL + SOR with second order approximation of boundary conditions
-			return Pressure_correction_solve_SOR(delta_p, rhs, par, N_DeltaP);       // SOR method for solving Poisson equation
+			dp_max = Pressure_correction_solve_SOR(delta_p, rhs, par, N_DeltaP);       // SOR method for solving Poisson equation
 		}
-		return max(delta_p);
+		dp_max = max(delta_p);
 	}
+	return dp_max;
 
 } //Pressure_correction_solve
 

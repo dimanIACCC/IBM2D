@@ -1,8 +1,8 @@
 circle{
-   x = 0.75
-   y =        0.75
+   x = 2.9
+   y =        0.25
    moving = 1
-   r = 0.05
+   r = 0.101265
    Poiseuille = 1
    rho = 3.0
 }

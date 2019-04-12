@@ -34,8 +34,6 @@ void Helmholtz_MKL(double*f, double &ax, double &bx, double &ay, double &by,
 
 	dpar = (double*)mkl_malloc((13 * nx / 2 + 7) * sizeof(double), 64);
 
-	for (MKL_INT i = 0; i<128; i++) ipar[i] = 0;
-
 	d_init_Helmholtz_2D(&ax, &bx, &ay, &by, &nx, &ny, BCtype, &q, ipar, dpar, &stat);
 	ipar[2] = 0;      // Disable warning for Neumann BC
 	d_commit_Helmholtz_2D(f, bd_ax, bd_bx, bd_ay, bd_by, &xhandle, ipar, dpar, &stat);
