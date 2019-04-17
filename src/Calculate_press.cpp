@@ -134,7 +134,6 @@ double Pressure_correction_solve(Matrix &delta_p, Matrix &rhs, Param par, int &N
 
 	if (par.DeltaP_method == 0) { //SOR method
 		return Pressure_correction_solve_SOR(delta_p, rhs, par, N_DeltaP);       // SOR method for solving Poisson equation
-																				 // scale $delta_p$ to zero in the node [nx-2][1]
 	}
 	else if (par.DeltaP_method >= 1) { //MKL solver with first order approximation of boundary conditions
 
@@ -178,19 +177,10 @@ double Pressure_correction_solve(Matrix &delta_p, Matrix &rhs, Param par, int &N
 		mkl_free(f_mkl);
 		MKL_Free_Buffers();
 
-		double dp_max;
 		if (par.DeltaP_method == 2) { //Hybrid variant MKL + SOR with second order approximation of boundary conditions
-			dp_max = Pressure_correction_solve_SOR(delta_p, rhs, par, N_DeltaP);       // SOR method for solving Poisson equation
+			return Pressure_correction_solve_SOR(delta_p, rhs, par, N_DeltaP);       // SOR method for solving Poisson equation
 		}
-
-		// scale $delta_p$ to zero in the node [nx-2][1]
-		double p_fix = delta_p[nx / 2][ny - 1];
-		for (int i = 0; i < delta_p.size(); ++i)
-			for (int j = 0; j < delta_p[0].size(); ++j)
-				delta_p[i][j] -= p_fix;
-
-		dp_max = max(delta_p);
-		return dp_max;
+		return max(delta_p);
 	}
 
 } //Pressure_correction_solve

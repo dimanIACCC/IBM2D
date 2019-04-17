@@ -125,6 +125,7 @@ void Calculate_u_p(Matrix &U_n   , Matrix &U_new,
 			double Delta_P_max = Pressure_correction_solve(Delta_P, P_RHS, par, N_DeltaP);     // solve pressure correction equation  -Laplace Delta_P = P_RHS
 
 			//Output_P(Delta_P, "helmholtz", s, par);
+			//std::cin.get();
 
 			double P_max = std::max(max(P_new), 1.e-14);
 			double relax = std::min(0.05 * std::max(pow(P_max / Delta_P_max, 1), 1.), 1.0);						// coefficient of relaxation
@@ -144,6 +145,9 @@ void Calculate_u_p(Matrix &U_n   , Matrix &U_new,
 			Output_Matrix(Delta_P, par.WorkDir, "Delta_P"  , s);
 		}*/
 
+		//if (s == 0)
+		//	Output(Delta_P, U_new, V_new, Fx_new, Fy_new, par.N_step, solidList, par);
+
 		#pragma region New P and U																
 
 			if ((par.BC == periodical || par.BC == u_inflow || par.BC == u_infinity && par.N_step < 10) || s > 50) {
@@ -153,10 +157,6 @@ void Calculate_u_p(Matrix &U_n   , Matrix &U_new,
 			else {
 				P_new += Delta_P * relax;          // 2nd order approximation for pressure
 			}
-
-			//if (s == 0)
-			//Output(P_new, U_new, V_new, Fx_new, Fy_new, s, solidList, par);
-			//std::cin.get();
 
 			for (size_t i = 1; i < U_new.size() - 1; ++i) {
 				for (size_t j = 1; j < U_new[0].size() - 1; ++j) {
