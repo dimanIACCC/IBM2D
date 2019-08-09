@@ -26,7 +26,8 @@ public:
 	GeomVec u_n, u, u_s;          // velocity of the mass center
 	GeomVec omega, omega_n, omega_s;  // angular velocity
 	GeomVec f, f_n, f_new;      // force applied to the whole SolidBody
-	GeomVec f_L;                // force from Lagrange mesh
+	GeomVec f_L;                // torque, moment of force from Lagrange mesh
+	GeomVec tau_L;                // force from Lagrange mesh
 	double Fr, Fr_all;      // average radial Force applied to SolidBody
 	GeomVec F_hd;   // Force calculated from hydrodynamics
 	GeomVec tau_hd; // torque, moment of force calculated from hydrodynamics

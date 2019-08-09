@@ -175,9 +175,14 @@ void predict_uv(Matrix &u0, Matrix &v0, Matrix &u, Matrix &v,
 
 	//Set up boundary conditions
 	for (int i = 0; i <= ny + 1; i++) {
-		ax_u[i][1] =  0.;   //Inflow boundary condition : du / dn = 0 (soft)
+		ax_u[i][1] = 0.;   //Inflow boundary condition : du / dn = 0 (soft)
 		ax_u[i][2] = -1.;
-		ax_u[i][3] =  0.;
+		ax_u[i][3] = 0.;
+		if (par.BC == u_inflow || par.BC == u_infinity){
+		ax_u[i][1] = 0.;   //Inflow boundary condition : u = 1
+		ax_u[i][2] = 0.;
+		ax_u[i][3] = 1.;
+		}
 		bx_u[i][1] =  0.;   //Outflow boundary condition : du / dn = 0 (soft)
 		bx_u[i][2] = -1.;
 		bx_u[i][3] =  0.;

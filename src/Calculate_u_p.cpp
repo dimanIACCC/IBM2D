@@ -70,33 +70,35 @@ void Calculate_u_p(Matrix &U_n   , Matrix &U_new,
 			CreateMatrix(B_u, par.N1_u, par.N2_u);										// create matrix filled by 0
 			CreateMatrix(B_v, par.N1_v, par.N2_v);										//
 
-			make_uv_RHS(B_u, B_v, U_n, V_n, U_s, V_s, P_n, par.grad_p_x, 0.0,
-				par.N1, par.N2, par.d_x, par.d_y, par.d_t, par.Re);
+			/*make_uv_RHS(B_u, B_v, U_n, V_n, U_s, V_s, P_n, par.grad_p_x, 0.0,
+				par.N1, par.N2, par.d_x, par.d_y, par.d_t, par.Re);*/
 
-			//B_u = CalculateB(U_n, V_n, U_s, V_s, P_n, P_new, Fx_new, par, Du);                           // RHS for Navier-Stokes non-linear equation
-			//B_v = CalculateB(V_n, U_n, V_s, U_s, P_n, P_new, Fy_new, par, Dv);
+			B_u = CalculateB(U_n, V_n, U_s, V_s, P_n, P_new, Fx_new, par, Du);                           // RHS for Navier-Stokes non-linear equation
+			B_v = CalculateB(V_n, U_n, V_s, U_s, P_n, P_new, Fy_new, par, Dv);
 
-			//Output_U(B_u, "B_u", s, par);
-			//Output_V(B_v, "B_v", s, par);
+			Output_U(B_u, "B_u", s, par);
+			Output_V(B_v, "B_v", s, par);
 			//std::cin.get();
 
 			U_new = U_s;
 			V_new = V_s;
 
-			//#pragma omp parallel sections num_threads(2)
-			//{
-			//	#pragma omp section
-			//	{
-			//		BiCGStab(U_new, A_u, B_u, par, Du, N_BiCGStab_u);                   // solving A_u * U_new = B_u
-			//	}
-			//	#pragma omp section
-			//	{
-			//		BiCGStab(V_new, A_v, B_v, par, Dv, N_BiCGStab_v);                   // solving A_v * V_new = B_v
-			//	}
-			//}
+			std::cout << "test" << std::endl;
+			#pragma omp parallel sections num_threads(2)
+			{
+				#pragma omp section
+				{
+					BiCGStab(U_new, A_u, B_u, par, Du, N_BiCGStab_u);                   // solving A_u * U_new = B_u
+				}
+				#pragma omp section
+				{
+					BiCGStab(V_new, A_v, B_v, par, Dv, N_BiCGStab_v);                   // solving A_v * V_new = B_v
+				}
+			}
+			std::cout << "test" << std::endl;
 
-			predict_uv(U_n, V_n, U_new, V_new,
-				P_new, B_u, B_v, par.N1, par.N2, par.d_x, par.d_y, par.d_t, par.Re, par);
+			/*predict_uv(U_n, V_n, U_new, V_new,
+				P_new, B_u, B_v, par.N1, par.N2, par.d_x, par.d_y, par.d_t, par.Re, par);*/
 			//Output_U(U_new, "U_new", s, par);
 			//Output_V(V_new, "V_new", s, par);
 			//std::cin.get();

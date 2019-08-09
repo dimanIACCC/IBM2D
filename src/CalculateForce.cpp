@@ -102,6 +102,9 @@ void CalculateForce(Matrix &Fx, Matrix &Fy, std::list<Circle> &iList, Matrix& u,
 					solid->Fr += dot_product(r, solid->Nodes[k].f_tmp) * ds;   // compression force applied to the solid
 					solid->S += ds;
 					solid->f_L += solid->Nodes[k].f_tmp * ds * par.d_x;
+					r = solid->Nodes[k].x;
+					r[2] += 0.;
+					solid->tau_L += x_product(r, solid->Nodes[k].f_tmp) * ds * par.d_x;
 				}
 
 				std::clock_t end = std::clock();

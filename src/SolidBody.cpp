@@ -90,7 +90,7 @@ Circle::~Circle()
 
 void SolidBody::velocities() {
 	for (int i = 0; i < Nn; ++i) {
-		Nodes[i].us = u_n + x_product(omega_n, Nodes[i].x_n);
+		Nodes[i].us = u + x_product(omega, Nodes[i].x);
 	}
 }
 
@@ -111,7 +111,7 @@ void SolidBody::log_init(std::string WorkDir) {
 	output.open(filename);
 
 	output << "title = " << '"' << "Solid" << name << '"' << std::endl;
-	output << "Variables = x y u v fx fy omega tau n Fx_hd Fy_hd Fx_L Fy_L IntTau tau_hd" << std::endl;
+	output << "Variables = n x y u v fx fy omega tau Fx_hd Fy_hd Fx_L Fy_L IntTau tau_hd" << std::endl;
 }
 
 void SolidBody::log(std::string WorkDir, int n) {
@@ -120,7 +120,8 @@ void SolidBody::log(std::string WorkDir, int n) {
 	output.open(filename, std::ios::app);
 
 	output << std::setprecision(8);
-	output << x_n[1] << "   "
+	output << n << "   " 
+	       << x_n[1] << "   "
 	       << x_n[2] << "   "
 	       << u_n[1] << "   "
 	       << u_n[2] << "   "
@@ -128,13 +129,12 @@ void SolidBody::log(std::string WorkDir, int n) {
 	       << f_new[2] << "   "
 	       << omega_n[3] << "   "
 	       << tau[3]   << "   "
-	       <<  n        << "   "
 	       << -F_hd[1] << "   "
 	       << -F_hd[2] << "   "
 	       << f_L[1] << "   "
 	       << f_L[2] << "   "
 	       << integralV_dur_dt[3] << "   "
-	       << tau_hd[3] << "   "
+	       << tau_L[3] << "   "
 	       << std::endl;
 }
 
@@ -202,7 +202,7 @@ void Read_Solids(std::string filename, std::list<Circle>& Solids, Param &par) {
 
 void Add_Solids(std::list<Circle>& Solids, Param &par) {
 	if (   (par.N_step - par.AddSolids_start) % par.AddSolids_interval == 0   &&   (par.N_step >= par.AddSolids_start)) { //create new solids starting from $AddSolids_start$ iteration with interval of $AddSolids_interval$ iterations
-		for (int i = 0; i < par.AddSolids_N; i++) { // add $AddSolids_N$ solids
+		for (int i = 0; i < par.AddSolids_N;  ) { // add $AddSolids_N$ solids
 			GeomVec x;
 			x[0] = 0;
 			x[1] = (par.L)  * (0.5 + (1 - 4 * par.r / par.L) * (double(rand()) - RAND_MAX / 2) / RAND_MAX);
@@ -221,6 +221,7 @@ void Add_Solids(std::list<Circle>& Solids, Param &par) {
 			if (add) {
 				Solids.push_back(c);
 				c.log_init(par.WorkDir);
+				i++;
 			}
 		}
 	}
@@ -318,6 +319,7 @@ void Solids_zero_force(std::list<Circle>& Solids) {
 		std::fill(it.tau.begin(), it.tau.end(), 0.0);
 		it.Fr_all = 0.;
 		std::fill(it.f_L.begin(), it.f_L.end(), 0.0);
+		std::fill(it.tau_L.begin(), it.tau_L.end(), 0.0);
 		for (size_t k = 0; k < it.Nn; ++k) {
 			std::fill(it.Nodes[k].f.begin(), it.Nodes[k].f.end(), 0.0);
 		}
@@ -338,7 +340,10 @@ void Solids_velocity_new(std::list<Circle>& Solids, Param par) {
 			//it.omega = (1 - alpha) * it.omega_s + alpha * (it.omega_n + d_omega);
 
 			it.u     = it.u_n     - it.f_new   * par.d_t / (it.rho - 1) / it.V;  // fluid density equals 1
-			it.omega = it.omega_n - it.tau     * par.d_t / (it.rho - 1) / it.I;  // angular moment I is normalized with density
+			//it.omega = it.omega_n - it.tau_L   * par.d_t / (it.rho - 1) / it.I;  // angular moment I is normalized with density
+
+			//it.u     = it.u_n     + par.d_t * (it.integralV_du_dt  - it.f_new) / it.V / it.rho * 1;  // fluid density equals 1
+			it.omega = it.omega_n + par.d_t * (it.integralV_dur_dt - it.tau  ) / it.I / it.rho * 1;  // angular moment I is normalized with density
 
 			//it.u     = it.u_n     + it.F_hd   / it.rho / it.V * par.d_t;  // fluid density equals 1
 			//it.omega = it.omega_n + it.tau_hd / it.rho / it.I * par.d_t;  // angular moment I is normalized with density
