@@ -45,7 +45,7 @@ double Pressure_correction_solve_SOR(Matrix &delta_p, Matrix &rhs, Param par, in
 			}
 		}
 
-		if (par.BC == u_infinity || par.BC == u_inflow || par.BC == periodical) {
+		if (par.BC == u_infinity || par.BC == u_inflow || par.BC == periodical || par.BC == box ) {
 
 			// Up-Down BC
 			for (size_t i = 0; i < n1; ++i) {
@@ -105,7 +105,7 @@ Matrix Pressure_RHS(Matrix &u, Matrix &v, Param par){
 			double d = (1.0 / par.d_x) * (u[i + 1][j] - u[i][j])
 			         + (1.0 / par.d_y) * (v[i][j + 1] - v[i][j]);
 
-			result[i][j] = - 2. * d / par.d_t;
+			result[i][j] = - d / par.d_t;
 
 		}
 
@@ -134,7 +134,7 @@ Matrix Pressure_RHS(Matrix &u, Matrix &v, Param par){
 }
 
 // subroutine to solve Pressure correction equation
-double Pressure_correction_solve(Matrix &delta_p, Matrix &rhs, Param par, double q, MKL_INT nx, MKL_INT ny, char* BCtype, int &N_DeltaP) {
+double Pressure_correction_solve(Matrix &delta_p, Matrix &rhs, Param par, int &N_DeltaP) {
 
 	double dp_max;
 
@@ -143,15 +143,56 @@ double Pressure_correction_solve(Matrix &delta_p, Matrix &rhs, Param par, double
 	}
 	else if (par.DeltaP_method >= 1) { //MKL solver with first order approximation of boundary conditions
 
-		Helmholtz_MKL(delta_p, rhs, q, par.d_x, par.d_y, 0, nx, 0, ny, BCtype);
+		char* BCtype = "DDDD";
+		MKL_INT nx = par.N1 + 1;
+		MKL_INT ny = par.N2 + 1;
+
+		if (par.BC == u_inflow || par.BC == u_infinity) BCtype = "NDNN";
+		if (par.BC == box                             ) BCtype = "NNNN";
+		if (par.BC == periodical)                      {BCtype = "PPNN"; nx = par.N1;}
+
+		double q = 0.;
+
+		//Boundaries
+		double ax = 0.;
+		double bx = par.d_x*nx;
+		double ay = 0.;
+		double by = par.d_y*ny;
+
+		double *f_mkl = NULL, *bd_ax = NULL, *bd_bx = NULL, *bd_ay = NULL, *bd_by = NULL;
+		f_mkl = (double*)mkl_malloc((nx + 1)*(ny + 1) * sizeof(double), 64);
+		bd_ax = (double*)mkl_malloc((ny + 1) * sizeof(double), 64);
+		bd_bx = (double*)mkl_malloc((ny + 1) * sizeof(double), 64);
+		bd_ay = (double*)mkl_malloc((nx + 1) * sizeof(double), 64);
+		bd_by = (double*)mkl_malloc((nx + 1) * sizeof(double), 64);
+
+		Matrix_to_DoubleArray(rhs, f_mkl, par.BC);
+
+		for (MKL_INT iy = 0; iy <= ny; iy++) {
+			bd_ax[iy] = 0.;
+			bd_bx[iy] = 0.;
+		}
+		for (MKL_INT ix = 0; ix <= nx; ix++) {
+			bd_ay[ix] = 0.;
+			bd_by[ix] = 0.;
+		}
+
+		Helmholtz_MKL(f_mkl, ax, bx, ay, by, bd_ax, bd_bx, bd_ay, bd_by, nx, ny, BCtype, q, par.d_x, par.d_y);
+
+		DoubleArray_to_Matrix(f_mkl, delta_p, par.BC);
+
+		//Output_P(delta_p, "dp", 555, par);
+
+		mkl_free(f_mkl);
+		MKL_Free_Buffers();
 
 		if (par.DeltaP_method == 2) { //Hybrid variant MKL + SOR with second order approximation of boundary conditions
 			dp_max = Pressure_correction_solve_SOR(delta_p, rhs, par, N_DeltaP);       // SOR method for solving Poisson equation
 		}
 		dp_max = max(delta_p);
 	}
+
 	return dp_max;
 
 } //Pressure_correction_solve
-
 

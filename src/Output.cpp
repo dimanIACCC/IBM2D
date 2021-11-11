@@ -102,7 +102,7 @@ void Output(Matrix p, Matrix u, Matrix v, Matrix Fx, Matrix Fy, int n, std::list
 
 	for (auto& solid : iList) {
 		output << "zone T = circle" << ",  i=" << solid.Nn + 2 << ", f=point" << std::endl;
-		output << "SolutionTime = " << par.N_step << std::endl;
+		output << "SolutionTime = " << n << std::endl;
 
 		output << solid.x_n[1] << " "
 		       << solid.x_n[2] << " "
@@ -119,8 +119,8 @@ void Output(Matrix p, Matrix u, Matrix v, Matrix Fx, Matrix Fy, int n, std::list
 			output << solid.Nodes[i].x_n[1] + solid.x_n[1] << " "
 			       << solid.Nodes[i].x_n[2] + solid.x_n[2] << " "
 			       << solid.Nodes[i].p << " "
-			       << solid.Nodes[i].uf[1] << " "
-			       << solid.Nodes[i].uf[2] << " "
+			       << solid.Nodes[i].us[1] << " "
+			       << solid.Nodes[i].us[2] << " "
 			       << solid.Nodes[i].f[1] << " "
 			       << solid.Nodes[i].f[2] << " "
 			       << solid.Nodes[i].t[1] << " "
@@ -131,8 +131,8 @@ void Output(Matrix p, Matrix u, Matrix v, Matrix Fx, Matrix Fy, int n, std::list
 		output << solid.Nodes[0].x_n[1] + solid.x_n[1] << " "
 		       << solid.Nodes[0].x_n[2] + solid.x_n[2] << " "
 		       << solid.Nodes[0].p << " "
-		       << solid.Nodes[0].uf[1] << " "
-		       << solid.Nodes[0].uf[2] << " "
+		       << solid.Nodes[0].us[1] << " "
+		       << solid.Nodes[0].us[2] << " "
 		       << solid.Nodes[0].f[1] << " "
 		       << solid.Nodes[0].f[2] << " "
 		       << solid.Nodes[0].t[1] << " "
@@ -143,6 +143,64 @@ void Output(Matrix p, Matrix u, Matrix v, Matrix Fx, Matrix Fy, int n, std::list
 	output.close();
 }
 
+bool Read_plt(std::string filename, Param &par, std::list<Circle>& solidList) {
+
+	std::ifstream input;
+	std::string line;
+	
+	input.open(filename);
+
+	if (input.is_open()) {
+		while (getline(input, line)) { // read line from file to string $line$
+			if (line.substr(0, 15) == "zone T = circle") {
+				Circle c(0, 0, par); //Create circle
+				
+				//Get the number of nodes in particle
+				//auto strings = split_string(line, ",");  // split line into parts by delimeter ","
+				//int i = 1;
+				//for (auto itr = strings.begin(); itr != strings.end(); itr++) {
+				//	std::string PAR, VALUE;
+				//	GetParValue(*itr, PAR, VALUE);
+				//	if (boost::trim_copy(PAR) == "i") {
+				//		c.Nn = stoi(VALUE);
+				//		//std::cout << "Nn = " << c.Nn << std::endl;
+				//	}
+				//}
+
+				getline(input, line); // SolutionTime =
+				std::string PAR, VALUE;
+				GetParValue(line, PAR, VALUE);
+				par.N_step = stoi(VALUE);
+
+				getline(input, line); // Center of the particle
+				auto strings = split_string(line, " "); // split line into parts by delimeter " "
+				int i = 1;
+				for (auto itr = strings.begin(); itr != strings.end(); itr++) {
+					//std::cout << *itr << std::endl;
+					if (i == 1) c.x_n[1]  = stod(*itr);
+					if (i == 2) c.x_n[2]  = stod(*itr);
+					if (i == 4) c.u_n[1]  = stod(*itr);
+					if (i == 5) c.u_n[2]  = stod(*itr);
+					if (i == 6) c.f[1]    = stod(*itr);
+					if (i == 7) c.f[2]    = stod(*itr);
+					if (i == 8) c.F_hd[1] = stod(*itr);
+					if (i == 9) c.F_hd[2] = stod(*itr);
+					i++;
+				}
+
+				solidList.push_back(c);
+
+				//std::cin.ignore();
+			}
+		}
+		input.close();
+		return true;
+	}
+	else {
+		return false;
+	}
+
+}
 
 void CreateDirectory(fs::path directory) {
 
@@ -178,35 +236,33 @@ void CreateDirectory(fs::path directory) {
 		std::cin.get();
 	}
 }
-void SetLog(std::ostream& log, Param par) {
 
-	log << "The IBM program starts.		";
-	time_t t = std::chrono::system_clock::to_time_t(std::chrono::system_clock::now());   // get time now
-	log << ctime(&t) << std::endl;
-	log << "The parameters are the following:" << std::endl;
-	log << "Reynolds number               : Re  = " << par.Re << std::endl;
-	log << "Channel length                : L   = " << par.L << std::endl;
-	log << "Channel width                 : W   = " << par.H << std::endl;
-	log << "Number of nodes on            : N1  = " << par.N1 << std::endl;
-	log << "Number of nodes on            : N2  = " << par.N2 << std::endl;
-	log << "Number of nodes for a particle: Nn  = " << par.Nn << std::endl;
-	log << "Time step                     : tau = " << par.d_t << std::endl;
-	log << "Tolerance for Zeidel method   : tol = " << par.Zeidel_eps << std::endl;
-	log << "Step number for start of Solids adding  : AddSolids_start    = " << par.AddSolids_start << std::endl;
-	log << "Step interval for Solids adding         : AddSolids_interval = " << par.AddSolids_interval << std::endl;
-	log << "Number of added Solids                  : AddSolids_N        = " << par.AddSolids_N << std::endl;
-	log << std::endl;
 
+void history_init(std::string WorkDir, std::string file, boundary_conditions BC) {
+	std::ofstream output;
+	std::string filename = WorkDir + "/" + file + ".plt";
+	output.open(filename);
+
+	output << "title = " << '"' << "history" << '"' << std::endl;
+	if (BC == box) {
+		output << "Variables = t h_average zero zero" << std::endl;
+	}
+	else if (BC == Taylor_Green || BC == Lamb_Oseen || BC == Line_Vortex) {
+		output << "Variables = t error_P error_U error_V" << std::endl;
+	}
 }
 
-void PushLog(std::ostream& log, int n, double eps_u, double eps_v) {
-	time_t t = std::chrono::system_clock::to_time_t(std::chrono::system_clock::now()); // get time now
-	std::string s_time = ctime(&t);
-	s_time.erase(7, 1);
-	s_time.erase(0, 4);
-	s_time.erase(s_time.size() - 6, 5);
-	log       << "n = " << std::setw(6) << n << "\t eps_u = " << std::fixed << eps_u << "\t eps_v = " << std::fixed << eps_v << "\t" << s_time;
-	std::cout << "n = " << std::setw(6) << n << "\t eps_u = " << std::fixed << eps_u << "\t eps_v = " << std::fixed << eps_v << "\t" << s_time;
+void history_log(std::string WorkDir, std::string file, double t, double var1, double var2, double var3) {
+	std::ofstream output;
+	std::string filename = WorkDir + "/" + file + ".plt";
+	output.open(filename, std::ios::app);
+
+	output << std::setprecision(8);
+	output << t << "   "
+	       << var1 << "   "
+	       << var2 << "   "
+	       << var3 << "   "
+	       << std::endl;
 }
 
 

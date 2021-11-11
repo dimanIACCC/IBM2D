@@ -12,17 +12,17 @@
 // Right-hand side term is calculated in B_u and B_v (subroutine CalculateB() )
 void Calculate_u_p(Matrix &U_n   , Matrix &U_new,
                    Matrix &V_n   , Matrix &V_new,
-                   Matrix &P_n   , Matrix &P_new,
-                   Matrix &Fx_n  , Matrix &Fx_new,
-                   Matrix &Fy_n  , Matrix &Fy_new,
-                   Template A_u  , Template A_v,
+                   Matrix &P,
+                   Matrix &Fx,
+                   Matrix &Fy,
                    std::list<Circle> &solidList, Param par) {
 
 	CreateMatrix(U_s, par.N1_u, par.N2_u);
 	CreateMatrix(V_s, par.N1_v, par.N2_v);
+	CreateMatrix(dFx, par.N1_u, par.N2_u);
+	CreateMatrix(dFy, par.N1_v, par.N2_v);
 	CreateMatrix(P_RHS  , par.N1_p, par.N2_p);
 	CreateMatrix(Delta_P, par.N1_p, par.N2_p);
-	CreateMatrix(P      , par.N1_p, par.N2_p);
 
 	CreateMatrix(Exx, par.N1_p, par.N2_p);
 	CreateMatrix(Eyy, par.N1_p, par.N2_p);
@@ -38,7 +38,6 @@ void Calculate_u_p(Matrix &U_n   , Matrix &U_new,
 
 	U_s = U_n;
 	V_s = V_n;
-	P_new = P_n;
 
 	std::clock_t begin, end, time_velocity, time_pressure, time_force;
 
@@ -61,47 +60,36 @@ void Calculate_u_p(Matrix &U_n   , Matrix &U_new,
 			P_new[i][j] = P_n[i][j] + p_fix;
 	}*/
 
-	int s_max = 1000;
-	// start iterations for pressure and velocity to fulfill the conituity equation
-	for (int s = 0; s <= s_max; ++s) {													// cycle while (delta_P / P > eps_P)
+	CreateMatrix(RHS_u, par.N1_u, par.N2_u);
+	CreateMatrix(RHS_v, par.N1_v, par.N2_v);
+
+	Fx = Fx * 0.;
+	Fy = Fy * 0.;
+
+	for (auto& it : solidList) {
+		std::fill(it.f_new.begin(), it.f_new.end(), 0.0);
+		std::fill(it.tau_new.begin(), it.tau_new.end(), 0.0);
+	}
+
+	double Delta_P_max = 1.;
+	double P_max = 1.;
+
+	// start iterations for pressure and velocity to fulfill the continuity equation
+	for (int s = 0; s <= par.s_max; ++s) {													// cycle while (delta_P / P > eps_P)
+
+		if (par.BC == Lamb_Oseen || par.BC == Line_Vortex || par.BC == Taylor_Green) {
+			BC_exact_p(P, par, par.d_t * (par.N_step + 0.5));
+		}
 
 		#pragma region Velocity
 		begin = std::clock();
-			CreateMatrix(B_u, par.N1_u, par.N2_u);										// create matrix filled by 0
-			CreateMatrix(B_v, par.N1_v, par.N2_v);										//
-
-			/*make_uv_RHS(B_u, B_v, U_n, V_n, U_s, V_s, P_n, par.grad_p_x, 0.0,
-				par.N1, par.N2, par.d_x, par.d_y, par.d_t, par.Re);*/
-
-			B_u = CalculateB(U_n, V_n, U_s, V_s, P_n, P_new, Fx_new, par, Du);                           // RHS for Navier-Stokes non-linear equation
-			B_v = CalculateB(V_n, U_n, V_s, U_s, P_n, P_new, Fy_new, par, Dv);
-
-			Output_U(B_u, "B_u", s, par);
-			Output_V(B_v, "B_v", s, par);
-			//std::cin.get();
 
 			U_new = U_s;
 			V_new = V_s;
 
-			std::cout << "test" << std::endl;
-			#pragma omp parallel sections num_threads(2)
-			{
-				#pragma omp section
-				{
-					BiCGStab(U_new, A_u, B_u, par, Du, N_BiCGStab_u);                   // solving A_u * U_new = B_u
-				}
-				#pragma omp section
-				{
-					BiCGStab(V_new, A_v, B_v, par, Dv, N_BiCGStab_v);                   // solving A_v * V_new = B_v
-				}
-			}
-			std::cout << "test" << std::endl;
+			make_uv_RHS(RHS_u, RHS_v, U_n, V_n, U_s, V_s, P, Fx, Fy, par);
+			predict_uv(U_new, V_new, RHS_u, RHS_v, par);
 
-			/*predict_uv(U_n, V_n, U_new, V_new,
-				P_new, B_u, B_v, par.N1, par.N2, par.d_x, par.d_y, par.d_t, par.Re, par);*/
-			//Output_U(U_new, "U_new", s, par);
-			//Output_V(V_new, "V_new", s, par);
-			//std::cin.get();
 
 		end = std::clock();
 		time_velocity = end - begin;
@@ -113,20 +101,38 @@ void Calculate_u_p(Matrix &U_n   , Matrix &U_new,
 		#pragma region Force
 		begin = std::clock();
 
-		// apply force from immersed particles for several times to fulfill no-slip BC
-			Multidirect_Forcing_Method(Fx_new, Fy_new, U_new, V_new, solidList, par);
+			CreateMatrix(U_f, par.N1_u, par.N2_u);
+			CreateMatrix(V_f, par.N1_v, par.N2_v);
+
+			U_f = U_new;
+			V_f = V_new;
+
+			// apply force from immersed particles for several times to fulfill no-slip BC
+			Multidirect_Forcing_Method(dFx, dFy, U_f, V_f, solidList, par);
+
+			if (par.IBM == 0) {
+				U_new += dFx * (par.d_t);
+				V_new += dFy * (par.d_t);
+			}
+			else if (par.IBM == 1) {
+				double coef = std::max(1., 0.01*par.d_t * (par.ldxdx + par.ldydy) / par.Re);
+				Fx += dFx * coef;
+				Fy += dFy * coef;
+			}
+
 			for (auto& solid : solidList) {
-				solid.f_new   = solid.f;
-				//std::cout << std::endl << s << ": " << solid.f_new << std::endl;
-				//std::cin.get();
+				if (par.IBM == 0) {
+					solid.f_new = solid.f;
+					solid.tau_new = solid.tau;
+				}
+				else if (par.IBM == 1) {
+					solid.f_new += solid.f;
+					solid.tau_new += solid.tau;
+				}
 			}
 
 		end = std::clock();
 		time_force = end - begin;
-
-		//Output_U(U_new, "UF", s, par);
-		//Output_V(V_new, "VF", s, par);
-		//std::cin.get();
 
 		#pragma endregion Force
 
@@ -140,135 +146,97 @@ void Calculate_u_p(Matrix &U_n   , Matrix &U_new,
 
 			P_RHS = Pressure_RHS(U_new, V_new, par);                                     // calculating P_RHS = 1/dt ( {U_i,j - U_i-1,j}/{h_x} + {V_i,j - V_i,j-1}/{h_x} )
 
-			//Output_P(P_RHS, "P_RHS", s, par);
-			//std::cin.get();
+			Delta_P_max = Pressure_correction_solve(Delta_P, P_RHS, par, N_DeltaP);     // solve pressure correction equation  -Laplace Delta_P = P_RHS
 
-			double q = 0.;
-			char* BCtype = "DDDD";
-			MKL_INT nx = par.N1 + 1;
-			MKL_INT ny = par.N2 + 1;
-
-			if (par.BC == u_inflow || par.BC == u_infinity) BCtype = "NDNN";
-			if (par.BC == periodical) { BCtype = "PPNN"; nx = par.N1; }
-
-			double Delta_P_max = Pressure_correction_solve(Delta_P, P_RHS, par, q, nx, ny, BCtype, N_DeltaP);     // solve pressure correction equation  -Laplace Delta_P = P_RHS
-
-			if (par.BC == periodical)
-				for (int j = 0; j < par.N2_p; j++) Delta_P[par.N1_p-1][j] = Delta_P[1][j];
-
-
-			//Output_P(Delta_P, "helmholtz", s, par);
-			//std::cin.get();
-
-			double P_max = std::max(max(P_new), 1.e-14);
-			double relax = std::min(0.05 * std::max(pow(P_max / Delta_P_max, 1), 1.), 1.0);						// coefficient of relaxation
-			relax = 1.; // workaround
-
+			P_max = std::max(max(P), 1.e-14);
+			
 			std::cout  << "s = "
 				<< std::setw(3) << s << ", delta_P / P = "
-				<< std::setprecision(6) << std::scientific << Delta_P_max / P_max << ", relax = "
-				<< std::fixed << relax << std::endl;
+				<< std::setprecision(6) << std::scientific << Delta_P_max / P_max << std::endl;
 
 		end = std::clock();
 		time_pressure = end - begin;
 		#pragma endregion Pressure
 
-		/*if (s < 3) {
-			Output_Matrix(U_new  , par.WorkDir, "u_predict", s);
-			Output_Matrix(Delta_P, par.WorkDir, "Delta_P"  , s);
-		}*/
-
-		//if (s == 0)
-		//	Output(Delta_P, U_new, V_new, Fx_new, Fy_new, par.N_step, solidList, par);
-
 		#pragma region New P and U																
 
-			if ((par.BC == periodical || par.BC == u_inflow || par.BC == u_infinity && par.N_step < 10) || s > 50) {
-				P_new += Delta_P * (relax / 2.);   // 1st order approximation for pressure
-				P_n = P_new;                       //
+			P += Delta_P;
+
+			if (par.BC == u_infinity || par.BC == u_inflow || par.BC == periodical || par.BC == box) {
+
+				// Up-Down BC
+				for (size_t i = 0; i <= par.N1 + 1; ++i) {
+					P[i][0         ] = P[i][1     ];       // D
+					P[i][par.N2 + 1] = P[i][par.N2];       // U
+				}
+
+				// Left-Right BC
+				for (size_t j = 0; j <= par.N2 + 1; ++j) {
+					P[0         ][j] = P[1     ][j];       // L
+					P[par.N1 + 1][j] = P[par.N1][j];       // R
+					if (par.BC == u_inflow || par.BC == u_infinity) {
+						P[par.N1 + 1][j] = -P[par.N1][j];
+					}
+				}
+
 			}
-			else {
-				P_new += Delta_P * relax;          // 2nd order approximation for pressure
+
+			// Periodical Left-Right BC
+			if (par.BC == periodical) {
+				for (size_t j = 0; j <= par.N2 + 1; ++j) {
+					P[0         ][j] = P[par.N1][j];        // L
+					P[par.N1 + 1][j] = P[1     ][j];        // R
+				}
+			}
+
+
+			for (size_t i = 1; i < P.size() - 1; ++i) {
+				for (size_t j = 1; j < P[0].size() - 1; ++j) {
+					P[i][j] -= 0.5 * par.d_t / par.Re * (par.ldxdx * (Delta_P[i + 1][j] - 2.*Delta_P[i][j] + Delta_P[i - 1][j])
+						                                +par.ldydy * (Delta_P[i][j + 1] - 2.*Delta_P[i][j] + Delta_P[i][j - 1]));
+				}
 			}
 
 			for (size_t i = 1; i < U_new.size() - 1; ++i) {
 				for (size_t j = 1; j < U_new[0].size() - 1; ++j) {
-					U_new[i][j] -= relax * par.d_t * (Delta_P[i][j] - Delta_P[i - 1][j]) / par.d_x / 2.;		// correction of predicted velocity U_new
+					U_new[i][j] -= par.d_t * (Delta_P[i][j] - Delta_P[i - 1][j]) / par.d_x;		// correction of predicted velocity U_new
 				}
 			}
 
 			for (size_t i = 1; i < V_new.size() - 1; ++i) {
 				for (size_t j = 1; j < V_new[0].size() - 1; ++j) {
-					V_new[i][j] -= relax * par.d_t * (Delta_P[i][j] - Delta_P[i][j - 1]) / par.d_y / 2.;		// correction of predicted velocity V_new
+					V_new[i][j] -= par.d_t * (Delta_P[i][j] - Delta_P[i][j - 1]) / par.d_y;		// correction of predicted velocity V_new
 				}
 			}
 
-			//if (s < 3) {
-				//Output_U(U_new, "u_correct", s, par);
-				//Output_V(V_new, "v_correct", s, par);
-				//Output_P(P_new, "p_correct", s, par);
-				//std::cin.get();
-			//}
+			U_s = U_new;
+			V_s = V_new;
 
-			if (par.BC == Lamb_Oseen || par.BC == Line_Vortex || par.BC == Taylor_Green) {
-				BC_exact_p(P_new, par, par.d_t * (par.N_step + 1));
-			}
 
 		#pragma endregion New P and U
 
-		// code for solid u and omega_new iterations
-		/*bool key_solid = false;
-		for (auto& it : solidList) {
-
-			double eps_uc = length(it.u - it.u_s) / (length(it.u) + 1e-4);
-			double eps_omega = length(it.omega - it.omega_s) / std::max( length(it.omega), length(it.u)/it.r );
-
-			double eps_max = 5e-6;
-			if (eps_uc < eps_max && eps_omega < eps_max) key_solid = true;
-
-			//output << s << "   " << it.u[1] << "   " << it.u[2] << "   " << it.omega[3] << "   " << it.f[1] << "   " << it.integralV_du_dt[1] << "   " << it.tau[3] << "   " << it.integralV_dur_dt[3] << "   " << std::endl;
-		}*/
-
-
 		//output of the iterations number
 		output << s << "   " << N_BiCGStab_u  << "   " << N_BiCGStab_v << "   " << N_DeltaP << "  " << time_velocity << "  " << time_pressure << "  " << time_force << std::endl;
+		//std::cin.get();
 
-		if (Delta_P_max / P_max < par.eps_P) {
-			Solids_velocity_new(solidList, par);
-			if (par.BC == Lamb_Oseen) {
-				for (auto& it : solidList) {
-					it.omega[3] = Lamb_Oseen_omega(it.r, par.Re, par.d_t*(par.N_step + 1), par.Lamb_Oseen_r0);
-				}
+		Solids_velocity_new(solidList, par);
+		Solids_collide(solidList, par);
+
+		if (par.BC == Lamb_Oseen) {
+			for (auto& it : solidList) {
+				it.omega[3] = Lamb_Oseen_omega(it.r, par.Re, par.d_t*(par.N_step + 1), par.Lamb_Oseen_r0);
 			}
-			// std::cout << "s iterations: " << s << std::endl;
-			//if (key_solid == true)
-			break;
-
-			//Output_Matrix(U_new, par.WorkDir, "u_finish", s);
-			//Output_Matrix(V_new, par.WorkDir, "v_finish", s);
-			//Output_Matrix(P_new, par.WorkDir, "p_finish", s);
 		}
 
-		U_s = U_new;
-		V_s = V_new;
+		if (Delta_P_max / P_max < par.eps_P && s>2) break;
+
 	}
-
-	//Output_U(Fx_new, "Fx", par.N_step, par);
-	//Output_V(Fy_new, "Fy", par.N_step, par);
-	//std::cin.get();
-
-	Fx_n = Fx_new;
-	Fy_n = Fy_new;
 
 	// Calculation of the strain rate, pressure and HydroDynamic (HD) force in Lagrange mesh
 	deformation_velocity(U_new, V_new, Exx, Eyy, Exy, par);
-	//Output_P(Exx, "Exx", -1, par);
-	//Output_P(Eyy, "Eyy", -1, par);
-	//Output_c(Exy, "Exy", -1, par);
-	P = (P_n + P_new) * 0.5;
 	Solids_deformation_velocity_pressure(solidList, Exx, Eyy, Exy, P, par);
 	Solids_Force(solidList, par.Re);
-
+	
 }
 
 void Zero_velocity_in_Solids(Matrix &u, Param par, std::list<Circle> iList) {

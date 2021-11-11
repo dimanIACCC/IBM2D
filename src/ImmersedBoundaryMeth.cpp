@@ -22,8 +22,6 @@ That project is devoted to numerical simulation of disperse flows in the channel
 
 int main(int argc, char *argv[]) {
 
-	//solve_pardiso();
-
 	fs::path WorkDir = L"Result/";
 	std::list<Circle> solidList; // list of immersed solids
 
@@ -31,14 +29,34 @@ int main(int argc, char *argv[]) {
 		std::string line, PAR, VALUE;
 		line = (std::string)argv[i];
 		GetParValue(line, PAR, VALUE);
-		
+
 		if (PAR == "-hibernation"|| PAR == "-h") {
 			Matrix U_n, V_n, P;
 			Param par;
-			par.WorkDir = WorkDir.string();
+		    par.WorkDir = WorkDir.string();
 			std::string file = par.WorkDir + VALUE;
 			Awake(file, par, solidList, U_n, V_n, P);
-			BodyOfProgram(par, solidList, U_n, V_n, P, false);
+			BodyOfProgram(par, solidList, U_n, V_n, P);
+			return 0;
+		}
+		else if (PAR == "-post") {
+			Param par(VALUE, "/input.txt");					// create the variable which contains parameters according to input data
+			par.WorkDir = VALUE + "/";
+			std::string file = "history_post_average10";
+			history_init(par.WorkDir, file, par.BC);
+
+			int i = 1;
+			while (Read_plt(par.WorkDir + "step" + std::to_string(i * 100) + ".plt", par, solidList)) {
+				std::cout << "i = " << i*100 << ", start new file" << std::endl;
+
+				double h_average;
+				h_average_of_Solids_Layer(solidList, par, h_average);
+				history_log(par.WorkDir, file, par.N_step*par.d_t, h_average, 0., 0.);
+				solidList.clear();
+				i++;
+			}
+			std::cin.ignore();
+
 			return 0;
 		}
 		else if (PAR == "-dir") if (VALUE.size() > 0) WorkDir = VALUE + '/';
@@ -47,7 +65,6 @@ int main(int argc, char *argv[]) {
 
 	CreateDirectory(WorkDir);
 	CreateDirectory(WorkDir.string() + "/Solids");
-
 
 	Param par(WorkDir.string(), "input.txt");					// create the variable which contains parameters according to input data
 
@@ -62,8 +79,8 @@ int main(int argc, char *argv[]) {
 
 	CreateMatrix(U_n, par.N1_u, par.N2_u);						// creation matrices for velocity
 	CreateMatrix(V_n, par.N1_v, par.N2_v);						// and pressure
-	CreateMatrix(P  , par.N1_p, par.N2_p);					//
-	fill_exact(U_n, V_n, P, par, 0.0);                          // Initial conditions for velocity and pressure
+	CreateMatrix(P  , par.N1_p, par.N2_p);					    //
+	fill_exact(U_n, V_n, P, par, 0.0, par.d_t*0.5);             // Initial conditions for velocity and pressure
 
 	BodyOfProgram(par, solidList, U_n, V_n, P);					// start solver
 

@@ -17,10 +17,11 @@ void Boundary_Conditions(Matrix &u, Param par, Direction Dir, double time) {
 					u[i][0           ] = u[i][1           ];
 					u[i][par.N2_u - 1] = u[i][par.N2_u - 2];
 				}
+
 			}
 			else if (Dir == Dv) {
-				u[i][0           ] = 2 * u[i][1           ] - u[i][2           ];
-				u[i][par.N2_v - 1] = 2 * u[i][par.N2_v - 2] - u[i][par.N2_v - 3];
+				u[i][0           ] = 0. - u[i][2           ];
+				u[i][par.N2_v - 1] = 0. - u[i][par.N2_v - 3];
 			}
 		}
 	}
@@ -33,6 +34,31 @@ void Boundary_Conditions(Matrix &u, Param par, Direction Dir, double time) {
 			}
 			else if (Dir == Dv) {
 				u[par.N1_v - 1][j] = u[par.N1_v - 2][j];
+			}
+		}
+	}
+
+	// BC for box problem
+	if (par.BC == box) {
+		for (size_t i = 0; i < Nx; ++i) {
+			if (Dir == Du) {
+				u[i][0           ] = par.u_wall;
+				u[i][par.N2_u - 1] = par.u_wall;
+			}
+			else if (Dir == Dv) {
+				u[i][0           ] = 0.;
+				u[i][par.N2_v - 1] = 0.;
+			}
+		}
+
+		for (size_t j = 0; j < Ny; ++j) {
+			if (Dir == Du) {
+				u[0           ][j] = 0.; // 2 * par.u_wall - u[2][j];
+				u[par.N1_u - 1][j] = 0.; // 2 * par.u_wall - u[par.N1_u - 2][j];
+			}
+			else if (Dir == Dv) {
+				u[0           ][j] = 0.; // 2 * par.u_wall - u[1           ][j];
+				u[par.N1_v - 1][j] = 0.; // 2 * par.u_wall - u[par.N1_v - 2][j];
 			}
 		}
 	}
@@ -90,12 +116,12 @@ void Boundary_Conditions(Matrix &u, Param par, Direction Dir, double time) {
 	}
 }
 
-void fill_exact(Matrix &u, Matrix &v, Matrix &p, Param &par, double time) {
+void fill_exact(Matrix &u, Matrix &v, Matrix &p, Param &par, double time_uv, double time_p) {
 	par.grad_p_x = 0.;
 	if (par.BC == u_inflow || par.BC == periodical) par.grad_p_x = dpdx_Poiseuille(par.H, par.Re);
-	fill_exact_u(u, par, time);
-	fill_exact_v(v, par, time);
-	fill_exact_p(p, par, time);
+	fill_exact_u(u, par, time_uv);
+	fill_exact_v(v, par, time_uv);
+	fill_exact_p(p, par, time_p);
 }
 
 void fill_exact_u(Matrix &u, Param par, double time) {

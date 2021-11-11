@@ -5,6 +5,11 @@
 #include "Matrix.h"
 #include "Exact_solutions.h"
 
+
+enum SolidShape {
+	circle, line
+};
+
 class Node
 {
 public:
@@ -21,18 +26,17 @@ public:
 class SolidBody
 {
 public:
-	bool moving;
+	int moving;              // 0 - Solid does not move, 1 - Solid is driven by the fluid, 2 - Solid moves according to the given law
 	GeomVec x_n, x;          // coordinates of the mass center
 	GeomVec u_n, u, u_s;          // velocity of the mass center
 	GeomVec omega, omega_n, omega_s;  // angular velocity
-	GeomVec f, f_n, f_new;      // force applied to the whole SolidBody
-	GeomVec f_L;                // torque, moment of force from Lagrange mesh
-	GeomVec tau_L;                // force from Lagrange mesh
+	GeomVec f, f_new;      // force applied to the whole SolidBody
+	GeomVec f_L;                // force from Lagrange mesh
 	double Fr, Fr_all;      // average radial Force applied to SolidBody
 	GeomVec F_hd;   // Force calculated from hydrodynamics
 	GeomVec tau_hd; // torque, moment of force calculated from hydrodynamics
 	double S;       // length of contour for radial Force averaging
-	GeomVec tau;    // torque, moment of force applied to the whole SolidBody
+	GeomVec tau, tau_new;    // torque, moment of force applied to the whole SolidBody
 	double I;       // moment of inertia
 	double rho;     // density
 	double V;       // volume
@@ -40,9 +44,10 @@ public:
 	GeomVec integralV_dur_dt;     // integral of the d(u x r)/dt over the Volume of the Solid
 	std::vector<Node> Nodes;   // Nodes of the SolidBody mesh
 	size_t Nn;                    // Number of Nodes
-	int name;                     // integer name of the solid
-	int n_moving;					//step which is the first moving for solid
-	SolidBody(double x, double y, double ux, double uy, double omega, double rho, int Nn, bool moving, int name);
+	int name;                     // integer name of the Solid
+	//int shape;                    // shape of the Solid
+	double r;
+	SolidBody(double x, double y, double ux, double uy, double omega, double rho, int Nn, int moving, int name);
 	~SolidBody();
 	void velocities();      // calculates the velocities in all Nodes of the SolidBody
 	double ds(size_t i);
@@ -52,8 +57,7 @@ public:
 
 class Circle : public SolidBody{
 public:
-	double r;
-	Circle(double x, double y, double ux, double uy, double omega, double rho, int Nn, bool moving, int name, double r);
+	Circle(double x, double y, double ux, double uy, double omega, double rho, int Nn, int moving, int name, double r);
 	Circle(double x, double y, Param &par);
 	~Circle();
 	void integrals(Matrix U_n, Matrix V_n, Matrix U_new, Matrix V_new, Param par);
@@ -61,8 +65,11 @@ public:
 
 void Read_Solids(std::string filename, std::list<Circle>& Solids, Param &par);
 void Add_Solids(std::list<Circle>& Solids, Param &par);
-bool Collide(Circle& s1, Circle& s2, Param par);
+bool Collide(Circle& s1, Circle& s2, Param par, double alpha, double beta, double kr);
 void Solids_move(std::list<Circle> &solidList, Param par);
+void Solids_collide(std::list<Circle> &solidList, Param par);
+void h_average_of_Solids_Layer(std::list<Circle> &solidList, Param par, double& h_average);
 void Solids_zero_force(std::list<Circle>& Solids);
 void Solids_velocity_new(std::list<Circle>& Solids, Param par);
+void Solids_position_new(std::list<Circle>& Solids, Param par);
 GeomVec Circle_Equation(GeomVec xc, double r, double theta);

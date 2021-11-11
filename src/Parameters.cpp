@@ -3,35 +3,47 @@
 
 
 
-Param::Param() {
-	// default parameters
-	Re = 20;
-	L = 30;
-	H = 7;
-	N1 = 101;
-	N2 = 21;
-	d_t = 0.00125;
+Param::Param() {  // default parameters
+
+	WorkDir = "";
 	N_step = 0;
-	Nn = 50;
-	rho = 10;
-	r = 0.5;
-	output_step = 50;
-	DeltaP_method = 0;
-	N_max = 5000000;
+	BC = u_infinity;
+
+	// physical parameters
+	d_t = 0.0001;
+	L = 1.;
+	H = 1.;
+	Re = 1.;
+	grad_p_x = 0.;
+	Gravity_angle = 0.0;
+	Gravity_module = 00.0;
+
+	// numerical parameters
+	N1 = 100;
+	N2 = 100;
+	Nn = 200;
+	output_step = 10;
+	IBM = 1;
+	DeltaP_method = 1;
 	N_Zeidel = 500000;
 	Zeidel_eps = 1e-5;
-	eps_P = 1.e-3;
-	InelasticCollision = false;
-	k_dist = 1.1;
+	s_max = 20;
+	eps_P = 1.e-5;
+	N_Force = 0;
+
+	// parameters for many particles
+	rho = 3.;
+	r = 0.05;
 	AddSolids_N = 0;
 	AddSolids_start = 0;
-	AddSolids_interval = 200;
-	BC = u_inflow;
-	u_wall = 0;
+	AddSolids_interval = 5000000;
 	SolidName_max = 0;
-	Lamb_Oseen_r0 = 0.2;
-	N_Force = 0;
-	WorkDir = "";
+	k_dist = 3.0;
+
+	// parameters for special problems
+	u_wall = 0.;
+	omega_BC = 0.;
+	Lamb_Oseen_r0 = 0.1;
 
 	this->init();
 }
@@ -84,6 +96,13 @@ void Param::init() {
 
 	k[1] = 2 * M_PI / L;
 	k[2] = 2 * M_PI / H;
+
+	Gravity_angle *= M_PI / 180.;
+
+	Gravity[0] = 0.0;
+	Gravity[1] =  Gravity_module*sin(Gravity_angle);
+	Gravity[2] = -Gravity_module*cos(Gravity_angle);
+	Gravity[3] = 0.0;
 }
 
 
@@ -91,30 +110,45 @@ void Param::read_line(std::string line) {
 	std::string PAR, VALUE;
 	GetParValue(line, PAR, VALUE);
 	if (VALUE.size() > 0) {
-		if      (PAR == "Re")           Re = stod(VALUE);
-		else if (PAR == "L")            L = stod(VALUE);
-		else if (PAR == "H")            H = stod(VALUE);
-		else if (PAR == "N1")           N1 = stoi(VALUE);
-		else if (PAR == "N2")           N2 = stoi(VALUE);
-		else if (PAR == "d_t")          d_t = stod(VALUE);
-		else if (PAR == "Nn")           Nn = stoi(VALUE);
-		else if (PAR == "rho")          rho = stod(VALUE);
-		else if (PAR == "r")            r = stod(VALUE);
-		else if (PAR == "output_step")  output_step = stoi(VALUE);
-		else if (PAR == "N_max")        N_max = stoi(VALUE);
+		if      (PAR == "N_step")               N_step = stoi(VALUE);
+		else if (PAR == "BC")                   BC = string_to_BC(VALUE);
+
+		// physical parameters
+		else if (PAR == "d_t")                  d_t = stod(VALUE);
+		else if (PAR == "L")                    L = stod(VALUE);
+		else if (PAR == "H")                    H = stod(VALUE);
+		else if (PAR == "Re")                   Re = stod(VALUE);
+		else if (PAR == "grad_p_x")             grad_p_x = (stod(VALUE));
+		else if (PAR == "Gravity_angle")        Gravity_angle = (stod(VALUE));
+		else if (PAR == "Gravity_module")       Gravity_module = (stod(VALUE));
+
+		// numerical parameters
+		else if (PAR == "N1")                   N1 = stoi(VALUE);
+		else if (PAR == "N2")                   N2 = stoi(VALUE);
+		else if (PAR == "Nn")                   Nn = stoi(VALUE);
+		else if (PAR == "output_step")          output_step = stoi(VALUE);
+		else if (PAR == "IBM")                  IBM = stoi(VALUE);
 		else if (PAR == "DeltaP_method")        DeltaP_method = stoi(VALUE);
 		else if (PAR == "N_Zeidel")             N_Zeidel = stoi(VALUE);
 		else if (PAR == "Zeidel_eps")           Zeidel_eps = stod(VALUE);
+		else if (PAR == "s_max")                s_max = stoi(VALUE);
 		else if (PAR == "eps_P")                eps_P = stod(VALUE);
-		else if (PAR == "InelasticCollision")   InelasticCollision = bool(stoi(VALUE));
-		else if (PAR == "k_dist")               k_dist = (stod(VALUE));
+		else if (PAR == "N_Force")              N_Force = stoi(VALUE);
+
+		// parameters for many particles
+		else if (PAR == "rho")                  rho = stod(VALUE);
+		else if (PAR == "r")                    r = stod(VALUE);
 		else if (PAR == "AddSolids_N")          AddSolids_N = stoi(VALUE);
 		else if (PAR == "AddSolids_start")      AddSolids_start = stoi(VALUE);
 		else if (PAR == "AddSolids_interval")   AddSolids_interval = stoi(VALUE);
-		else if (PAR == "BC")                   BC = string_to_BC(VALUE);
-		else if (PAR == "N_Force")              N_Force = stoi(VALUE);
-		else if (PAR == "N_step")               N_step = stoi(VALUE);
 		else if (PAR == "SolidName_max")        SolidName_max = stoi(VALUE);
+		else if (PAR == "k_dist")               k_dist = (stod(VALUE));
+
+		// parameters for special problems
+		else if (PAR == "Lamb_Oseen_r0")        Lamb_Oseen_r0 = (stod(VALUE));
+		else if (PAR == "u_wall")               u_wall = (stod(VALUE));
+		else if (PAR == "omega_BC")             omega_BC = (stod(VALUE));
+
 		else    std::cout << "unknown parameter " << PAR << std::endl;
 	}
 	else {
@@ -131,11 +165,12 @@ boundary_conditions string_to_BC(std::string s) {
 	else if (s == "Taylor_Green" || s == "3") BC = Taylor_Green;
 	else if (s == "Lamb_Oseen"   || s == "4") BC = Lamb_Oseen;
 	else if (s == "Line_Vortex"  || s == "5") BC = Line_Vortex;
+	else if (s == "box"          || s == "6") BC = box;
 	else std::cout << "string_to_BC: unknown BC" << std::endl;
 	return BC;
 }
 
-GeomVec x_p(int i, int j, Param &par) {
+GeomVec x_p(int i, int j, Param par) {
 	GeomVec result;
 	result[0] = 0.0;
 	result[1] = (i - 0.5) * par.d_x;
@@ -144,7 +179,7 @@ GeomVec x_p(int i, int j, Param &par) {
 	return result;
 }
 
-GeomVec x_u(int i, int j, Param &par) {
+GeomVec x_u(int i, int j, Param par) {
 	GeomVec result;
 	result[0] = 0.0;
 	result[1] = (i - 1.0) * par.d_x;
@@ -153,7 +188,7 @@ GeomVec x_u(int i, int j, Param &par) {
 	return result;
 }
 
-GeomVec x_v(int i, int j, Param &par) {
+GeomVec x_v(int i, int j, Param par) {
 	GeomVec result;
 	result[0] = 0.0;
 	result[1] = (i - 0.5) * par.d_x;
@@ -162,7 +197,7 @@ GeomVec x_v(int i, int j, Param &par) {
 	return result;
 }
 
-GeomVec x_c(int i, int j, Param &par) {
+GeomVec x_c(int i, int j, Param par) {
 	GeomVec result;
 	result[0] = 0.0;
 	result[1] = i * par.d_x;
@@ -172,7 +207,7 @@ GeomVec x_c(int i, int j, Param &par) {
 	return result;
 }
 
-double DeltaFunction(double &x, double &y, Param &par) {
+double DeltaFunction(double x, double y, Param &par) {
 	return FunctionD(x / par.d_x) * FunctionD(y / par.d_y);
 }
 
@@ -237,7 +272,7 @@ double Heaviside(double x) {
 	return result;
 }
 
-int i_real_u(int &i, Param &par) {
+int i_real_u(int i, Param par) {
 	int i_real = i;
 	if (i_real < 1         ) i_real += par.N1;
 	if (i_real > par.N1 + 1) i_real -= par.N1;
@@ -245,7 +280,7 @@ int i_real_u(int &i, Param &par) {
 	return i_real;
 }
 
-int i_real_v(int &i, Param &par) {
+int i_real_v(int i, Param par) {
 	int i_real = i;
 	if (i_real < 1         ) i_real += par.N1;
 	if (i_real > par.N1    ) i_real -= par.N1;

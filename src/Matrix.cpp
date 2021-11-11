@@ -67,7 +67,7 @@ double UL(Matrix &A, size_t i, size_t j, Direction dir) {
 	return result;
 }
 
-double max(Matrix &A) {
+double max(const Matrix &A) {
 	double eps = 0.0;
 	for (size_t i = 0; i < A.size(); ++i) {
 		for (size_t j = 0; j < A[0].size(); ++j) {

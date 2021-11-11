@@ -1,6 +1,4 @@
-#include "stdafx.h"
 #include "PredictVel.h"
-#include "helmholtz.h"
 
 // LHS of Navier-Stokes equation operator
 // LHS = (1 / d_t - 1/Re * 0.5 \Delta ) * U_new
@@ -61,13 +59,13 @@ Matrix CalculateB(Matrix &u_n, Matrix &v_n, Matrix &u_s, Matrix &v_s, Matrix &p,
 			                                (p    [i][j] - L(p    , i, j, Dir)) / d_u
 			                              + (p_new[i][j] - L(p_new, i, j, Dir)) / d_u
 			                             );
-			double Laplace_F = par.d_t / (2.0*par.Re) * (par.ldxdx * (F[i + 1][j] - 2.0 * F[i][j] + F[i - 1][j])
-			                                           + par.ldydy * (F[i][j + 1] - 2.0 * F[i][j] + F[i][j - 1]) ) ;
+			double Laplace_F =  par.ldxdx * (F[i + 1][j] - 2.0 * F[i][j] + F[i - 1][j])
+			                  + par.ldydy * (F[i][j + 1] - 2.0 * F[i][j] + F[i][j - 1]) ;
 
 			result[i][j] = - advective_term_s
 			               - pressure_term
-			               + diffusion_term_n / (2.0*par.Re)
-			               + Laplace_F
+			               + diffusion_term_n    / (2.0*par.Re)
+			               + par.d_t * Laplace_F / (2.0*par.Re)
 			               + u_n[i][j] / par.d_t;
 
 			if (Dir == Du) result[i][j] += par.grad_p_x;
@@ -76,7 +74,6 @@ Matrix CalculateB(Matrix &u_n, Matrix &v_n, Matrix &u_s, Matrix &v_s, Matrix &p,
 	}
 
 	Boundary_Conditions(u_s, par, Dir, par.d_t * (par.N_step + 1));
-	Boundary_Conditions(result, par, Dir, par.d_t * (par.N_step + 1));
 
 	return result;
 }
@@ -88,156 +85,124 @@ double advective_term(Matrix &ul, Matrix &vl, Matrix &ur, Matrix &vr, size_t i, 
 	return result;
 }
 
-void make_uv_RHS(Matrix &rhsu, Matrix &rhsv, Matrix &u0, Matrix &v0, Matrix &u1, Matrix &v1, Matrix &p0, double fu, double fv,
-                 int nx, int ny, double hx, double hy, double tau, double Re) {
+void make_uv_RHS(Matrix &rhsu, Matrix &rhsv, Matrix &u0, Matrix &v0, Matrix &u, Matrix &v, Matrix &p, Matrix &Fx, Matrix &Fy, Param par) {
 
-	double re_x = Re / hx;
-	double re_y = Re / hy;
-	double e_xx = 1. / (hx*hx);
-	double e_yy = 1. / (hy*hy);
-	double re2 = 2.*Re;
-	double re2_t = 2.*Re / tau;
+	double re2_x = 2. * par.Re / par.d_x;
+	double re2_y = 2. * par.Re / par.d_y;
+	double re_2x = par.Re / (2.0*par.d_x);
+	double re_2y = par.Re / (2.0*par.d_y);
+	double e_xx = 1. / (par.d_x*par.d_x);
+	double e_yy = 1. / (par.d_y*par.d_y);
+	double re2 = 2.*par.Re;
+	double re2_t = 2.*par.Re / par.d_t;
 
-	for (int i = 1; i <= nx + 1; i++) {
-		for (int j = 1; j <= ny; j++) {
+	for (int i = 1; i <= par.N1_u - 2; i++) {
+		for (int j = 1; j <= par.N2_u - 2; j++) {
+			double a1 = 0.5*(u[i][j] + u0[i][j]);
+			double a2 = 0.125*(v[i - 1][j] + v[i - 1][j + 1] + v[i][j] + v[i][j + 1] + v0[i - 1][j] + v0[i - 1][j + 1] + v0[i][j] + v0[i][j + 1]);
+			double Laplace_F = par.ldxdx * (Fx[i + 1][j] - 2.0 * Fx[i][j] + Fx[i - 1][j])
+				             + par.ldydy * (Fx[i][j + 1] - 2.0 * Fx[i][j] + Fx[i][j - 1]);
+
 			rhsu[i][j] = re2_t*u0[i][j]
 				+ e_xx *(u0[i + 1][j] - 2.*u0[i][j] + u0[i - 1][j])
 				+ e_yy *(u0[i][j + 1] - 2.*u0[i][j] + u0[i][j - 1])
-				- re_x *(p0[i][j] - p0[i - 1][j])
-				+ re2  *fu;
+
+				- re_2x*a1*(u[i + 1][j] - u[i - 1][j] + u0[i + 1][j] - u0[i - 1][j])
+				- re_2y*a2*(u[i][j + 1] - u[i][j - 1] + u0[i][j + 1] - u0[i][j - 1])
+
+				- re2_x *(p [i][j] - p [i - 1][j])
+				
+				+ Fx[i][j] * re2
+				// + Laplace_F * par.d_t
+				+ par.grad_p_x * re2;
 		}
 	}
-	for (int i = 1; i <= nx; i++) {
-		for (int j = 1; j <= ny + 1; j++) {
-			rhsv[i][j] = re2_t*v0[i][j] 
-				+ e_xx *(v0[i + 1][j] - 2.*v0[i][j] + v0[i - 1][j])
-				+ e_yy *(v0[i][j + 1] - 2.*v0[i][j] + v0[i][j - 1])
-				- re_y *(p0[i][j] - p0[i][j - 1])
-				+ re2  *fv;
-		}
-	}
-
-}
-
-void predict_uv(Matrix &u0, Matrix &v0, Matrix &u, Matrix &v,
-	Matrix &p, Matrix &rhsu, Matrix &rhsv, int &nx, int &ny, double &hx, double &hy, double &tau, double &Re, Param &par) {
-
-	double re2_t = 2.0 * Re / tau;
-	double re_x  = Re / hx;
-	double re_y  = Re / hy;
-	double re_2x = Re / (2.0*hx);
-	double re_2y = Re / (2.0*hy);
-
-	//Allocate arrayes
-	CreateMatrix(fu, nx + 3, ny + 2);
-	CreateMatrix(fv, nx + 2, ny + 3);
-
-	for (int i = 1; i <= nx + 1; i++) {
-		for (int j = 1; j <= ny; j++) {
-			double a1 = 0.5*(u[i][j] + u0[i][j]);
-			double a2 = 0.125*(v[i - 1][j] + v[i - 1][j + 1] + v[i][j] + v[i][j + 1] + v0[i - 1][j] + v0[i - 1][j + 1] + v0[i][j] + v0[i][j + 1]);
-			fu[i][j] = rhsu[i][j]
-			- re_2x*a1*(u[i + 1][j] - u[i - 1][j] + u0[i + 1][j] - u0[i - 1][j])
-			- re_2y*a2*(u[i][j + 1] - u[i][j - 1] + u0[i][j + 1] - u0[i][j - 1])
-			- re_x *(p[i][j] - p[i - 1][j]);
-		}
-	}
-	if (par.BC == periodical)
-		for (int j = 1; j <= ny; j++) {
-			fu[0   ][j] = fu[nx  ][j];
-			fu[1   ][j] = fu[nx+1][j];
-			fu[nx+2][j] = fu[2   ][j];
-		}
-
-	for (int i = 1; i <= nx; i++) {
-		for (int j = 1; j <= ny + 1; j++) {
+	for (int i = 1; i <= par.N1_v - 2; i++) {
+		for (int j = 1; j <= par.N2_v - 2; j++) {
 			double a1 = 0.125*(u[i][j - 1] + u[i + 1][j - 1] + u[i][j] + u[i + 1][j] + u0[i][j - 1] + u0[i + 1][j - 1] + u0[i][j] + u0[i + 1][j]);
 			double a2 = 0.5*(v[i][j] + v0[i][j]);
-			fv[i][j] = rhsv[i][j]
-			- re_2x*a1*(v[i + 1][j] - v[i - 1][j] + v0[i + 1][j] - v0[i - 1][j])
-			- re_2y*a2*(v[i][j + 1] - v[i][j - 1] + v0[i][j + 1] - v0[i][j - 1])
-			- re_y *(p[i][j] - p[i][j - 1]);
+			double Laplace_F = par.ldxdx * (Fy[i + 1][j] - 2.0 * Fy[i][j] + Fy[i - 1][j])
+				             + par.ldydy * (Fy[i][j + 1] - 2.0 * Fy[i][j] + Fy[i][j - 1]);
+
+			rhsv[i][j] = re2_t*v0[i][j]
+				+ e_xx *(v0[i + 1][j] - 2.*v0[i][j] + v0[i - 1][j])
+				+ e_yy *(v0[i][j + 1] - 2.*v0[i][j] + v0[i][j - 1])
+				
+				- re_2x*a1*(v[i + 1][j] - v[i - 1][j] + v0[i + 1][j] - v0[i - 1][j])
+				- re_2y*a2*(v[i][j + 1] - v[i][j - 1] + v0[i][j + 1] - v0[i][j - 1])
+
+				- re2_y *(p [i][j] - p [i][j - 1])
+
+				+ Fy[i][j] * re2;
+			    //+ Laplace_F * par.d_t;
 		}
 	}
-	if (par.BC == periodical)
-		for (int j = 1; j <= ny + 1; j++) {
-			fv[0][j] = fv[nx][j];
-			fv[nx+1][j] = fv[1][j];
-		}
-	//Output_U(fu, "fu", -555, par);
-	//Output_V(fv, "fv", -555, par);
-	//std::cin.get();
-
-	CreateMatrix(ax_u, ny + 2, 4);
-	CreateMatrix(bx_u, ny + 2, 4);
-	CreateMatrix(ay_u, nx + 3, 4);
-	CreateMatrix(by_u, nx + 3, 4);
-
-	//Set up boundary conditions
-	for (int i = 0; i <= ny + 1; i++) {
-		ax_u[i][1] = 0.;   //Inflow boundary condition : du / dn = 0 (soft)
-		ax_u[i][2] = -1.;
-		ax_u[i][3] = 0.;
-		if (par.BC == u_inflow || par.BC == u_infinity){
-		ax_u[i][1] = 0.;   //Inflow boundary condition : u = 1
-		ax_u[i][2] = 0.;
-		ax_u[i][3] = 1.;
-		}
-		bx_u[i][1] =  0.;   //Outflow boundary condition : du / dn = 0 (soft)
-		bx_u[i][2] = -1.;
-		bx_u[i][3] =  0.;
-	}
-	for (int i = 0; i <= nx + 2; i++) {
-		ay_u[i][1] =  1.; //Bottom boundary condition : du / dn = 0 (soft)
-		ay_u[i][2] =  0.;
-		ay_u[i][3] =  0.;
-		by_u[i][1] =  1.; //Top boundary condition : du / dn = 0 (soft)
-		by_u[i][2] =  0.;
-		by_u[i][3] =  0.;
-	}
-
-	char* BCtype = "DDDD";
-	if (par.BC == u_inflow  ) BCtype = "NDDD";
-	if (par.BC == u_infinity) BCtype = "NDNN";
-	if (par.BC == periodical) BCtype = "PPDD";
-	Helmholtz_MKL(u, fu, re2_t, par.d_x, par.d_y, 1, nx + 1, 0, ny + 1, BCtype);
-
-	//Solve Boundary value problem for Helmholtz equation by Gauss–Seidel method(it is faster here than SOR method)
-	//Helmholtz_SOR(u, ax_u, bx_u, ay_u, by_u, fu, re2_t, nx + 1, ny, hx, hy, 200000, 1.e-11, 1.);
-	Boundary_Conditions(u, par, Du, par.d_t * (par.N_step + 1));
-
-
-	CreateMatrix(ax_v, ny + 3, 4);
-	CreateMatrix(bx_v, ny + 3, 4);
-	CreateMatrix(ay_v, nx + 2, 4);
-	CreateMatrix(by_v, nx + 2, 4);
-
-	for (int i = 0; i <= ny + 2; i++) {
-		ax_v[i][1] = -1.;   //Inflow boundary condition : v = 0
-		ax_v[i][2] =  0.;
-		ax_v[i][3] =  0.;
-		bx_v[i][1] = -1.;   //Outflow boundary condition : dv / dn = 0 (soft)
-		bx_v[i][2] =  0.;
-		bx_v[i][3] =  0.;
-	}
-	for (int i = 0; i <= nx + 1; i++) {
-		ay_v[i][1] =  0.;   //Bottom boundary condition : v = 0 (no - slip)
-		ay_v[i][2] =  1.;
-		ay_v[i][3] =  0.;
-		by_v[i][1] =  0.;   //Top    boundary condition : v = 0 (no - slip)
-		by_v[i][2] =  1.;
-		by_v[i][3] =  0.;
-	}
-
-	if (par.BC == u_inflow  ) BCtype = "NDDD";
-	if (par.BC == u_infinity) BCtype = "NDDD";
-	if (par.BC == periodical) BCtype = "PPDD";
-	Helmholtz_MKL(v, fv, re2_t, par.d_x, par.d_y, 0, nx, 0, ny + 2, BCtype);
-
-	//Solve Boundary value problem for Helmholtz equation by Gauss–Seidel method(it is faster here than SOR method)
-	//Helmholtz_SOR(v, ax_v, bx_v, ay_v, by_v, fv, re2_t, nx, ny + 1, hx, hy, 200000, 1.e-11, 1.);
-	Boundary_Conditions(v, par, Dv, par.d_t * (par.N_step + 1));
+	Boundary_Conditions(rhsu, par, Du, par.d_t * (par.N_step + 1));
+	Boundary_Conditions(rhsv, par, Dv, par.d_t * (par.N_step + 1));
 }
+
+void predict_uv(Matrix &u, Matrix &v, Matrix &rhsu, Matrix &rhsv, Param &par) {
+
+	//#pragma omp parallel sections num_threads(2) 
+	{
+      //#pragma omp section 
+	  {
+		//BiCGStab(u, A_u, B_u, par, Du, N_BiCGStab_u);                   // solving A_u * U_new = B_u
+		prepare_solve_helmholtz_velocity(u, rhsu, par.N1_u - 1, par.N2_u - 1, 2 * par.Re / par.d_t, par);
+		Boundary_Conditions(u, par, Du, par.d_t * (par.N_step + 1));
+	  }
+	  //#pragma omp section 
+	  {
+		//BiCGStab(v, A_v, B_v, par, Dv, N_BiCGStab_v);                   // solving A_v * V_new = B_v
+		prepare_solve_helmholtz_velocity(v, rhsv, par.N1_v - 1, par.N2_v - 1, 2 * par.Re / par.d_t, par);
+		Boundary_Conditions(v, par, Dv, par.d_t * (par.N_step + 1));
+	  }
+	}
+
+}
+
+void prepare_solve_helmholtz_velocity(Matrix &A, Matrix &RHS, MKL_INT nx, MKL_INT ny, double q, Param par) {
+	char* BCtype = "DDDD";
+	if (par.BC == u_inflow) BCtype = "DNDD";
+	if (par.BC == u_infinity) BCtype = "DNNN";
+	if (par.BC == periodical) BCtype = "PPDD";
+
+	double ax = 0.;
+	double bx = par.d_x*nx;
+	double ay = 0.;
+	double by = par.d_y*ny;
+
+	double *f_mkl = NULL, *bd_ax = NULL, *bd_bx = NULL, *bd_ay = NULL, *bd_by = NULL;
+	f_mkl = (double*)mkl_malloc((nx + 1)*(ny + 1) * sizeof(double), 64);
+	bd_ax = (double*)mkl_malloc((ny + 1) * sizeof(double), 64);
+	bd_bx = (double*)mkl_malloc((ny + 1) * sizeof(double), 64);
+	bd_ay = (double*)mkl_malloc((nx + 1) * sizeof(double), 64);
+	bd_by = (double*)mkl_malloc((nx + 1) * sizeof(double), 64);
+
+	Matrix_to_DoubleArray(RHS, f_mkl, par.BC);
+	for (MKL_INT iy = 0; iy <= ny; iy++) {
+		bd_ax[iy] = 0.;
+		bd_bx[iy] = 0.;
+		if (par.BC == u_infinity || par.BC == u_inflow) bd_ax[iy] = A[0][iy];
+		if (par.BC == Taylor_Green || par.BC == Lamb_Oseen || par.BC == Line_Vortex) {
+			bd_ax[iy] = A[0][iy];
+			bd_bx[iy] = A[nx][iy];
+		}
+	}
+	for (MKL_INT ix = 0; ix <= nx; ix++) {
+		bd_ay[ix] = 0.;
+		bd_by[ix] = 0.;
+		if (par.BC == Taylor_Green || par.BC == Lamb_Oseen || par.BC == Line_Vortex) {
+			bd_ay[ix] = A[ix][0];
+			bd_by[ix] = A[ix][ny];
+		}
+	}
+
+	Helmholtz_MKL(f_mkl, ax, bx, ay, by, bd_ax, bd_bx, bd_ay, bd_by, nx, ny, BCtype, 2 * par.Re / par.d_t, par.d_x, par.d_y);
+	DoubleArray_to_Matrix(f_mkl, A, par.BC);
+	mkl_free(f_mkl);
+}
+
 
 
 void Output_eq_terms(std::string filename, int n, Matrix &u_n, Matrix &v_n, Matrix &u_s, Matrix &v_s, Matrix &p, Matrix &p_new, Matrix &F, Param par, Direction Dir) {

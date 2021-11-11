@@ -12,5 +12,5 @@
 #include <iomanip>
 #include <omp.h>
 
-const bool Debug = true;
+const bool Debug = false;
 

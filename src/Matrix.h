@@ -26,7 +26,7 @@ double U(Matrix &A, size_t i, size_t j, Direction dir);
 
 double UL(Matrix &A, size_t i, size_t j, Direction dir);
 
-double max(Matrix &A);
+double max(const Matrix &A);
 double diff(Matrix &A, Matrix &B);
 double Summ(Matrix& A);
 
