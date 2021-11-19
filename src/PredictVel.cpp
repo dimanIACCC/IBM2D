@@ -143,15 +143,15 @@ void make_uv_RHS(Matrix &rhsu, Matrix &rhsv, Matrix &u0, Matrix &v0, Matrix &u, 
 
 void predict_uv(Matrix &u, Matrix &v, Matrix &rhsu, Matrix &rhsv, Param &par) {
 
-	//#pragma omp parallel sections num_threads(2) 
+	#pragma omp parallel sections num_threads(2)
 	{
-      //#pragma omp section 
+      #pragma omp section
 	  {
 		//BiCGStab(u, A_u, B_u, par, Du, N_BiCGStab_u);                   // solving A_u * U_new = B_u
 		prepare_solve_helmholtz_velocity(u, rhsu, 2 * par.Re / par.d_t, par, Du);
 		Boundary_Conditions(u, par, Du, par.d_t * (par.N_step + 1));
 	  }
-	  //#pragma omp section 
+	  #pragma omp section
 	  {
 		//BiCGStab(v, A_v, B_v, par, Dv, N_BiCGStab_v);                   // solving A_v * V_new = B_v
 		prepare_solve_helmholtz_velocity(v, rhsv, 2 * par.Re / par.d_t, par, Dv);
