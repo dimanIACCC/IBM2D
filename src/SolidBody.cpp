@@ -211,8 +211,8 @@ void Add_Solids(std::list<Circle>& Solids, Param &par) {
 		for (int i = 0; i < par.AddSolids_N; i++) { // add $AddSolids_N$ solids
 			GeomVec x;
 			x[0] = 0;
-			x[1] = (par.L)  * (0.5 + (1 - 15 * par.r / par.L) * (double(rand()) - RAND_MAX / 2) / RAND_MAX);
-			x[2] = (par.H)  * (0.5 + (1 - 15 * par.r / par.H) * (double(rand()) - RAND_MAX / 2) / RAND_MAX);
+			x[1] = (par.L)  * (0.5 + (1 - 4 * par.r / par.L) * (double(rand()) - RAND_MAX / 2) / RAND_MAX);
+			x[2] = (par.H)  * (0.5 + (1 - 3 * par.r / par.H) * (double(rand()) - RAND_MAX / 2) / RAND_MAX);
 			x[3] = 0;
 			Circle c(x[1], x[2], par);
 			if (c.name > par.SolidName_max) par.SolidName_max = c.name;

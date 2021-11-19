@@ -24,11 +24,10 @@
 
 #include "helmholtz.h"
 
-DFTI_DESCRIPTOR_HANDLE xhandle = 0;
-
 void Helmholtz_MKL(double*f, double &ax, double &bx, double &ay, double &by, 
                    double*bd_ax, double*bd_bx, double*bd_ay, double*bd_by, MKL_INT &nx, MKL_INT &ny, char *BCtype, double q, double hx, double hy)
 {
+	DFTI_DESCRIPTOR_HANDLE xhandle = 0;
 	MKL_INT stat, ipar[128];
 	double *dpar = NULL;
 
