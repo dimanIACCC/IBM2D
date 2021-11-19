@@ -148,24 +148,36 @@ void predict_uv(Matrix &u, Matrix &v, Matrix &rhsu, Matrix &rhsv, Param &par) {
       //#pragma omp section 
 	  {
 		//BiCGStab(u, A_u, B_u, par, Du, N_BiCGStab_u);                   // solving A_u * U_new = B_u
-		prepare_solve_helmholtz_velocity(u, rhsu, par.N1_u - 1, par.N2_u - 1, 2 * par.Re / par.d_t, par);
+		prepare_solve_helmholtz_velocity(u, rhsu, 2 * par.Re / par.d_t, par, Du);
 		Boundary_Conditions(u, par, Du, par.d_t * (par.N_step + 1));
 	  }
 	  //#pragma omp section 
 	  {
 		//BiCGStab(v, A_v, B_v, par, Dv, N_BiCGStab_v);                   // solving A_v * V_new = B_v
-		prepare_solve_helmholtz_velocity(v, rhsv, par.N1_v - 1, par.N2_v - 1, 2 * par.Re / par.d_t, par);
+		prepare_solve_helmholtz_velocity(v, rhsv, 2 * par.Re / par.d_t, par, Dv);
 		Boundary_Conditions(v, par, Dv, par.d_t * (par.N_step + 1));
 	  }
 	}
 
 }
 
-void prepare_solve_helmholtz_velocity(Matrix &A, Matrix &RHS, MKL_INT nx, MKL_INT ny, double q, Param par) {
+void prepare_solve_helmholtz_velocity(Matrix &A, Matrix &RHS, double q, Param par, Direction Dir) {
 	char* BCtype = "DDDD";
 	if (par.BC == u_inflow) BCtype = "DNDD";
 	if (par.BC == u_infinity) BCtype = "DNNN";
 	if (par.BC == periodical) BCtype = "PPDD";
+
+	MKL_INT nx, ny;
+	if (Dir == Du) {
+		nx = par.N1 + 2;
+		ny = par.N2 + 1;
+		if (par.BC == periodical) nx = par.N1;
+	}
+	if (Dir == Dv) {
+		nx = par.N1 + 1;
+		ny = par.N2 + 2;
+		if (par.BC == periodical) nx = par.N1;
+	}
 
 	double ax = 0.;
 	double bx = par.d_x*nx;
@@ -179,7 +191,9 @@ void prepare_solve_helmholtz_velocity(Matrix &A, Matrix &RHS, MKL_INT nx, MKL_IN
 	bd_ay = (double*)mkl_malloc((nx + 1) * sizeof(double), 64);
 	bd_by = (double*)mkl_malloc((nx + 1) * sizeof(double), 64);
 
-	Matrix_to_DoubleArray(RHS, f_mkl, par.BC);
+	if (Dir == Du) MatrixU_to_DoubleArray(RHS, f_mkl, par.BC);
+	if (Dir == Dv) Matrix_to_DoubleArray(RHS, f_mkl, par.BC);
+
 	for (MKL_INT iy = 0; iy <= ny; iy++) {
 		bd_ax[iy] = 0.;
 		bd_bx[iy] = 0.;
@@ -199,7 +213,10 @@ void prepare_solve_helmholtz_velocity(Matrix &A, Matrix &RHS, MKL_INT nx, MKL_IN
 	}
 
 	Helmholtz_MKL(f_mkl, ax, bx, ay, by, bd_ax, bd_bx, bd_ay, bd_by, nx, ny, BCtype, 2 * par.Re / par.d_t, par.d_x, par.d_y);
-	DoubleArray_to_Matrix(f_mkl, A, par.BC);
+
+	if (Dir == Du) DoubleArray_to_MatrixU(f_mkl, A, par.BC);
+	if (Dir == Dv) DoubleArray_to_Matrix(f_mkl, A, par.BC);
+
 	mkl_free(f_mkl);
 }
 

@@ -50,15 +50,6 @@ void Calculate_u_p(Matrix &U_n   , Matrix &U_new,
 	//output << "Variables = s ux uy omega f IntU tau IntUr" << std::endl;
 	output << "Variables = s  N_BiCGStab_u  N_BiCGStab_v  N_DeltaP time_velocity time_pressure time_force" << std::endl;
 
-	/*if (par.BC == Taylor_Green) {
-		int i = par.N1 / 2;
-		int j = par.N2 / 2;
-		double p_fix = 2 * exact_p(x_p(i, j, par), par, par.d_t * (par.N_step + 0.5)) - 2 * P_n[i][j];
-
-		for (i = 0; i < P_new.size(); ++i)
-		for (j = 0; j < P_new[0].size(); ++j)
-			P_new[i][j] = P_n[i][j] + p_fix;
-	}*/
 
 	CreateMatrix(RHS_u, par.N1_u, par.N2_u);
 	CreateMatrix(RHS_v, par.N1_v, par.N2_v);
@@ -75,11 +66,7 @@ void Calculate_u_p(Matrix &U_n   , Matrix &U_new,
 	double P_max = 1.;
 
 	// start iterations for pressure and velocity to fulfill the continuity equation
-	for (int s = 0; s <= par.s_max; ++s) {													// cycle while (delta_P / P > eps_P)
-
-		if (par.BC == Lamb_Oseen || par.BC == Line_Vortex || par.BC == Taylor_Green) {
-			BC_exact_p(P, par, par.d_t * (par.N_step + 0.5));
-		}
+	for (int s = 1; s <= par.s_max; ++s) {													// cycle while (delta_P / P > eps_P)
 
 		#pragma region Velocity
 		begin = std::clock();
@@ -94,9 +81,6 @@ void Calculate_u_p(Matrix &U_n   , Matrix &U_new,
 		end = std::clock();
 		time_velocity = end - begin;
 		#pragma endregion Velocity
-
-		//Output(P_new, U_new, V_new, Fx_new, Fy_new, s, solidList, par);
-		//std::cin.get();
 
 		#pragma region Force
 		begin = std::clock();
@@ -162,7 +146,26 @@ void Calculate_u_p(Matrix &U_n   , Matrix &U_new,
 
 			P += Delta_P;
 
-			if (par.BC == u_infinity || par.BC == u_inflow || par.BC == periodical || par.BC == box) {
+			if (par.BC == Lamb_Oseen || par.BC == Line_Vortex) {
+				BC_exact_p(P, par, par.d_t * (par.N_step + 0.5));
+			}
+
+			if (par.BC == Taylor_Green) {
+
+				//Dirichlet BC for pressure
+				//BC_exact_p(P, par, par.d_t * (par.N_step + 0.5));
+
+				// Correct pressure for Neumann BC in Taylor-Green problem
+				int i = par.N1 / 2;
+				int j = par.N2 / 2;
+				double p_fix = exact_p(x_p(i, j, par), par, par.d_t * (par.N_step + 0.5)) - P[i][j];
+
+				for (i = 0; i < P.size(); ++i)
+					for (j = 0; j < P[0].size(); ++j)
+						P[i][j] = P[i][j] + p_fix;
+			}
+
+			if (par.BC == u_infinity || par.BC == u_inflow || par.BC == periodical || par.BC == box || par.BC == Taylor_Green) {
 
 				// Up-Down BC
 				for (size_t i = 0; i <= par.N1 + 1; ++i) {

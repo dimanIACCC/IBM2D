@@ -83,3 +83,38 @@ void DoubleArray_to_Matrix(double* D, Matrix &M, boundary_conditions BC) {
 	}
 }
 
+
+void MatrixU_to_DoubleArray(Matrix &M, double* D, boundary_conditions BC) {
+
+	int Nx = M.size();
+	int Ny = M[0].size();
+
+	for (int i = 0; i < Nx; i++) {
+		for (int j = 0; j < Ny; j++) {
+			if (BC == periodical) {
+				if      (i == 0);
+				else if (i == Nx - 1);
+				else  D[(i-1) + j*(Nx - 2)] = M[i][j];
+			}
+			else D[i + j*Nx] = M[i][j];
+		}
+	}
+
+}
+
+void DoubleArray_to_MatrixU(double* D, Matrix &M, boundary_conditions BC) {
+
+	int Nx = M.size();
+	int Ny = M[0].size();
+
+	for (int i = 0; i < Nx; i++) {
+		for (int j = 0; j < Ny; j++) {
+			if (BC == periodical) {
+			    if      (i == 0)      M[i][j] = D[(Nx - 2) + j*(Nx - 2)];
+				else if (i == Nx - 1) M[i][j] = D[0        + j*(Nx - 2)];
+				else                  M[i][j] = D[(i-1)    + j*(Nx - 2)];
+			}
+			else M[i][j] = D[i + j*Nx];
+		}
+	}
+}

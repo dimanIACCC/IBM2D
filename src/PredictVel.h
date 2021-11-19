@@ -15,4 +15,4 @@ double advective_term(Matrix &ul, Matrix &vl, Matrix &ur, Matrix &vr, size_t i, 
 void Output_eq_terms(std::string filename, int n, Matrix &u_n, Matrix &v_n, Matrix &u_s, Matrix &v_s, Matrix &p, Matrix &p_new, Matrix &F, Param par, Direction Dir);
 void make_uv_RHS(Matrix &rhsu, Matrix &rhsv, Matrix &u0, Matrix &v0, Matrix &u, Matrix &v, Matrix &p, Matrix &Fx, Matrix &Fy, Param par);
 void predict_uv(Matrix &u, Matrix &v, Matrix &rhsu, Matrix &rhsv, Param &par);
-void prepare_solve_helmholtz_velocity(Matrix &A, Matrix &RHS, MKL_INT nx, MKL_INT ny, double q, Param par);
+void prepare_solve_helmholtz_velocity(Matrix &A, Matrix &RHS, double q, Param par, Direction Dir);

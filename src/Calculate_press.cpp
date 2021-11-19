@@ -148,7 +148,7 @@ double Pressure_correction_solve(Matrix &delta_p, Matrix &rhs, Param par, int &N
 		MKL_INT ny = par.N2 + 1;
 
 		if (par.BC == u_inflow || par.BC == u_infinity) BCtype = "NDNN";
-		if (par.BC == box                             ) BCtype = "NNNN";
+		if (par.BC == box || par.BC == Taylor_Green)    BCtype = "NNNN";
 		if (par.BC == periodical)                      {BCtype = "PPNN"; nx = par.N1;}
 
 		double q = 0.;

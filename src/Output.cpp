@@ -324,8 +324,8 @@ void Output_Matrix(Matrix A, std::string WorkDir, std::string Variable, int n) {
 	output << "Zone T=" << '"' << "Flow" << '"' << ",  I =  " << A[0].size() << ", J =  " << A.size() << ", Datapacking = Point" << std::endl;
 
 	for (int i = 0; i < A.size(); ++i) {
-		//for (int j = 0; j < A[0].size(); ++j) {
-		for (int j = A[0].size()-1; j >= 0; --j) {
+		for (int j = 0; j < A[0].size(); ++j) {
+		//for (int j = A[0].size()-1; j >= 0; --j) {
 			output << i << ' ' << j << ' ' << A[i][j] << std::endl;
 		}
 	}
@@ -363,8 +363,8 @@ void Output_2DArray(double* A, int Nx, int Ny, std::string WorkDir, std::string 
 	output << "Zone T=" << '"' << "Array" << '"' << ",  I =  " << Ny << ", J =  " << Nx << ", Datapacking = Point" << std::endl;
 
 	for (int i = 0; i < Nx; ++i) {
-		//for (int j = 0; j < Ny; ++j) {
-		for (int j = Ny - 1; j >= 0; --j) {
+		for (int j = 0; j < Ny; ++j) {
+		//for (int j = Ny - 1; j >= 0; --j) {
 			//for (int j = Ny-1; j >= 0; --j) {
 			output << i << ' ' << j << ' ' << A[i + j*Nx] << std::endl;
 		}
