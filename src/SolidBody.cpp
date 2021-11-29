@@ -266,43 +266,32 @@ bool Collide(Circle& s1, Circle& s2, Param par, double alpha, double beta, doubl
 	GeomVec r = s1.x - s2.x;
 	double dist = Distance_2Solids(s1, s2, par, r);
 
-	//double rrr = length(r); //<----distance between two particles
-	//if (par.BC == periodical) {
-	//	GeomVec r_plus  = r;
-	//	GeomVec r_minus = r;
-	//	r_plus[1]  += par.L;
-	//	r_minus[1] -= par.L;
-	//	if (length(r_plus ) < rrr) { r = r_plus ; rrr = length(r_plus ); };
-	//	if (length(r_minus) < rrr) { r = r_minus; rrr = length(r_minus); };
-	//}
-
-	// if (rrr <= (1.+par.k_dist)*(s1.r + s2.r) && s1.moving == 1 && s2.moving == 1) {
 	double dist_u = par.k_dist*par.d_x;
 	double dist_r = par.k_dist*par.d_x * kr;
 	if (dist <= dist_u) {
 		result = true;
-		///r = r / rrr;
-			double u1_before = dot_product(s1.u, r);
-			double u2_before = dot_product(s2.u, r);
-			double omega1_before = s1.omega[3];
-			double omega2_before = s2.omega[3];
-				double m1 = s1.rho * s1.V;
-				double m2 = s2.rho * s2.V;
+		double u1_before = dot_product(s1.u, r);
+		double u2_before = dot_product(s2.u, r);
+		double omega1_before = s1.omega[3];
+		double omega2_before = s2.omega[3];
+		double m1 = s1.rho * s1.V;
+		double m2 = s2.rho * s2.V;
 		if (u1_before - u2_before < 0.0) { // if Solids move to each other
-				double u1_after = (u1_before * (m1 - m2) + 2 * m2 * u2_before) / (m1 + m2);
-				double u2_after = (u2_before * (m2 - m1) + 2 * m1 * u1_before) / (m1 + m2);
-				double omega1_after = (omega1_before * (m1 - m2) + 2 * m2 * omega2_before) / (m1 + m2);
-				double omega2_after = (omega2_before * (m1 - m2) + 2 * m2 * omega1_before) / (m1 + m2);
-				if (s1.moving == 1) s1.u += alpha*(u1_after - u1_before)*r;
-				if (s2.moving == 1) s2.u += alpha*(u2_after - u2_before)*r;
-				if (s1.moving == 1) s1.omega[3] += alpha*(omega1_after - omega1_before);
-				if (s2.moving == 1) s2.omega[3] += alpha*(omega2_after - omega2_before);
-				//2*m2*( u2_before - u1_before) / (m1 + m2)
-			}
+			double u1_after = (u1_before * (m1 - m2) + 2 * m2 * u2_before) / (m1 + m2);
+			double u2_after = (u2_before * (m2 - m1) + 2 * m1 * u1_before) / (m1 + m2);
+			double omega1_after = (omega1_before * (m1 - m2) + 2 * m2 * omega2_before) / (m1 + m2);
+			double omega2_after = (omega2_before * (m1 - m2) + 2 * m2 * omega1_before) / (m1 + m2);
+			if (s1.moving == 1) s1.d_u_collide += alpha*(u1_after - u1_before)*r;
+			if (s2.moving == 1) s2.d_u_collide += alpha*(u2_after - u2_before)*r;
+			if (s1.moving == 1) s1.d_omega_collide[3] += alpha*(omega1_after - omega1_before);
+			if (s2.moving == 1) s2.d_omega_collide[3] += alpha*(omega2_after - omega2_before);
+			//if (Debug) std::cout << "Collision u" << std::endl;
+		}
 		if (dist <= dist_r) {
-				double Delta_u = (dist_r - dist) / par.d_t;
-				if (s1.moving == 1) s1.u += beta*m2 / (m1 + m2)*Delta_u*r;
-				if (s2.moving == 1) s2.u -= beta*m1 / (m1 + m2)*Delta_u*r;
+			double Delta_u = (dist_r - dist) / par.d_t;
+			if (s1.moving == 1) s1.d_u_collide += beta*m2 / (m1 + m2)*Delta_u*r;
+			if (s2.moving == 1) s2.d_u_collide -= beta*m1 / (m1 + m2)*Delta_u*r;
+			//if (Debug) std::cout << "Collision r" << std::endl;
 		}
 	}
 	return result;
@@ -311,15 +300,9 @@ bool Collide(Circle& s1, Circle& s2, Param par, double alpha, double beta, doubl
 void Solids_collide(std::list<Circle> &solidList, Param par) {
 
 	double alpha = 0.1; // coefficient for the collision force based on velocity value
-	double beta = 1.1;  // coefficient for the collision force based on distance between particles value
+	double beta = 2.0;  // coefficient for the collision force based on distance between particles value
+	double kr = 0.2;    // fraction of distance where distance force switches on
 
-	double kr = 0.5;    // fraction of distance where distance force switches on
-	///--------------collisions between particles-----------------
-	for (auto one = solidList.begin(); one != solidList.end(); one++) {
-		for (auto two = next(one); two != solidList.end(); two++) {
-			if (Collide(*one, *two, par, alpha, beta, kr)) if (Debug) std::cout << "Collision detected" << std::endl;
-		}
-	}
 	///-------------collision with walls--------------------------
 	double distance;
 	for (auto one = solidList.begin(); one != solidList.end(); one++) {
@@ -329,61 +312,75 @@ void Solids_collide(std::list<Circle> &solidList, Param par) {
 
 			distance = par.H - one->x[2] - one->r; //<-------distance to upper wall
 			if (distance < dist_u) {
-			if (Debug) std::cout << "Collision with upper wall" << std::endl;
-			if (one->u[2] > 0) one->u[2] -= alpha * one->u[2];   // velocity force
-			one->omega[3] -= alpha * one->omega[3];
-			if (Debug) std::cout << "Delta_u_v =" << alpha * one->u[2] << std::endl;
-		}
+				if (Debug) std::cout << "Collision with upper wall" << std::endl;
+				if (one->u[2] > 0) one->u[2] -= alpha * one->u[2];   // velocity force
+				one->omega[3] -= alpha * one->omega[3];
+				if (Debug) std::cout << "Delta_u_v =" << alpha * one->u[2] << std::endl;
+			}
 			if (distance < dist_r) {
-			if (Debug) std::cout << "Collision with upper wall" << std::endl;
+				if (Debug) std::cout << "Collision with upper wall" << std::endl;
 				double Delta_u = (dist_r - distance) / par.d_t;  // distance force
-			one->u[2] -= beta*Delta_u;
-			if (Debug) std::cout << "Delta_u_r =" << beta*Delta_u << std::endl;
-		}
+				one->u[2] -= beta*Delta_u;
+				if (Debug) std::cout << "Delta_u_r =" << beta*Delta_u << std::endl;
+			}
 			distance = one->x[2] - one->r;//<-------distance to lower wall
 			if (distance < dist_u) {
-			if (Debug) std::cout << "Collision with lower wall" << std::endl;
-			if (one->u[2] < 0) one->u[2] -= alpha * one->u[2];   // velocity force
-			one->omega[3] -= alpha * one->omega[3];
-			if (Debug) std::cout << "Delta_u_v =" << alpha * one->u[2] << std::endl;
-		}
+				if (Debug) std::cout << "Collision with lower wall" << std::endl;
+				if (one->u[2] < 0) one->u[2] -= alpha * one->u[2];   // velocity force
+				one->omega[3] -= alpha * one->omega[3];
+				if (Debug) std::cout << "Delta_u_v =" << alpha * one->u[2] << std::endl;
+			}
 			if (distance < dist_r) {
-			if (Debug) std::cout << "Collision with lower wall" << std::endl;
+				if (Debug) std::cout << "Collision with lower wall" << std::endl;
 				double Delta_u = (dist_r - distance) / par.d_t; // distance force
-			one->u[2] += beta*Delta_u;
-			if (Debug) std::cout << "Delta_u_r =" << beta*Delta_u << std::endl;
-		}
+				one->u[2] += beta*Delta_u;
+				if (Debug) std::cout << "Delta_u_r =" << beta*Delta_u << std::endl;
+			}
 
-		if (par.BC == box) {
+			if (par.BC == box) {
 				distance = par.L - one->x[1] - one->r;//<-------distance to right wall
 				if (distance < dist_u) {
-				if (Debug) std::cout << "Collision with right wall" << std::endl;
-				if (one->u[1] > 0) one->u[1] -= alpha * one->u[1];  // velocity force
-				one->omega[3] -= alpha * one->omega[3];
-				if (Debug) std::cout << "Delta_u_v =" << alpha * one->u[2] << std::endl;
-			}
+					if (Debug) std::cout << "Collision with right wall" << std::endl;
+					if (one->u[1] > 0) one->u[1] -= alpha * one->u[1];  // velocity force
+					one->omega[3] -= alpha * one->omega[3];
+					if (Debug) std::cout << "Delta_u_v =" << alpha * one->u[2] << std::endl;
+				}
 				if (distance < dist_r) {
-				if (Debug) std::cout << "Collision with right wall" << std::endl;
+					if (Debug) std::cout << "Collision with right wall" << std::endl;
 					double Delta_u = (dist_r - distance) / par.d_t; // distance force
-				one->u[1] -= beta*Delta_u;
-				if (Debug) std::cout << "Delta_u_r =" << alpha * one->u[2] << std::endl;
-			}
+					one->u[1] -= beta*Delta_u;
+					if (Debug) std::cout << "Delta_u_r =" << alpha * one->u[2] << std::endl;
+				}
 				distance = one->x[1] - one->r;//<-------distance to left  wall
 				if (distance < dist_u) {
-				if (Debug) std::cout << "Collision with left wall" << std::endl;
-				if (one->u[1] < 0) one->u[1] -= alpha *one->u[1];   // velocity force
-				one->omega[3] -= alpha * one->omega[3];
-				if (Debug) std::cout << "Delta_u_v =" << alpha * one->u[2] << std::endl;
-			}
+					if (Debug) std::cout << "Collision with left wall" << std::endl;
+					if (one->u[1] < 0) one->u[1] -= alpha *one->u[1];   // velocity force
+					one->omega[3] -= alpha * one->omega[3];
+					if (Debug) std::cout << "Delta_u_v =" << alpha * one->u[2] << std::endl;
+				}
 				if (distance < dist_r) {
-				if (Debug) std::cout << "Collision with left wall" << std::endl;
+					if (Debug) std::cout << "Collision with left wall" << std::endl;
 					double Delta_u = (dist_r - distance) / par.d_t; // distance force
-				one->u[1] += beta*Delta_u;
-				if (Debug) std::cout << "Delta_u_r =" << alpha * one->u[2] << std::endl;
-			}
+					one->u[1] += beta*Delta_u;
+					if (Debug) std::cout << "Delta_u_r =" << alpha * one->u[2] << std::endl;
+				}
 			}
 		}
 	}
+
+	///--------------collisions between particles-----------------
+	for (auto one = solidList.begin(); one != solidList.end(); one++) {
+		for (auto two = next(one); two != solidList.end(); two++) {
+			if (Collide(*one, *two, par, alpha, beta, kr)) if (Debug) std::cout << "Collision of particles" << std::endl;
+		}
+	}
+
+	for (auto one = solidList.begin(); one != solidList.end(); one++) {
+		one->u     += one->d_u_collide;
+		one->omega += one->d_omega_collide;
+	}
+
+
 }
 
 void Solids_move(std::list<Circle> &solidList, Param par) {
@@ -437,6 +434,8 @@ void Solids_zero_force(std::list<Circle>& Solids) {
 		std::fill(it.tau.begin(), it.tau.end(), 0.0);
 		it.Fr_all = 0.;
 		std::fill(it.f_L.begin(), it.f_L.end(), 0.0);
+		std::fill(it.d_u_collide.begin(), it.d_u_collide.end(), 0.0);
+		std::fill(it.d_omega_collide.begin(), it.d_omega_collide.end(), 0.0);
 		for (size_t k = 0; k < it.Nn; ++k) {
 			std::fill(it.Nodes[k].f.begin(), it.Nodes[k].f.end(), 0.0);
 		}

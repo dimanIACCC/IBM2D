@@ -30,6 +30,7 @@ public:
 	GeomVec x_n, x;          // coordinates of the mass center
 	GeomVec u_n, u, u_s;          // velocity of the mass center
 	GeomVec omega, omega_n, omega_s;  // angular velocity
+	GeomVec d_u_collide, d_omega_collide;   // velocity and andgular velocity corrections due to the collision
 	GeomVec f, f_new;      // force applied to the whole SolidBody
 	GeomVec f_L;                // force from Lagrange mesh
 	double Fr, Fr_all;      // average radial Force applied to SolidBody
