@@ -110,7 +110,7 @@ void MakeHibernationFile(Param& par, std::list<Circle>& solidList, Matrix& U_n, 
 	output << "H = " << par.H << std::endl;
 	output << "Re = " << par.Re << std::endl;
 	output << "grad_p_x = " << par.grad_p_x << std::endl;
-	output << "Gravity_angle = " << par.Gravity_angle << std::endl;
+	output << "Gravity_angle = " << par.Gravity_angle *180. / M_PI << std::endl;
 	output << "Gravity_module = " << par.Gravity_module << std::endl;
 
 	// numerical parameters

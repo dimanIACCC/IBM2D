@@ -42,7 +42,7 @@ int main(int argc, char *argv[]) {
 		else if (PAR == "-post") {
 			Param par(VALUE, "/input.txt");					// create the variable which contains parameters according to input data
 			par.WorkDir = VALUE + "/";
-			std::string file = "history_post_average10";
+			std::string file = "history_post_average10_dist5";
 			history_init(par.WorkDir, file, par.BC);
 
 			int i = 1;

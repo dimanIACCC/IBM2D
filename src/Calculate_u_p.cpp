@@ -222,8 +222,8 @@ void Calculate_u_p(Matrix &U_n   , Matrix &U_new,
 		output << s << "   " << N_BiCGStab_u  << "   " << N_BiCGStab_v << "   " << N_DeltaP << "  " << time_velocity << "  " << time_pressure << "  " << time_force << std::endl;
 		//std::cin.get();
 
-		Solids_velocity_new(solidList, par);
 		Solids_collide(solidList, par);
+		Solids_velocity_new(solidList, par);
 
 		if (par.BC == Lamb_Oseen) {
 			for (auto& it : solidList) {
