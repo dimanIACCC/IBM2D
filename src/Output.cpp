@@ -75,7 +75,7 @@ void Output_V(Matrix v, std::string filename, int n, Param par) {
 	output.close();
 }
 
-void Output(Matrix p, Matrix u, Matrix v, Matrix Fx, Matrix Fy, int n, std::list<Circle> iList, Param par) {
+void Output(Matrix p, Matrix u, Matrix v, Matrix Fx, Matrix Fy, int n, std::vector<Circle> iList, Param par) {
 
 	std::ofstream output;
 	std::string filename = par.WorkDir + "step" + std::to_string(n) + ".plt";
@@ -137,7 +137,7 @@ void Output(Matrix p, Matrix u, Matrix v, Matrix Fx, Matrix Fy, int n, std::list
 	output.close();
 }
 
-bool Read_plt(std::string filename, Param &par, std::list<Circle>& solidList) {
+bool Read_plt(std::string filename, Param &par, std::vector<Circle>& solidList) {
 
 	std::ifstream input;
 	std::string line;

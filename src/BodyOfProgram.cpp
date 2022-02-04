@@ -1,7 +1,7 @@
 #include "stdafx.h"
 #include "BodyOfProgram.h"
 
-void BodyOfProgram(Param par, std::list<Circle> solidList, Matrix U_n, Matrix V_n, Matrix P) {
+void BodyOfProgram(Param par, std::vector<Circle> solidList, Matrix U_n, Matrix V_n, Matrix P) {
 																		 
 #pragma region SetMatrices 
 	CreateMatrix(U_new, par.N1_u, par.N2_u);
@@ -95,7 +95,7 @@ void BodyOfProgram(Param par, std::list<Circle> solidList, Matrix U_n, Matrix V_
 	//log.close();
 }
 
-void MakeHibernationFile(Param& par, std::list<Circle>& solidList, Matrix& U_n, Matrix& V_n, Matrix& P_n) {
+void MakeHibernationFile(Param& par, std::vector<Circle>& solidList, Matrix& U_n, Matrix& V_n, Matrix& P_n) {
 	std::ofstream output;
 	std::string filename = par.WorkDir + "step" + std::to_string(par.N_step) + ".txt";
 	output.open(filename);
@@ -194,7 +194,7 @@ void MakeHibernationFile(Param& par, std::list<Circle>& solidList, Matrix& U_n, 
 
 
 //this method is restoring calculated values to continue calculations
-void Awake(std::string &filename, Param &par, std::list<Circle>& solidList, Matrix& U_n, Matrix& V_n, Matrix& P_n) {
+void Awake(std::string &filename, Param &par, std::vector<Circle>& solidList, Matrix& U_n, Matrix& V_n, Matrix& P_n) {
 	std::ifstream hibernation_source;
 	std::string line;
 	std::string PAR, VALUE;

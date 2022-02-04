@@ -113,7 +113,7 @@ void SolidBody::log(std::string WorkDir, int n) {
 	       << std::endl;
 }
 
-void Read_Solids(std::string filename, std::list<Circle>& Solids, Param &par) {
+void Read_Solids(std::string filename, std::vector<Circle>& Solids, Param &par) {
 	std::ifstream input;
 	std::string line;
 
@@ -173,7 +173,7 @@ void Read_Solids(std::string filename, std::list<Circle>& Solids, Param &par) {
 
 }
 
-void Add_Solids(std::list<Circle>& Solids, Param &par) {
+void Add_Solids(std::vector<Circle>& Solids, Param &par) {
 	if (   (par.N_step - par.AddSolids_start) % par.AddSolids_interval == 0   &&   (par.N_step >= par.AddSolids_start)) { //create new solids starting from $AddSolids_start$ iteration with interval of $AddSolids_interval$ iterations
 		for (int i = 0; i < par.AddSolids_N; i++) { // add $AddSolids_N$ solids
 			GeomVec x;
@@ -264,7 +264,7 @@ bool Collide(Circle& s1, Circle& s2, Param par, double alpha, double beta, doubl
 	return result;
 }
 
-void Solids_collide(std::list<Circle> &solidList, Param par) {
+void Solids_collide(std::vector<Circle> &solidList, Param par) {
 
 	double kr = 0.25;    // fraction of distance where distance force switches on
 	double dist_u = par.k_dist*par.d_x;
@@ -337,7 +337,7 @@ void Solids_collide(std::list<Circle> &solidList, Param par) {
 
 }
 
-void Solids_move(std::list<Circle> &solidList, Param par) {
+void Solids_move(std::vector<Circle> &solidList, Param par) {
 	for (auto it = solidList.begin(); it != solidList.end();) {
 			if (it->moving > 0) {
 				it->u_n    = it->u;
@@ -365,8 +365,9 @@ void Solids_move(std::list<Circle> &solidList, Param par) {
 	}
 
 
-void h_average_of_Solids_Layer(std::list<Circle> &solidList, Param par, double& h_average) {
-	solidList.sort(std::greater<Circle>());
+void h_average_of_Solids_Layer(std::vector<Circle> &solidList, Param par, double& h_average) {
+	//solidList.sort(std::greater<Circle>());
+	sort(solidList.begin(), solidList.end(), std::greater<Circle>());
 	h_average = 0.;
 	int i = 0;
 	int i_max = 10;
@@ -382,7 +383,7 @@ void h_average_of_Solids_Layer(std::list<Circle> &solidList, Param par, double& 
 }
 
 
-void Solids_zero_force(std::list<Circle>& Solids) {
+void Solids_zero_force(std::vector<Circle>& Solids) {
 	for (auto& it : Solids) {
 		std::fill(it.f.begin(), it.f.end(), 0.0);
 		std::fill(it.tau.begin(), it.tau.end(), 0.0);
@@ -395,7 +396,7 @@ void Solids_zero_force(std::list<Circle>& Solids) {
 	}
 }
 
-void Solids_velocity_new(std::list<Circle>& Solids, Param par) {
+void Solids_velocity_new(std::vector<Circle>& Solids, Param par) {
 
 	for (auto& it : Solids) {
 		if (it.moving == 0) {
@@ -428,7 +429,7 @@ void Solids_velocity_new(std::list<Circle>& Solids, Param par) {
 	}
 }
 
-void Solids_position_new(std::list<Circle>& Solids, Param par) {
+void Solids_position_new(std::vector<Circle>& Solids, Param par) {
 	for (auto& it : Solids) {
 		if (it.moving>0) {
 			it.x = it.x_n + 0.5 * (it.u_n + it.u) * par.d_t;

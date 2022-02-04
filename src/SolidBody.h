@@ -61,13 +61,13 @@ public:
 	void integrals(Matrix U_n, Matrix V_n, Matrix U_new, Matrix V_new, Param par);
 };
 
-void Read_Solids(std::string filename, std::list<Circle>& Solids, Param &par);
-void Add_Solids(std::list<Circle>& Solids, Param &par);
+void Read_Solids(std::string filename, std::vector<Circle>& Solids, Param &par);
+void Add_Solids(std::vector<Circle>& Solids, Param &par);
 bool Collide(Circle& s1, Circle& s2, Param par, double alpha, double beta, double friction, double kr);
-void Solids_move(std::list<Circle> &solidList, Param par);
-void Solids_collide(std::list<Circle> &solidList, Param par);
-void h_average_of_Solids_Layer(std::list<Circle> &solidList, Param par, double& h_average);
-void Solids_zero_force(std::list<Circle>& Solids);
-void Solids_velocity_new(std::list<Circle>& Solids, Param par);
-void Solids_position_new(std::list<Circle>& Solids, Param par);
+void Solids_move(std::vector<Circle> &solidList, Param par);
+void Solids_collide(std::vector<Circle> &solidList, Param par);
+void h_average_of_Solids_Layer(std::vector<Circle> &solidList, Param par, double& h_average);
+void Solids_zero_force(std::vector<Circle>& Solids);
+void Solids_velocity_new(std::vector<Circle>& Solids, Param par);
+void Solids_position_new(std::vector<Circle>& Solids, Param par);
 GeomVec Circle_Equation(GeomVec xc, double r, double theta);

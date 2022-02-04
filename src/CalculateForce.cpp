@@ -2,7 +2,7 @@
 #include "CalculateForce.h"
 #include "Output.h"
 
-void Multidirect_Forcing_Method(Matrix &Fx, Matrix &Fy, Matrix &u, Matrix &v, std::list<Circle> &solidList, Param par) {
+void Multidirect_Forcing_Method(Matrix &Fx, Matrix &Fy, Matrix &u, Matrix &v, std::vector<Circle> &solidList, Param par) {
 
 	CreateMatrix(Fx_tmp, par.N1_u, par.N2_u);
 	CreateMatrix(Fy_tmp, par.N1_v, par.N2_v);
@@ -27,7 +27,7 @@ void Multidirect_Forcing_Method(Matrix &Fx, Matrix &Fy, Matrix &u, Matrix &v, st
 	}
 }
 
-void CalculateForce(Matrix &Fx, Matrix &Fy, std::list<Circle> &iList, Matrix& u, Matrix& v, Param par) {
+void CalculateForce(Matrix &Fx, Matrix &Fy, std::vector<Circle> &iList, Matrix& u, Matrix& v, Param par) {
 
 	for (size_t i = 0; i < par.N1_u; ++i) {
 		for (size_t j = 0; j < par.N2_u; ++j) {
@@ -40,7 +40,7 @@ void CalculateForce(Matrix &Fx, Matrix &Fy, std::list<Circle> &iList, Matrix& u,
 		}
 	}
 
-	std::list<Circle>::iterator solid;
+	std::vector<Circle>::iterator solid;
 
 #pragma omp parallel private(solid) num_threads(1)
 	{
@@ -170,7 +170,7 @@ void deformation_velocity(Matrix &u, Matrix &v, Matrix &Exx, Matrix &Eyy, Matrix
 
 }
 
-void Solids_deformation_velocity_pressure(std::list<Circle> &Solids, Matrix &Exx, Matrix &Eyy, Matrix &Exy, Matrix &p, Param par) {
+void Solids_deformation_velocity_pressure(std::vector<Circle> &Solids, Matrix &Exx, Matrix &Eyy, Matrix &Exy, Matrix &p, Param par) {
 
 	size_t np1 = par.N1_p;
 	size_t np2 = par.N2_p;
