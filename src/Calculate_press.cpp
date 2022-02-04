@@ -18,7 +18,7 @@ double Pressure_correction_solve_SOR(Matrix &delta_p, Matrix &rhs, Param par, in
 	//See page 135 in "Khakimzyanov G.S. Cherny S.G. Method of computations.
 	//Part 3. Numerical methods to solve problems for parabolic and elliptic
 	//problems.Novosibirsk: NSU, 2007. 160 p.".
-	double omega = 2. / (1. + sin(M_PI / std::min(n1, n2)));
+	double omega = 2. / (1. + sin(M_PI / std::fmin(n1, n2)));
 	double omega1 = 1. - omega;
 
 	for (int n = 0; n < par.N_Zeidel; n++) {
@@ -134,11 +134,12 @@ Matrix Pressure_RHS(Matrix &u, Matrix &v, Param par){
 }
 
 // subroutine to solve Pressure correction equation
-double Pressure_correction_solve(Matrix &delta_p, Matrix &rhs, Param par, int &N_DeltaP) {
+double Pressure_correction_solve(Matrix &delta_p, Matrix &rhs, Param par) {
 
 	double dp_max;
 
 	if (par.DeltaP_method == 0) { //SOR method
+		int N_DeltaP;
 		dp_max = Pressure_correction_solve_SOR(delta_p, rhs, par, N_DeltaP);       // SOR method for solving Poisson equation
 	}
 	else if (par.DeltaP_method >= 1) { //MKL solver with first order approximation of boundary conditions
@@ -187,9 +188,10 @@ double Pressure_correction_solve(Matrix &delta_p, Matrix &rhs, Param par, int &N
 		MKL_Free_Buffers();
 
 		if (par.DeltaP_method == 2) { //Hybrid variant MKL + SOR with second order approximation of boundary conditions
+			int N_DeltaP;
 			dp_max = Pressure_correction_solve_SOR(delta_p, rhs, par, N_DeltaP);       // SOR method for solving Poisson equation
 		}
-		dp_max = max(delta_p);
+		dp_max = Matrix_max(delta_p);
 	}
 
 	return dp_max;

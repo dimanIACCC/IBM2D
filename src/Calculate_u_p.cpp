@@ -28,12 +28,12 @@ void Calculate_u_p(Matrix &U_n   , Matrix &U_new,
 	CreateMatrix(Eyy, par.N1_p, par.N2_p);
 	CreateMatrix(Exy, par.N1+1, par.N2+1);
 
-	int N_BiCGStab_u=0, N_BiCGStab_v=0, N_DeltaP=0;
-
 	for (auto& solid : solidList) {
 		solid.x = solid.x_n;
 		solid.u = solid.u_n;
 		solid.omega = solid.omega_n;
+		std::fill(solid.f_new.begin(), solid.f_new.end(), 0.0);
+		std::fill(solid.tau_new.begin(), solid.tau_new.end(), 0.0);
 	}
 
 	U_s = U_n;
@@ -47,9 +47,7 @@ void Calculate_u_p(Matrix &U_n   , Matrix &U_new,
 	//output.open(filename);
 
 	output << "title = iterations_step" << par.N_step << std::endl;
-	//output << "Variables = s ux uy omega f IntU tau IntUr" << std::endl;
-	output << "Variables = s  N_BiCGStab_u  N_BiCGStab_v  N_DeltaP time_velocity time_pressure time_force" << std::endl;
-
+	output << "Variables = s time_velocity time_pressure time_force" << std::endl;
 
 	CreateMatrix(RHS_u, par.N1_u, par.N2_u);
 	CreateMatrix(RHS_v, par.N1_v, par.N2_v);
@@ -57,15 +55,10 @@ void Calculate_u_p(Matrix &U_n   , Matrix &U_new,
 	Fx = Fx * 0.;
 	Fy = Fy * 0.;
 
-	for (auto& it : solidList) {
-		std::fill(it.f_new.begin(), it.f_new.end(), 0.0);
-		std::fill(it.tau_new.begin(), it.tau_new.end(), 0.0);
-	}
-
 	double Delta_P_max = 1.;
 	double P_max = 1.;
 
-	// start iterations for pressure and velocity to fulfill the continuity equation
+	// start iterations for pressure and velocity to fulfil the continuity equation
 	for (int s = 1; s <= par.s_max; ++s) {													// cycle while (delta_P / P > eps_P)
 
 		#pragma region Velocity
@@ -81,6 +74,8 @@ void Calculate_u_p(Matrix &U_n   , Matrix &U_new,
 		end = std::clock();
 		time_velocity = end - begin;
 		#pragma endregion Velocity
+
+
 
 		#pragma region Force
 		begin = std::clock();
@@ -99,7 +94,7 @@ void Calculate_u_p(Matrix &U_n   , Matrix &U_new,
 				V_new += dFy * (par.d_t);
 			}
 			else if (par.IBM == 1) {
-				double coef = std::max(1., 0.01*par.d_t * (par.ldxdx + par.ldydy) / par.Re);
+				double coef = fast_math::fmax(1., 0.01*par.d_t * (par.ldxdx + par.ldydy) / par.Re);
 				Fx += dFx * coef;
 				Fy += dFy * coef;
 			}
@@ -128,11 +123,11 @@ void Calculate_u_p(Matrix &U_n   , Matrix &U_new,
 		#pragma region Pressure
 		begin = std::clock();
 
-			P_RHS = Pressure_RHS(U_new, V_new, par);                                     // calculating P_RHS = 1/dt ( {U_i,j - U_i-1,j}/{h_x} + {V_i,j - V_i,j-1}/{h_x} )
+			P_RHS = Pressure_RHS(U_new, V_new, par);                          // calculating P_RHS = 1/dt ( {U_i,j - U_i-1,j}/{h_x} + {V_i,j - V_i,j-1}/{h_x} )
 
-			Delta_P_max = Pressure_correction_solve(Delta_P, P_RHS, par, N_DeltaP);     // solve pressure correction equation  -Laplace Delta_P = P_RHS
+			Delta_P_max = Pressure_correction_solve(Delta_P, P_RHS, par);     // solve pressure correction equation  -Laplace Delta_P = P_RHS
 
-			P_max = std::max(max(P), 1.e-14);
+			P_max = fast_math::fmax(Matrix_max(P), 1.e-14);
 			
 			std::cout  << "s = "
 				<< std::setw(3) << s << ", delta_P / P = "
@@ -219,8 +214,8 @@ void Calculate_u_p(Matrix &U_n   , Matrix &U_new,
 		#pragma endregion New P and U
 
 		//output of the iterations number
-		output << s << "   " << N_BiCGStab_u  << "   " << N_BiCGStab_v << "   " << N_DeltaP << "  " << time_velocity << "  " << time_pressure << "  " << time_force << std::endl;
-		//std::cin.get();
+		//output << s << "  " << time_velocity << "  " << time_pressure << "  " << time_force << std::endl;
+		std::cin.get();
 
 		Solids_collide(solidList, par);
 		Solids_velocity_new(solidList, par);

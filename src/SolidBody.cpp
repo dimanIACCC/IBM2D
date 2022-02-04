@@ -249,8 +249,8 @@ double Distance_2Solids(SolidBody& s1, SolidBody& s2, Param& par, GeomVec& r) {
 
 	//if (s1.shape == circle && s2.shape == circle) {
 
-		double r1 = std::min(s1.r, s2.r);
-		double r2 = std::max(s1.r, s2.r);
+		double r1 = std::fmin(s1.r, s2.r);
+		double r2 = std::fmax(s1.r, s2.r);
 
 		if      (rrr >= r2) dist = rrr - (r2 + r1);
 		else if (rrr <= r2) { dist = (r2 - r1) - rrr; r = -r; } // circle r1 is inside circle r2

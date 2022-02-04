@@ -3,6 +3,10 @@
 #include "GeomVec.h"
 #include "String.h"
 #include <boost/filesystem.hpp>
+#include <amp.h>
+#include <amp_math.h>
+using namespace concurrency;
+using namespace precise_math;
 
 namespace fs = boost::filesystem;
 
@@ -73,16 +77,33 @@ public:
 	void read_line(std::string);
 };
 
+class InfluenceArea
+{
+public:
+	int i_min, i_max, j_min, j_max;
+};
+
 boundary_conditions string_to_BC(std::string s);
 GeomVec x_p(int i, int j, Param par); // coordinates of (i,j)-th node for pressure p mesh
 GeomVec x_u(int i, int j, Param par); // coordinates of (i,j)-th node for velocity u mesh
 GeomVec x_v(int i, int j, Param par); // coordinates of (i,j)-th node for velocity v mesh
 GeomVec x_c(int i, int j, Param par); // coordinates of (i,j)-th node for corners    mesh
 
-double DeltaFunction(double x, double y, Param &par);
+double* x_p_(int i, int j, double d_x, double d_y) restrict(amp);
+double* x_u_(int i, int j, double d_x, double d_y) restrict(amp);
+double* x_v_(int i, int j, double d_x, double d_y) restrict(amp);
+double* x_c_(int i, int j, double d_x, double d_y) restrict(amp);
+
+double DeltaFunction(double x, double y, double d_x, double d_y);
+double DeltaFunction_(double x, double y, double d_x, double d_y) restrict(amp);
 double FunctionD(double r);
+double FunctionD_(double r) restrict(amp);
 void GetInfluenceArea(int &i_min, int &i_max, int &j_min, int &j_max, size_t Ni, size_t Nj, GeomVec x, int size, Param par);
+
+InfluenceArea GetInfluenceArea_(int Ni, int Nj, double* x, int size, boundary_conditions BC, double d_x, double d_y)  restrict(amp);
 double Volume_Frac(GeomVec xc, double r, GeomVec x, double dx, double dy);
 double Heaviside(double x);
 int i_real_u(int i, Param par);
+int i_real_u_(int i, int N1) restrict(amp);
 int i_real_v(int i, Param par);
+int i_real_v_(int i, int N1) restrict(amp);

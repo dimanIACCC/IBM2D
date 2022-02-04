@@ -8,7 +8,7 @@
 namespace fs = boost::filesystem;
 
 
-void CreateDirectory(fs::path directory);
+void CreateDir(fs::path directory);
 
 void history_init(std::string WorkDir, std::string file, boundary_conditions BC);
 void history_log(std::string WorkDir, std::string file, double t, double var1, double var2, double var3);

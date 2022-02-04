@@ -13,7 +13,7 @@ enum SolidShape {
 class Node
 {
 public:
-	GeomVec x, x_n;// coordinates
+	GeomVec x, x_n, x_s; // coordinates
 	GeomVec uf;       // velocity of the fluid in the Node
 	GeomVec us;       // velocity of the SolidBody in the Node
 	GeomVec f, f_tmp; // force and temporary force in iterations

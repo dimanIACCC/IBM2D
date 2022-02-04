@@ -28,6 +28,7 @@ void BodyOfProgram(Param par, std::list<Circle> solidList, Matrix U_n, Matrix V_
 			MakeHibernationFile(par, solidList, U_n, V_n, P);              // writting hibernation file for prior time step
 
 		Add_Solids(solidList, par);                                                     // add solids if the conditions are fulfilled
+		std::cout << "Add_Solids finished" << std::endl;
 
 		Calculate_u_p(U_n, U_new, V_n, V_new, P, Fx, Fy, solidList, par);  // calculate velocity and pressure at the new time step
 		Solids_position_new(solidList, par);
@@ -44,9 +45,9 @@ void BodyOfProgram(Param par, std::list<Circle> solidList, Matrix U_n, Matrix V_
 		dU = U_new - U_exact;
 		dV = V_new - V_exact;
 		dP = P     - P_exact;
-		double max_dU = max(dU);
-		double max_dV = max(dV);
-		double max_dP = max(dP);
+		double max_dU = Matrix_max(dU);
+		double max_dV = Matrix_max(dV);
+		double max_dP = Matrix_max(dP);
 
 		if (par.N_step % par.output_step == 0 || par.N_step < 1000) {
 			//Output_U(dU, "dU", par.N_step, par);
@@ -77,7 +78,7 @@ void BodyOfProgram(Param par, std::list<Circle> solidList, Matrix U_n, Matrix V_
 			history_log(par.WorkDir, "history", par.N_step*par.d_t, h_average, 0., 0.);
 		}
 		else if (par.BC == Taylor_Green || par.BC == Lamb_Oseen || par.BC == Line_Vortex) {
-			history_log(par.WorkDir, "history", par.N_step*par.d_t, max_dP / max(P_exact), max_dU / max(U_exact), max_dV / max(V_exact) );
+			history_log(par.WorkDir, "history", par.N_step*par.d_t, max_dP / Matrix_max(P_exact), max_dU / Matrix_max(U_exact), max_dV / Matrix_max(V_exact) );
 		}
 
 		std::cout << "n = " << std::setw(6) << par.N_step << std::endl;

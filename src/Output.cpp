@@ -202,30 +202,20 @@ bool Read_plt(std::string filename, Param &par, std::list<Circle>& solidList) {
 
 }
 
-void CreateDirectory(fs::path directory) {
+void CreateDir(fs::path directory) {
 
 
 	try
 	{
 		if (exists(directory)) {
-			//std::cout << "This folder is already exist! \nRemove all files inside? (Y/N)" << std::endl;
-			//char answer = std::cin.get();
-			//if ( (answer == 'Y') ||  (answer == 'y') ) {
-			//	fs::remove_all(directory);
-			//	fs::create_directory(directory);
-			//}
-			//else {
-			//	std::cout << "Start program? (Y/N)" << std::endl;
-			//	std::cin >> answer;
-			//	if ((answer != 'Y') && (answer != 'y'))exit(0);
-			//}
+
 		}
 		else {
 			try {
 				fs::create_directory(directory);
 			}
 			catch (const fs::filesystem_error& ex) {
-				CreateDirectory(directory.parent_path());
+				CreateDir(directory.parent_path());
 				fs::create_directory(directory);
 			}
 		}

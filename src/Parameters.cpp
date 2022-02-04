@@ -207,11 +207,66 @@ GeomVec x_c(int i, int j, Param par) {
 	return result;
 }
 
-double DeltaFunction(double x, double y, Param &par) {
-	return FunctionD(x / par.d_x) * FunctionD(y / par.d_y);
+
+double* x_p_(int i, int j, double d_x, double d_y) restrict(amp) {
+	double result[4];
+	result[0] = 0.0;
+	result[1] = (i - 0.5) * d_x;
+	result[2] = (j - 0.5) * d_y;
+	result[3] = 0.0;
+	return result;
+}
+
+double* x_u_(int i, int j, double d_x, double d_y) restrict(amp) {
+	double result[4];
+	result[0] = 0.0;
+	result[1] = (i - 1.0) * d_x;
+	result[2] = (j - 0.5) * d_y;
+	result[3] = 0.0;
+	return result;
+}
+
+double* x_v_(int i, int j, double d_x, double d_y) restrict(amp) {
+	double result[4];
+	result[0] = 0.0;
+	result[1] = (i - 0.5) * d_x;
+	result[2] = (j - 1.0) * d_y;
+	result[3] = 0.0;
+	return result;
+}
+
+double* x_c_(int i, int j, double d_x, double d_y) restrict(amp) {
+	double result[4];
+	result[0] = 0.0;
+	result[1] = i * d_x;
+	result[2] = j * d_y;
+	result[3] = 0.0;
+
+	return result;
+}
+
+double DeltaFunction(double x, double y, double d_x, double d_y) {
+	return FunctionD(x / d_x) * FunctionD(y / d_y);
+}
+
+double DeltaFunction_(double x, double y, double d_x, double d_y) restrict(amp) {
+	return FunctionD_(x / d_x) * FunctionD_(y / d_y);
 }
 
 double FunctionD(double r) {
+	if ((0.0 <= fabs(r)) && (fabs(r) < 1.0)) {
+		return 1.0 / 8.0*(3.0 - 2.0 * fabs(r) + sqrt(1.0 + 4.0 * fabs(r) - 4.0 * r * r));
+	}
+	if ((1.0 <= fabs(r)) && (fabs(r) < 2.0)) {
+		return 1.0 / 8.0*(5.0 - 2.0 * fabs(r) - sqrt(-7.0 + 12.0 * fabs(r) - 4.0 * r * r));
+	}
+	if (2.0 <= fabs(r)) {
+		return 0.0;
+	}
+	return 0;
+}
+
+double FunctionD_(double r) restrict(amp) {
 	if ((0.0 <= fabs(r)) && (fabs(r) < 1.0)) {
 		return 1.0 / 8.0*(3.0 - 2.0 * fabs(r) + sqrt(1.0 + 4.0 * fabs(r) - 4.0 * r * r));
 	}
@@ -243,6 +298,30 @@ void GetInfluenceArea(int &i_min, int &i_max, int &j_min, int &j_max, size_t Ni,
 	if (j_max > Nj) {
 		j_max = Nj;
 	}
+}
+
+InfluenceArea GetInfluenceArea_(int Ni, int Nj, double* x, int size, boundary_conditions BC, double d_x, double d_y) restrict(amp) {
+	InfluenceArea IA;
+	IA.i_max = (int)(x[1] / d_x) + size;
+	IA.i_min = (int)(x[1] / d_x) - size;
+
+	IA.j_max = (int)(x[2] / d_y) + size;
+	IA.j_min = (int)(x[2] / d_y) - size;
+
+	if (IA.i_min < 0 && BC != periodical) {
+		IA.i_min = 0;
+	}
+	if (IA.j_min < 0) {
+		IA.j_min = 0;
+	}
+	if (IA.i_max > Ni && BC != periodical) {
+		IA.i_max = Ni;
+	}
+	if (IA.j_max > Nj) {
+		IA.j_max = Nj;
+	}
+
+	return IA;
 }
 
 double Volume_Frac(GeomVec xc, double r, GeomVec x, double dx, double dy) {
@@ -280,9 +359,24 @@ int i_real_u(int i, Param par) {
 	return i_real;
 }
 
+int i_real_u_(int i, int N1) restrict(amp) {
+	int i_real = i;
+	if (i_real < 1) i_real += N1;
+	if (i_real > N1 + 1) i_real -= N1;
+	if (i_real == 1) i_real = N1 + 1;
+	return i_real;
+}
+
 int i_real_v(int i, Param par) {
 	int i_real = i;
 	if (i_real < 1         ) i_real += par.N1;
 	if (i_real > par.N1    ) i_real -= par.N1;
+	return i_real;
+}
+
+int i_real_v_(int i, int N1) restrict(amp) {
+	int i_real = i;
+	if (i_real < 1) i_real += N1;
+	if (i_real > N1) i_real -= N1;
 	return i_real;
 }

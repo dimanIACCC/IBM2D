@@ -63,8 +63,8 @@ int main(int argc, char *argv[]) {
 
 	}
 
-	CreateDirectory(WorkDir);
-	CreateDirectory(WorkDir.string() + "/Solids");
+	CreateDir(WorkDir);
+	CreateDir(WorkDir.string() + "/Solids");
 
 	Param par(WorkDir.string(), "input.txt");					// create the variable which contains parameters according to input data
 

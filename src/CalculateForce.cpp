@@ -42,7 +42,7 @@ void CalculateForce(Matrix &Fx, Matrix &Fy, std::list<Circle> &iList, Matrix& u,
 
 	std::list<Circle>::iterator solid;
 
-#pragma omp parallel private(solid) num_threads(std::max(1,omp_get_max_threads()-1))
+#pragma omp parallel private(solid) num_threads(1)
 	{
 		for (solid = iList.begin(); solid != iList.end(); solid++) {
 		#pragma omp single nowait
@@ -50,41 +50,18 @@ void CalculateForce(Matrix &Fx, Matrix &Fy, std::list<Circle> &iList, Matrix& u,
 				//calculating velocities us of the solid boundary
 				solid->velocities();
 
-				std::clock_t begin = std::clock();
+				std::clock_t begin;
+				std::clock_t end;
+
 				for (size_t k = 0; k < solid->Nn; ++k) {
+					solid->Nodes[k].x_s = solid->x + solid->Nodes[k].x;
+				}
 
-					int i_max, i_min;
-					int j_max, j_min;
-					GeomVec xs = solid->x + solid->Nodes[k].x;
+				bool AMP = true;
+				if (AMP == true) uf_in_Nodes    (solid->Nodes, u, v, par, solid->Nn);
+				else             uf_in_Nodes_old(solid->Nodes, u, v, par, solid->Nn);
 
-					//calculating fluid velocity uf in Lagrange nodes by using near Euler nodes and discrete delta function
-					GetInfluenceArea(i_min, i_max, j_min, j_max, par.N1_u - 1, par.N2_u - 1, xs, 4, par);
-					solid->Nodes[k].uf[1] = 0.0;
-					for (int i = i_min; i <= i_max; ++i) {
-						for (int j = j_min; j <= j_max; ++j) {
-							int i_real = i_real_u(i, par);
-							GeomVec xu = x_u(i_real, j, par);
-							solid->Nodes[k].uf[1] += u[i_real][j] * DeltaFunction(xu[1] - xs[1], xu[2] - xs[2], par);
-							if (par.BC == periodical) {
-								solid->Nodes[k].uf[1] += u[i_real][j] * DeltaFunction(xu[1] - xs[1] - par.L, xu[2] - xs[2], par);
-								solid->Nodes[k].uf[1] += u[i_real][j] * DeltaFunction(xu[1] - xs[1] + par.L, xu[2] - xs[2], par);
-							}
-						}
-					}
-
-					GetInfluenceArea(i_min, i_max, j_min, j_max, par.N1_v - 1, par.N2_v - 1, xs, 4, par);
-					solid->Nodes[k].uf[2] = 0.0;
-					for (int i = i_min; i <= i_max; ++i) {
-						for (int j = j_min; j <= j_max; ++j) {
-							int i_real = i_real_v(i, par);
-							GeomVec xv = x_v(i_real, j, par);
-							solid->Nodes[k].uf[2] += v[i_real][j] * DeltaFunction(xv[1] - xs[1], xv[2] - xs[2], par);
-							if (par.BC == periodical) {
-								solid->Nodes[k].uf[2] += v[i_real][j] * DeltaFunction(xv[1] - xs[1] - par.L, xv[2] - xs[2], par);
-								solid->Nodes[k].uf[2] += v[i_real][j] * DeltaFunction(xv[1] - xs[1] + par.L, xv[2] - xs[2], par);
-							}
-						}
-					}
+				for (size_t k = 0; k < solid->Nn; ++k) {
 
 					// mass force f in Lagrange nodes
 					solid->Nodes[k].f_tmp = -(solid->Nodes[k].uf - solid->Nodes[k].us) / par.d_t;
@@ -96,9 +73,6 @@ void CalculateForce(Matrix &Fx, Matrix &Fy, std::list<Circle> &iList, Matrix& u,
 					solid->S += ds;
 					solid->f_L += solid->Nodes[k].f_tmp * ds * par.d_x;
 				}
-
-				std::clock_t end = std::clock();
-				//std::cout << end - begin << std::endl;
 
 				solid->Fr /= solid->S;
 				for (size_t k = 0; k < solid->Nn; ++k) {
@@ -135,17 +109,17 @@ void CalculateForce(Matrix &Fx, Matrix &Fy, std::list<Circle> &iList, Matrix& u,
 						for (int j = jx_min; j <= jx_max; ++j) {
 							int i_real = i_real_u(i, par);
 							GeomVec xu = x_u(i_real, j, par);
-							Fx_temp[i_real][j] += solid->Nodes[k].f_tmp[1] * DeltaFunction(xu[1] - xs[1], xu[2] - xs[2], par) * dn * ds;
+							Fx_temp[i_real][j] += solid->Nodes[k].f_tmp[1] * DeltaFunction(xu[1] - xs[1], xu[2] - xs[2], par.d_x, par.d_y) * dn * ds;
 
 							if (par.BC == periodical) {
 
 								GeomVec xu_plus = xu;
 								xu_plus[1] += par.L;
-								Fx_temp[i_real][j] += solid->Nodes[k].f_tmp[1] * DeltaFunction(xu_plus[1]  - xs[1], xu_plus[2]  - xs[2], par) * dn * ds;
+								Fx_temp[i_real][j] += solid->Nodes[k].f_tmp[1] * DeltaFunction(xu_plus[1]  - xs[1], xu_plus[2]  - xs[2], par.d_x, par.d_y) * dn * ds;
 
 								GeomVec xu_minus = xu;
 								xu_minus[1] -= par.L;
-								Fx_temp[i_real][j] += solid->Nodes[k].f_tmp[1] * DeltaFunction(xu_minus[1] - xs[1], xu_minus[2] - xs[2], par) * dn * ds;
+								Fx_temp[i_real][j] += solid->Nodes[k].f_tmp[1] * DeltaFunction(xu_minus[1] - xs[1], xu_minus[2] - xs[2], par.d_x, par.d_y) * dn * ds;
 
 							}
 						}
@@ -155,17 +129,17 @@ void CalculateForce(Matrix &Fx, Matrix &Fy, std::list<Circle> &iList, Matrix& u,
 						for (int j = jy_min; j <= jy_max; ++j) {
 							int i_real = i_real_v(i, par);
 							GeomVec xv = x_v(i_real, j, par);
-							Fy_temp[i_real][j] += solid->Nodes[k].f_tmp[2] * DeltaFunction(xv[1] - xs[1], xv[2] - xs[2], par) * dn * ds;
+							Fy_temp[i_real][j] += solid->Nodes[k].f_tmp[2] * DeltaFunction(xv[1] - xs[1], xv[2] - xs[2], par.d_x, par.d_y) * dn * ds;
 
 							if (par.BC == periodical) {
 
 								GeomVec xv_plus = xv;
 								xv_plus[1] += par.L;
-								Fy_temp[i_real][j] += solid->Nodes[k].f_tmp[2] * DeltaFunction(xv_plus[1]  - xs[1], xv_plus[2]  - xs[2], par) * dn * ds;
+								Fy_temp[i_real][j] += solid->Nodes[k].f_tmp[2] * DeltaFunction(xv_plus[1]  - xs[1], xv_plus[2]  - xs[2], par.d_x, par.d_y) * dn * ds;
 
 								GeomVec xv_minus = xv;
 								xv_minus[1] -= par.L;
-								Fy_temp[i_real][j] += solid->Nodes[k].f_tmp[2] * DeltaFunction(xv_minus[1] - xs[1], xv_minus[2] - xs[2], par) * dn * ds;
+								Fy_temp[i_real][j] += solid->Nodes[k].f_tmp[2] * DeltaFunction(xv_minus[1] - xs[1], xv_minus[2] - xs[2], par.d_x, par.d_y) * dn * ds;
 
 							}
 						}
@@ -173,7 +147,7 @@ void CalculateForce(Matrix &Fx, Matrix &Fy, std::list<Circle> &iList, Matrix& u,
 				}
 
 				end = std::clock();
-				//std::cout << end - begin << std::endl;
+				std::cout << "time force " << end - begin << std::endl;
 
 				int ix_max, ix_min;
 				int jx_max, jx_min;
@@ -227,6 +201,8 @@ void CalculateForce(Matrix &Fx, Matrix &Fy, std::list<Circle> &iList, Matrix& u,
 		}
 	}
 
+	//Output(u, u, v, Fx, Fy, par.N_step, iList, par);
+	//getchar();
 }
 
 void deformation_velocity(Matrix &u, Matrix &v, Matrix &Exx, Matrix &Eyy, Matrix &Exy, Param par) {
@@ -284,16 +260,16 @@ void Solids_deformation_velocity_pressure(std::list<Circle> &Solids, Matrix &Exx
 					if (i_real >  np1 - 2) i_real -= np1 - 2;
 					GeomVec xp = x_p(i_real, j, par);
 					GeomVec xs = solid.x + solid.Nodes[k].x;
-					solid.Nodes[k].Eps(1, 1) += Exx[i_real][j] * DeltaFunction(xp[1] - xs[1], xp[2] - xs[2], par);
-					solid.Nodes[k].Eps(2, 2) += Eyy[i_real][j] * DeltaFunction(xp[1] - xs[1], xp[2] - xs[2], par);
-					solid.Nodes[k].p         +=   p[i_real][j] * DeltaFunction(xp[1] - xs[1], xp[2] - xs[2], par);
+					solid.Nodes[k].Eps(1, 1) += Exx[i_real][j] * DeltaFunction(xp[1] - xs[1], xp[2] - xs[2], par.d_x, par.d_y);
+					solid.Nodes[k].Eps(2, 2) += Eyy[i_real][j] * DeltaFunction(xp[1] - xs[1], xp[2] - xs[2], par.d_x, par.d_y);
+					solid.Nodes[k].p         +=   p[i_real][j] * DeltaFunction(xp[1] - xs[1], xp[2] - xs[2], par.d_x, par.d_y);
 					if (par.BC == periodical) {
-						solid.Nodes[k].Eps(1, 1) += Exx[i_real][j] * DeltaFunction(xp[1] - xs[1] - par.L, xp[2] - xs[2], par);
-						solid.Nodes[k].Eps(1, 1) += Exx[i_real][j] * DeltaFunction(xp[1] - xs[1] + par.L, xp[2] - xs[2], par);
-						solid.Nodes[k].Eps(2, 2) += Eyy[i_real][j] * DeltaFunction(xp[1] - xs[1] - par.L, xp[2] - xs[2], par);
-						solid.Nodes[k].Eps(2, 2) += Eyy[i_real][j] * DeltaFunction(xp[1] - xs[1] + par.L, xp[2] - xs[2], par);
-						solid.Nodes[k].p         +=   (p[i_real][j] + dpdx_Poiseuille(par.H, par.Re)*par.L) * DeltaFunction(xp[1] - xs[1] - par.L, xp[2] - xs[2], par);
-						solid.Nodes[k].p         +=   (p[i_real][j] - dpdx_Poiseuille(par.H, par.Re)*par.L) * DeltaFunction(xp[1] - xs[1] + par.L, xp[2] - xs[2], par);
+						solid.Nodes[k].Eps(1, 1) += Exx[i_real][j] * DeltaFunction(xp[1] - xs[1] - par.L, xp[2] - xs[2], par.d_x, par.d_y);
+						solid.Nodes[k].Eps(1, 1) += Exx[i_real][j] * DeltaFunction(xp[1] - xs[1] + par.L, xp[2] - xs[2], par.d_x, par.d_y);
+						solid.Nodes[k].Eps(2, 2) += Eyy[i_real][j] * DeltaFunction(xp[1] - xs[1] - par.L, xp[2] - xs[2], par.d_x, par.d_y);
+						solid.Nodes[k].Eps(2, 2) += Eyy[i_real][j] * DeltaFunction(xp[1] - xs[1] + par.L, xp[2] - xs[2], par.d_x, par.d_y);
+						solid.Nodes[k].p         +=   (p[i_real][j] + dpdx_Poiseuille(par.H, par.Re)*par.L) * DeltaFunction(xp[1] - xs[1] - par.L, xp[2] - xs[2], par.d_x, par.d_y);
+						solid.Nodes[k].p         +=   (p[i_real][j] - dpdx_Poiseuille(par.H, par.Re)*par.L) * DeltaFunction(xp[1] - xs[1] + par.L, xp[2] - xs[2], par.d_x, par.d_y);
 					}
 				}
 			}
@@ -308,10 +284,10 @@ void Solids_deformation_velocity_pressure(std::list<Circle> &Solids, Matrix &Exx
 					if (i_real == 0      ) i_real  = nc1 - 1;
 					GeomVec xc = x_c(i_real, j, par);
 					GeomVec xs = solid.x + solid.Nodes[k].x;
-					solid.Nodes[k].Eps(1, 2) += Exy[i_real][j] * DeltaFunction(xc[1] - xs[1], xc[2] - xs[2], par);
+					solid.Nodes[k].Eps(1, 2) += Exy[i_real][j] * DeltaFunction(xc[1] - xs[1], xc[2] - xs[2], par.d_x, par.d_y);
 					if (par.BC == periodical) {
-						solid.Nodes[k].Eps(1, 2) += Exy[i_real][j] * DeltaFunction(xc[1] - xs[1] - par.L, xc[2] - xs[2], par);
-						solid.Nodes[k].Eps(1, 2) += Exy[i_real][j] * DeltaFunction(xc[1] - xs[1] + par.L, xc[2] - xs[2], par);
+						solid.Nodes[k].Eps(1, 2) += Exy[i_real][j] * DeltaFunction(xc[1] - xs[1] - par.L, xc[2] - xs[2], par.d_x, par.d_y);
+						solid.Nodes[k].Eps(1, 2) += Exy[i_real][j] * DeltaFunction(xc[1] - xs[1] + par.L, xc[2] - xs[2], par.d_x, par.d_y);
 					}
 				}
 			}
@@ -335,3 +311,170 @@ void Solids_Force(std::list<Circle> &Solids, double Re) {
 		}
 	}
 }
+
+void MatrixMultiplyAMP(std::vector<float>& vC,
+	const std::vector<float>& vA,
+	const std::vector<float>& vB, int M, int N, int W)
+{
+	array_view<const float, 2> a(M, W, vA), b(W, N, vB);
+	array_view<float, 2> c(M, N, vC);
+	c.discard_data();
+	parallel_for_each(c.extent,
+		[=](index<2> idx) restrict(amp) {
+		int row = idx[0]; int col = idx[1];
+		float sum = 0.0f;
+		for (int i = 0; i < W; i++)
+			sum += a(row, i) * b(i, col);
+		c[idx] = sum;
+	}
+	);
+}
+
+class Node_simple
+{
+public:
+	double x_s[4];
+	double uf[4];
+};
+
+
+
+std::vector<Node_simple> Copy_Node_Simple_vector(std::vector<Node>& Nodes, int N) {
+
+	std::vector<Node_simple> Nodes_simple(N);
+	for (int k = 0; k < N; ++k) {
+		Nodes_simple[k].x_s[1] = Nodes[k].x_s[1];
+		Nodes_simple[k].x_s[2] = Nodes[k].x_s[2];
+		Nodes_simple[k].uf[1] = Nodes[k].uf[1];
+		Nodes_simple[k].uf[2] = Nodes[k].uf[2];
+	}
+	return Nodes_simple;
+}
+
+void Copy_Node_vector(std::vector<Node_simple>& Nodes_simple, std::vector<Node>& Nodes, int N) {
+
+	for (int k = 0; k < N; ++k) {
+		Nodes[k].x_s[1] = Nodes_simple[k].x_s[1];
+		Nodes[k].x_s[2] = Nodes_simple[k].x_s[2];
+		Nodes[k].uf[1] = Nodes_simple[k].uf[1];
+		Nodes[k].uf[2] = Nodes_simple[k].uf[2];
+	}
+}
+
+void uf_in_Nodes(std::vector<Node>& Nodes, Matrix u, Matrix v, Param par, int Nn)
+{
+	int N1_period = par.N1;
+	int N1_u = par.N1_u;
+	int N2_u = par.N2_u;
+	int N1_v = par.N1_v;
+	int N2_v = par.N2_v;
+	double d_x = par.d_x;
+	double d_y = par.d_y;
+	boundary_conditions BC = par.BC;
+	double L = par.L;
+	std::clock_t begin = std::clock();
+
+	std::vector<Node_simple> Nodes_simple = Copy_Node_Simple_vector(Nodes, Nn);
+	array_view<Node_simple, 1> Nodes_AV(Nn, Nodes_simple);
+
+	double *u_ = new double[N1_u*N2_u];
+	double *v_ = new double[N1_v*N2_v];
+
+	Matrix_to_DoubleArray(u, u_, par.BC);
+	Matrix_to_DoubleArray(v, v_, par.BC);
+
+	array_view <double, 2> u_AV(N2_u, N1_u, u_);
+	array_view <double, 2> v_AV(N2_v, N1_v, v_);
+
+	//std::cout << "Matrix u = " << u[10][20] << ";  double* = " << u_[10 + N1 * 20] << "; u_AV = " << u_AV(20, 10) << std::endl;
+	//std::getchar();
+
+	//Nodes_AV.discard_data();
+	parallel_for_each(Nodes_AV.extent, [=](index<1> k) restrict(amp) {
+		InfluenceArea IA_u = GetInfluenceArea_(N1_u - 1, N2_u - 1, Nodes_AV[k].x_s, 4, BC, d_x, d_y);
+		//calculating fluid velocity uf in Lagrange nodes by using near Euler nodes and discrete delta function
+		Nodes_AV[k].uf[1] = 0.0;
+		for (int i = IA_u.i_min; i <= IA_u.i_max; ++i) {
+			for (int j = IA_u.j_min; j <= IA_u.j_max; ++j) {
+				int i_real = i_real_u_(i, N1_period);
+				double* xu = x_u_(i, j, d_x, d_y);
+				Nodes_AV[k].uf[1] += u_AV(j, i_real) * DeltaFunction_(xu[1] - Nodes_AV[k].x_s[1], xu[2] - Nodes_AV[k].x_s[2], d_x, d_y);
+				if (BC == periodical) {
+					Nodes_AV[k].uf[1] += u_AV(j, i_real) * DeltaFunction_(xu[1] - Nodes_AV[k].x_s[1] - L, xu[2] - Nodes_AV[k].x_s[2], d_x, d_y);
+					Nodes_AV[k].uf[1] += u_AV(j, i_real) * DeltaFunction_(xu[1] - Nodes_AV[k].x_s[1] + L, xu[2] - Nodes_AV[k].x_s[2], d_x, d_y);
+				}
+			}
+		}
+
+		InfluenceArea IA_v = GetInfluenceArea_(N1_v - 1, N2_v - 1, Nodes_AV[k].x_s, 4, BC, d_x, d_y);
+		//calculating fluid velocity uf in Lagrange nodes by using near Euler nodes and discrete delta function
+		Nodes_AV[k].uf[2] = 0.0;
+		for (int i = IA_v.i_min; i <= IA_v.i_max; ++i) {
+			for (int j = IA_v.j_min; j <= IA_v.j_max; ++j) {
+				int i_real = i_real_v_(i, N1_period);
+				double* xv = x_v_(i, j, d_x, d_y);
+				Nodes_AV[k].uf[2] += v_AV(j, i_real) * DeltaFunction_(xv[1] - Nodes_AV[k].x_s[1], xv[2] - Nodes_AV[k].x_s[2], d_x, d_y);
+				if (BC == periodical) {
+					Nodes_AV[k].uf[1] += v_AV(j, i_real) * DeltaFunction_(xv[1] - Nodes_AV[k].x_s[1] - L, xv[2] - Nodes_AV[k].x_s[2], d_x, d_y);
+					Nodes_AV[k].uf[1] += v_AV(j, i_real) * DeltaFunction_(xv[1] - Nodes_AV[k].x_s[1] + L, xv[2] - Nodes_AV[k].x_s[2], d_x, d_y);
+				}
+			}
+		}
+	}
+	);
+	Nodes_AV.synchronize();
+
+	std::clock_t end = std::clock();
+	std::cout << "time u new " << end - begin << std::endl;
+
+	Copy_Node_vector(Nodes_simple, Nodes, Nn);
+
+}
+
+void uf_in_Nodes_old(std::vector<Node>& Nodes, Matrix u, Matrix v, Param par, int Nn){
+	
+	std::clock_t begin = std::clock();
+
+	for (size_t k = 0; k < Nn; ++k) {
+		//calculating fluid velocity uf in Lagrange nodes by using near Euler nodes and discrete delta function
+		int i_max, i_min;
+		int j_max, j_min;
+		GetInfluenceArea(i_min, i_max, j_min, j_max, par.N1_u - 1, par.N2_u - 1, Nodes[k].x_s, 4, par);
+
+		Nodes[k].uf[1] = 0.0;
+		for (int i = i_min; i <= i_max; ++i) {
+			for (int j = j_min; j <= j_max; ++j) {
+				int i_real = i_real_u(i, par);
+				GeomVec xu = x_u(i_real, j, par);
+				Nodes[k].uf[1] += u[i_real][j] * DeltaFunction(xu[1] - Nodes[k].x_s[1], xu[2] - Nodes[k].x_s[2], par.d_x, par.d_y);
+				if (par.BC == periodical) {
+					Nodes[k].uf[1] += u[i_real][j] * DeltaFunction(xu[1] - Nodes[k].x_s[1] - par.L, xu[2] - Nodes[k].x_s[2], par.d_x, par.d_y);
+					Nodes[k].uf[1] += u[i_real][j] * DeltaFunction(xu[1] - Nodes[k].x_s[1] + par.L, xu[2] - Nodes[k].x_s[2], par.d_x, par.d_y);
+				}
+			}
+		}
+	}
+	for (size_t k = 0; k < Nn; ++k) {
+		//calculating fluid velocity uf in Lagrange nodes by using near Euler nodes and discrete delta function
+		int i_max, i_min;
+		int j_max, j_min;
+		GetInfluenceArea(i_min, i_max, j_min, j_max, par.N1_v - 1, par.N2_v - 1, Nodes[k].x_s, 4, par);
+		Nodes[k].uf[2] = 0.0;
+		for (int i = i_min; i <= i_max; ++i) {
+			for (int j = j_min; j <= j_max; ++j) {
+				int i_real = i_real_v(i, par);
+				GeomVec xv = x_v(i_real, j, par);
+				Nodes[k].uf[2] += v[i_real][j] * DeltaFunction(xv[1] - Nodes[k].x_s[1], xv[2] - Nodes[k].x_s[2], par.d_x, par.d_y);
+				if (par.BC == periodical) {
+					Nodes[k].uf[2] += v[i_real][j] * DeltaFunction(xv[1] - Nodes[k].x_s[1] - par.L, xv[2] - Nodes[k].x_s[2], par.d_x, par.d_y);
+					Nodes[k].uf[2] += v[i_real][j] * DeltaFunction(xv[1] - Nodes[k].x_s[1] + par.L, xv[2] - Nodes[k].x_s[2], par.d_x, par.d_y);
+				}
+			}
+		}
+	}
+	std::clock_t end = std::clock();
+	std::cout << "time u old " << end - begin << std::endl;
+}
+
+
+
