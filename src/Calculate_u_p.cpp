@@ -233,7 +233,6 @@ void Calculate_u_p(Matrix &U_n   , Matrix &U_new,
 	// Calculation of the strain rate, pressure and HydroDynamic (HD) force in Lagrange mesh
 	deformation_velocity(U_new, V_new, Exx, Eyy, Exy, par);
 	Solids_deformation_velocity_pressure(solidList, Exx, Eyy, Exy, P, par);
-	Solids_Force(solidList, par.Re);
 	
 }
 

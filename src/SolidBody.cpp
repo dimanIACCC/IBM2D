@@ -49,37 +49,15 @@ bool operator >(const SolidBody& a, const SolidBody& b) {
 Circle::Circle(double x, double y, double ux, double uy, double omega, double rho, int Nn, int moving, int name, double r) :
      SolidBody(       x,        y,        ux,        uy,        omega,        rho,     Nn,      moving,     name) {
 	this->r = r;
-	int N_Solid_Layers = 1;
-	int Nn2 = Nn / N_Solid_Layers;
-	for (int i = 0; i < Nn2; ++i){
-		Nodes[i].x_n[1] = cos(i * 2.0 * M_PI / Nn2) * r;
-		Nodes[i].x_n[2] = sin(i * 2.0 * M_PI / Nn2) * r;
-		Nodes[i].n[1]  = cos(i * 2.0 * M_PI / Nn2);
-		Nodes[i].n[2]  = sin(i * 2.0 * M_PI / Nn2);
-		Nodes[i].x = Nodes[i].x_n;
-	}
-	/*for (int i = Nn2; i < 2*Nn2; ++i) {
-		Nodes[i].x_n[1] = cos(i * 2.0 * M_PI / Nn2) * r * 0.95;
-		Nodes[i].x_n[2] = sin(i * 2.0 * M_PI / Nn2) * r * 0.95;
-		Nodes[i].n[1] = cos(i * 2.0 * M_PI / Nn2);
-		Nodes[i].n[2] = sin(i * 2.0 * M_PI / Nn2);
-		Nodes[i].x = Nodes[i].x_n;
-	}*/
-	/*for (int i = 2*Nn2; i < 3*Nn2; ++i) {
-		Nodes[i].x_n[1] = cos(i * 2.0 * M_PI / Nn2) * r * 0.5;
-		Nodes[i].x_n[2] = sin(i * 2.0 * M_PI / Nn2) * r * 0.5;
-		Nodes[i].n[1] = cos(i * 2.0 * M_PI / Nn2);
-		Nodes[i].n[2] = sin(i * 2.0 * M_PI / Nn2);
+	for (int i = 0; i < Nn; ++i){
+		Nodes[i].x_n[1] = cos(i * 2.0 * M_PI / Nn) * r;
+		Nodes[i].x_n[2] = sin(i * 2.0 * M_PI / Nn) * r;
+		Nodes[i].n[1]  = cos(i * 2.0 * M_PI / Nn);
+		Nodes[i].n[2]  = sin(i * 2.0 * M_PI / Nn);
+		Nodes[i].ds = 2.0 * M_PI * r / Nn;
 		Nodes[i].x = Nodes[i].x_n;
 	}
 
-	for (int i = 3*Nn2; i < Nn; ++i) {
-		Nodes[i].x_n[1] = cos(i * 2.0 * M_PI / Nn2) * r * 0.25;
-		Nodes[i].x_n[2] = sin(i * 2.0 * M_PI / Nn2) * r * 0.25;
-		Nodes[i].n[1]  = cos(i * 2.0 * M_PI / Nn2);
-		Nodes[i].n[2]  = sin(i * 2.0 * M_PI / Nn2);
-		Nodes[i].x = Nodes[i].x_n;
-	}*/
 	V = M_PI * r * r;
 	I =  V * r * r / 2.0; // angular momentum for unit density
 }
@@ -102,15 +80,10 @@ void SolidBody::velocities() {
 	}
 }
 
-
-double SolidBody::ds(size_t i) {
-	GeomVec xL, xR;
-	if (i > 0)    xL = Nodes[i-1].x;
-	else          xL = Nodes[Nn-1].x;
-	if (i < Nn-1) xR = Nodes[i+1].x;
-	else          xR = Nodes[0].x;
-	double result = length(xL - xR) / 2;
-	return result;
+void SolidBody::coordinates() {
+	for (int i = 0; i < Nn; ++i) {
+		Nodes[i].x_s = x + Nodes[i].x;
+	}
 }
 
 void SolidBody::log_init(std::string WorkDir) {
@@ -119,7 +92,7 @@ void SolidBody::log_init(std::string WorkDir) {
 	output.open(filename);
 
 	output << "title = " << '"' << "Solid" << name << '"' << std::endl;
-	output << "Variables = n x y u v fx fy omega tau Fx_hd Fy_hd Fx_L Fy_L IntTau tau_hd" << std::endl;
+	output << "Variables = n x y u v fx fy omega tau" << std::endl;
 }
 
 void SolidBody::log(std::string WorkDir, int n) {
@@ -136,13 +109,7 @@ void SolidBody::log(std::string WorkDir, int n) {
 	       << f_new[1] << "   "
 	       << f_new[2] << "   "
 	       << omega_n[3] << "   "
-	       << tau[3]   << "   "
-	       << -F_hd[1] << "   "
-	       << -F_hd[2] << "   "
-	       << f_L[1] << "   "
-	       << f_L[2] << "   "
-	       << integralV_dur_dt[3] << "   "
-	       << tau_hd[3] << "   "
+	       << tau_new[3]   << "   "
 	       << std::endl;
 }
 
@@ -419,8 +386,6 @@ void Solids_zero_force(std::list<Circle>& Solids) {
 	for (auto& it : Solids) {
 		std::fill(it.f.begin(), it.f.end(), 0.0);
 		std::fill(it.tau.begin(), it.tau.end(), 0.0);
-		it.Fr_all = 0.;
-		std::fill(it.f_L.begin(), it.f_L.end(), 0.0);
 		std::fill(it.d_uv_collide.begin(), it.d_uv_collide.end(), 0.0);
 		std::fill(it.d_ur_collide.begin(), it.d_ur_collide.end(), 0.0);
 		std::fill(it.d_omega_collide.begin(), it.d_omega_collide.end(), 0.0);

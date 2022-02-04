@@ -84,7 +84,7 @@ void Output(Matrix p, Matrix u, Matrix v, Matrix Fx, Matrix Fy, int n, std::list
 	output << std::setprecision(15);
 
 	output << "title = " << '"' << filename << '"' << std::endl;
-	output << "Variables = x y p u v fx fy tx ty" << std::endl;
+	output << "Variables = x y p u v fx fy" << std::endl;
 	output << "zone T=" << '"' << n << '"' << ",  i=" << par.N1_p << ", j=" << par.N2_p << ", f=point" << std::endl;
 	output << "SolutionTime = " << n * par.d_t << std::endl;
 
@@ -96,7 +96,7 @@ void Output(Matrix p, Matrix u, Matrix v, Matrix Fx, Matrix Fy, int n, std::list
 			double u_, v_, Fx_, Fy_;
 			u_ = (u[i][j] + u[i + 1][j]) * 0.5;		Fx_ = (Fx[i][j] + Fx[i + 1][j]) * 0.5;
 			v_ = (v[i][j] + v[i][j + 1]) * 0.5;		Fy_ = (Fy[i][j] + Fy[i][j + 1]) * 0.5;
-			output << xp[1] << " " << xp[2] << " " << p[i][j] + par.grad_p_x * (par.L - xp[1]) << " " << u_ << " " << v_ << " " << Fx_ << " " << Fy_ << " " << 0 << " " << 0 << std::endl;
+			output << xp[1] << " " << xp[2] << " " << p[i][j] + par.grad_p_x * (par.L - xp[1]) << " " << u_ << " " << v_ << " " << Fx_ << " " << Fy_  << std::endl;
 		}
 	}
 
@@ -107,12 +107,10 @@ void Output(Matrix p, Matrix u, Matrix v, Matrix Fx, Matrix Fy, int n, std::list
 		output << solid.x_n[1] << " "
 		       << solid.x_n[2] << " "
 		       << 0 << " "
-		       << solid.u_n[1] << " "
-		       << solid.u_n[2] << " "
+		       << solid.u[1] << " "
+		       << solid.u[2] << " "
 		       << solid.f[1] << " "
 		       << solid.f[2] << " "
-		       << solid.F_hd[1] << " "
-		       << solid.F_hd[2] << " "
 		       << std::endl;
 		for (int i = 0; i < solid.Nn; ++i) {
 
@@ -123,8 +121,6 @@ void Output(Matrix p, Matrix u, Matrix v, Matrix Fx, Matrix Fy, int n, std::list
 			       << solid.Nodes[i].us[2] << " "
 			       << solid.Nodes[i].f[1] << " "
 			       << solid.Nodes[i].f[2] << " "
-			       << solid.Nodes[i].t[1] << " "
-			       << solid.Nodes[i].t[2] << " "
 			       << std::endl;
 
 		}
@@ -135,8 +131,6 @@ void Output(Matrix p, Matrix u, Matrix v, Matrix Fx, Matrix Fy, int n, std::list
 		       << solid.Nodes[0].us[2] << " "
 		       << solid.Nodes[0].f[1] << " "
 		       << solid.Nodes[0].f[2] << " "
-		       << solid.Nodes[0].t[1] << " "
-		       << solid.Nodes[0].t[2] << " "
 		       << std::endl;
 	}
 
@@ -183,8 +177,6 @@ bool Read_plt(std::string filename, Param &par, std::list<Circle>& solidList) {
 					if (i == 5) c.u_n[2]  = stod(*itr);
 					if (i == 6) c.f[1]    = stod(*itr);
 					if (i == 7) c.f[2]    = stod(*itr);
-					if (i == 8) c.F_hd[1] = stod(*itr);
-					if (i == 9) c.F_hd[2] = stod(*itr);
 					i++;
 				}
 

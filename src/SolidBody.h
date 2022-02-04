@@ -16,10 +16,10 @@ public:
 	GeomVec x, x_n, x_s; // coordinates
 	GeomVec uf;       // velocity of the fluid in the Node
 	GeomVec us;       // velocity of the SolidBody in the Node
-	GeomVec f, f_tmp; // force and temporary force in iterations
+	GeomVec f;        // force
 	GeomVec n;        // norm
-	GeomVec t;        // traction vector
 	GeomMat Eps;      // deformation velocity
+	double ds;        // size of Lagrange element
 	double p;         // pressure
 };
 
@@ -31,13 +31,10 @@ public:
 	GeomVec u_n, u, u_s;          // velocity of the mass center
 	GeomVec omega, omega_n, omega_s;  // angular velocity
 	GeomVec d_uv_collide, d_ur_collide, d_omega_collide;   // velocity and andgular velocity corrections due to the collision
-	GeomVec f, f_new;      // force applied to the whole SolidBody
-	GeomVec f_L;                // force from Lagrange mesh
-	double Fr, Fr_all;      // average radial Force applied to SolidBody
-	GeomVec F_hd;   // Force calculated from hydrodynamics
-	GeomVec tau_hd; // torque, moment of force calculated from hydrodynamics
+	GeomVec f_new, f;      // force applied to the whole SolidBody
+	GeomVec tau_new, tau;    // torque, moment of force applied to the whole SolidBody
+	double Fr;      // average radial Force applied to SolidBody
 	double S;       // length of contour for radial Force averaging
-	GeomVec tau, tau_new;    // torque, moment of force applied to the whole SolidBody
 	double I;       // moment of inertia
 	double rho;     // density
 	double V;       // volume
@@ -50,8 +47,8 @@ public:
 	double r;
 	SolidBody(double x, double y, double ux, double uy, double omega, double rho, int Nn, int moving, int name);
 	~SolidBody();
-	void velocities();      // calculates the velocities in all Nodes of the SolidBody
-	double ds(size_t i);
+	void velocities();      // calculates the velocities  in all Nodes of the SolidBody
+	void coordinates();     // calculates the coordinates of all Nodes of the SolidBody in global coordinate system
 	void log_init(std::string WorkDir);
 	void log(std::string WorkDir, int n);
 };
