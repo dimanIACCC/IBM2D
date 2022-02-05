@@ -215,7 +215,7 @@ void Calculate_u_p(Matrix &U_n   , Matrix &U_new,
 
 		//output of the iterations number
 		//output << s << "  " << time_velocity << "  " << time_pressure << "  " << time_force << std::endl;
-		std::cin.get();
+		//std::cin.get();
 
 		Solids_collide(solidList, par);
 		Solids_velocity_new(solidList, par);

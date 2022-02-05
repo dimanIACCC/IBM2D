@@ -29,6 +29,8 @@ void Multidirect_Forcing_Method(Matrix &Fx, Matrix &Fy, Matrix &u, Matrix &v, st
 
 void CalculateForce(Matrix &Fx, Matrix &Fy, std::vector<Circle> &iList, Matrix& u, Matrix& v, Param par) {
 
+	bool AMP = true;
+
 	for (size_t i = 0; i < par.N1_u; ++i) {
 		for (size_t j = 0; j < par.N2_u; ++j) {
 			Fx[i][j] = 0.0;
@@ -56,7 +58,6 @@ void CalculateForce(Matrix &Fx, Matrix &Fy, std::vector<Circle> &iList, Matrix& 
 		for (solid = iList.begin(); solid != iList.end(); solid++) {
 			#pragma omp single nowait
 			{
-				bool AMP = true;
 				if (AMP == true)
 					uf_in_Nodes    (solid->Nodes, u, v, par, solid->Nn);
 				else
@@ -80,10 +81,8 @@ void CalculateForce(Matrix &Fx, Matrix &Fy, std::vector<Circle> &iList, Matrix& 
 				for (size_t k = 0; k < solid->Nn; ++k) {
 					GeomVec r = (solid->Nodes[k].x) / length(solid->Nodes[k].x);
 					solid->Nodes[k].f -= solid->Fr * r;
-					double dV = sqrt(par.d_x*par.d_x * solid->Nodes[k].n[1] * solid->Nodes[k].n[1]
-						+ par.d_y*par.d_y * solid->Nodes[k].n[2] * solid->Nodes[k].n[2]) * solid->Nodes[k].ds;
-					solid->f += solid->Nodes[k].f * dV;
-					solid->tau += x_product(solid->Nodes[k].x, solid->Nodes[k].f) * dV;
+					solid->f += solid->Nodes[k].f * solid->Nodes[k].ds;
+					solid->tau += x_product(solid->Nodes[k].x, solid->Nodes[k].f) * solid->Nodes[k].ds;
 				}
 
 			}
@@ -95,7 +94,10 @@ void CalculateForce(Matrix &Fx, Matrix &Fy, std::vector<Circle> &iList, Matrix& 
 				CreateMatrix(Fx_temp, par.N1_u, par.N2_u);
 				CreateMatrix(Fy_temp, par.N1_v, par.N2_v);
 
-				F_to_Euler_grid_old(solid->Nodes, Fx_temp, Fy_temp, par, solid->Nn);
+				if (AMP == true)
+					F_to_Euler_grid(solid->Nodes, Fx_temp, Fy_temp, par, solid->Nn);
+				else
+					F_to_Euler_grid_old(solid->Nodes, Fx_temp, Fy_temp, par, solid->Nn);
 
 				int ix_max, ix_min;
 				int jx_max, jx_min;
@@ -257,29 +259,42 @@ class Node_simple
 public:
 	double x_s[4];
 	double uf[4];
+	double f[4];
+	double n[4];
+	double ds;
 };
 
 
 
-std::vector<Node_simple> Copy_Node_Simple_vector(std::vector<Node>& Nodes, int N) {
+std::vector<Node_simple> Copy_Node_Simple_vector(std::vector<Node>& Nodes, int Nn) {
 
-	std::vector<Node_simple> Nodes_simple(N);
-	for (int k = 0; k < N; ++k) {
+	std::vector<Node_simple> Nodes_simple(Nn);
+	for (int k = 0; k < Nn; ++k) {
 		Nodes_simple[k].x_s[1] = Nodes[k].x_s[1];
 		Nodes_simple[k].x_s[2] = Nodes[k].x_s[2];
 		Nodes_simple[k].uf[1] = Nodes[k].uf[1];
 		Nodes_simple[k].uf[2] = Nodes[k].uf[2];
+		Nodes_simple[k].f[1] = Nodes[k].f[1];
+		Nodes_simple[k].f[2] = Nodes[k].f[2];
+		Nodes_simple[k].n[1] = Nodes[k].n[1];
+		Nodes_simple[k].n[2] = Nodes[k].n[2];
+		Nodes_simple[k].ds = Nodes[k].ds;
 	}
 	return Nodes_simple;
 }
 
-void Copy_Node_vector(std::vector<Node_simple>& Nodes_simple, std::vector<Node>& Nodes, int N) {
+void Copy_Node_vector(std::vector<Node_simple>& Nodes_simple, std::vector<Node>& Nodes, int Nn) {
 
-	for (int k = 0; k < N; ++k) {
+	for (size_t k = 0; k < Nn; ++k) {
 		Nodes[k].x_s[1] = Nodes_simple[k].x_s[1];
 		Nodes[k].x_s[2] = Nodes_simple[k].x_s[2];
 		Nodes[k].uf[1] = Nodes_simple[k].uf[1];
 		Nodes[k].uf[2] = Nodes_simple[k].uf[2];
+		Nodes[k].f[1] = Nodes_simple[k].f[1];
+		Nodes[k].f[2] = Nodes_simple[k].f[2];
+		Nodes[k].f[1] = Nodes_simple[k].n[1];
+		Nodes[k].f[2] = Nodes_simple[k].n[2];
+		Nodes[k].ds = Nodes_simple[k].ds;
 	}
 }
 
@@ -401,10 +416,16 @@ void uf_in_Nodes_old(std::vector<Node>& Nodes, Matrix &u, Matrix &v, Param par, 
 
 void F_to_Euler_grid(std::vector<Node>& Nodes, Matrix &Fx_temp, Matrix &Fy_temp, Param par, int Nn) {
 
+	int N1_period = par.N1;
 	int N1_u = par.N1_u;
 	int N2_u = par.N2_u;
 	int N1_v = par.N1_v;
 	int N2_v = par.N2_v;
+	double d_x = par.d_x;
+	double d_y = par.d_y;
+	boundary_conditions BC = par.BC;
+	double L = par.L;
+	double l_dxdy = 1. / d_x / d_y;
 
 	std::clock_t begin = std::clock();
 
@@ -417,66 +438,68 @@ void F_to_Euler_grid(std::vector<Node>& Nodes, Matrix &Fx_temp, Matrix &Fy_temp,
 	Matrix_to_DoubleArray(Fx_temp, Fx_temp_, par.BC);
 	Matrix_to_DoubleArray(Fy_temp, Fy_temp_, par.BC);
 
-	array_view <double, 2> u_AV(N2_u, N1_u, Fx_temp_);
-	array_view <double, 2> v_AV(N2_v, N1_v, Fy_temp_);
+	array_view <double, 2> Fx_temp_AV(N2_u, N1_u, Fx_temp_);
+	array_view <double, 2> Fy_temp_AV(N2_v, N1_v, Fy_temp_);
 
-	for (size_t k = 0; k < Nn; ++k) {
+	Fx_temp_AV.discard_data();
+	parallel_for_each(Fx_temp_AV.extent, [=](index<2> idx) restrict(amp) {
+		int i = idx[1];
+		int j = idx[0];
 
-		int ix_max, ix_min;
-		int jx_max, jx_min;
+		int i_real = i_real_u_(i, N1_period);
+		double* xu = x_u_(i, j, d_x, d_y);
+		for (int k = 0; k < Nn; ++k) {
 
-		int iy_max, iy_min;
-		int jy_max, jy_min;
+			Fx_temp_AV(j, i_real) += Nodes_AV[k].f[1] * DeltaFunction_(xu[1] - Nodes_AV[k].x_s[1], xu[2] - Nodes_AV[k].x_s[2], d_x, d_y) * l_dxdy * Nodes_AV[k].ds;
 
-		GetInfluenceArea(ix_min, ix_max, jx_min, jx_max, par.N1_u - 1, par.N2_u - 1, Nodes[k].x_s, 4, par);
-		GetInfluenceArea(iy_min, iy_max, jy_min, jy_max, par.N1_v - 1, par.N2_v - 1, Nodes[k].x_s, 4, par);
+			if (BC == periodical) {
 
-		//calculating velocities us of the solid boundary
-		double dn = sqrt(par.d_x*par.d_x * Nodes[k].n[1] * Nodes[k].n[1]
-		               + par.d_y*par.d_y * Nodes[k].n[2] * Nodes[k].n[2]) / par.d_x / par.d_y;
-		// calculating force force_temp for Euler nodes caused by k-th solid
-		for (int i = ix_min; i <= ix_max; ++i) {
-			for (int j = jx_min; j <= jx_max; ++j) {
-				int i_real = i_real_u(i, par);
-				GeomVec xu = x_u(i_real, j, par);
-				Fx_temp[i_real][j] += Nodes[k].f[1] * DeltaFunction(xu[1] - Nodes[k].x_s[1], xu[2] - Nodes[k].x_s[2], par.d_x, par.d_y) * dn * Nodes[k].ds;
+				double* xu_plus = xu;
+				xu_plus[1] += L;
+				Fx_temp_AV(j, i_real) += Nodes_AV[k].f[1] * DeltaFunction_(xu_plus[1] - Nodes_AV[k].x_s[1], xu_plus[2] - Nodes_AV[k].x_s[2], d_x, d_y) * l_dxdy * Nodes_AV[k].ds;
 
-				if (par.BC == periodical) {
-
-					GeomVec xu_plus = xu;
-					xu_plus[1] += par.L;
-					Fx_temp[i_real][j] += Nodes[k].f[1] * DeltaFunction(xu_plus[1] - Nodes[k].x_s[1], xu_plus[2] - Nodes[k].x_s[2], par.d_x, par.d_y) * dn * Nodes[k].ds;
-
-					GeomVec xu_minus = xu;
-					xu_minus[1] -= par.L;
-					Fx_temp[i_real][j] += Nodes[k].f[1] * DeltaFunction(xu_minus[1] - Nodes[k].x_s[1], xu_minus[2] - Nodes[k].x_s[2], par.d_x, par.d_y) * dn * Nodes[k].ds;
-
-				}
-			}
-		}
-
-		for (int i = iy_min; i <= iy_max; ++i) {
-			for (int j = jy_min; j <= jy_max; ++j) {
-				int i_real = i_real_v(i, par);
-				GeomVec xv = x_v(i_real, j, par);
-				Fy_temp[i_real][j] += Nodes[k].f[2] * DeltaFunction(xv[1] - Nodes[k].x_s[1], xv[2] - Nodes[k].x_s[2], par.d_x, par.d_y) * dn * Nodes[k].ds;
-
-				if (par.BC == periodical) {
-
-					GeomVec xv_plus = xv;
-					xv_plus[1] += par.L;
-					Fy_temp[i_real][j] += Nodes[k].f[2] * DeltaFunction(xv_plus[1] - Nodes[k].x_s[1], xv_plus[2] - Nodes[k].x_s[2], par.d_x, par.d_y) * dn * Nodes[k].ds;
-
-					GeomVec xv_minus = xv;
-					xv_minus[1] -= par.L;
-					Fy_temp[i_real][j] += Nodes[k].f[2] * DeltaFunction(xv_minus[1] - Nodes[k].x_s[1], xv_minus[2] - Nodes[k].x_s[2], par.d_x, par.d_y) * dn * Nodes[k].ds;
-
-				}
+				double* xu_minus = xu;
+				xu_minus[1] -= L;
+				Fx_temp_AV(j, i_real) += Nodes_AV[k].f[1] * DeltaFunction_(xu_minus[1] - Nodes_AV[k].x_s[1], xu_minus[2] - Nodes_AV[k].x_s[2], d_x, d_y) * l_dxdy * Nodes_AV[k].ds;
 			}
 		}
 	}
+	);
+	Fx_temp_AV.synchronize();
+	DoubleArray_to_Matrix(Fx_temp_, Fx_temp, par.BC);
+
+	//Output_2DArray(Fx_temp_, N1_u, N2_u, "Result/", "Array", 555);
+	//std::getchar();
+
+	Fy_temp_AV.discard_data();
+	parallel_for_each(Fy_temp_AV.extent, [=](index<2> idx) restrict(amp) {
+		int i = idx[1];
+		int j = idx[0];
+
+		int i_real = i_real_v_(i, N1_period);
+		double* xv = x_v_(i_real, j, d_x, d_y);
+		for (int k = 0; k < Nn; ++k) {
+
+			Fy_temp_AV(j, i_real) += Nodes_AV[k].f[2] * DeltaFunction_(xv[1] - Nodes_AV[k].x_s[1], xv[2] - Nodes_AV[k].x_s[2], d_x, d_y) * l_dxdy * Nodes_AV[k].ds;
+
+			if (BC == periodical) {
+
+				double* xv_plus = xv;
+				xv_plus[1] += L;
+				Fy_temp_AV(j, i_real) += Nodes_AV[k].f[2] * DeltaFunction_(xv_plus[1] - Nodes_AV[k].x_s[1], xv_plus[2] - Nodes_AV[k].x_s[2], d_x, d_y) * l_dxdy * Nodes_AV[k].ds;
+
+				double* xv_minus = xv;
+				xv_minus[1] -= L;
+				Fy_temp_AV(j, i_real) += Nodes_AV[k].f[2] * DeltaFunction_(xv_minus[1] - Nodes_AV[k].x_s[1], xv_minus[2] - Nodes_AV[k].x_s[2], d_x, d_y) * l_dxdy * Nodes_AV[k].ds;
+			}
+		}
+	}
+	);
+	Fy_temp_AV.synchronize();
+	DoubleArray_to_Matrix(Fy_temp_, Fy_temp, par.BC);
+
 	std::clock_t end = std::clock();
-	std::cout << "time force " << end - begin << std::endl;
+	std::cout << "time f new " << end - begin << std::endl;
 }
 
 void F_to_Euler_grid_old(std::vector<Node>& Nodes, Matrix &Fx_temp, Matrix &Fy_temp, Param par, int Nn) {
@@ -495,24 +518,23 @@ void F_to_Euler_grid_old(std::vector<Node>& Nodes, Matrix &Fx_temp, Matrix &Fy_t
 		GetInfluenceArea(iy_min, iy_max, jy_min, jy_max, par.N1_v - 1, par.N2_v - 1, Nodes[k].x_s, 4, par);
 
 		//calculating velocities us of the solid boundary
-		double dn = sqrt(par.d_x*par.d_x * Nodes[k].n[1] * Nodes[k].n[1]
-		               + par.d_y*par.d_y * Nodes[k].n[2] * Nodes[k].n[2]) / par.d_x / par.d_y;
+		double l_dxdy = 1. / par.d_x / par.d_y;
 		// calculating force force_temp for Euler nodes caused by k-th solid
 		for (int i = ix_min; i <= ix_max; ++i) {
 			for (int j = jx_min; j <= jx_max; ++j) {
 				int i_real = i_real_u(i, par);
 				GeomVec xu = x_u(i_real, j, par);
-				Fx_temp[i_real][j] += Nodes[k].f[1] * DeltaFunction(xu[1] - Nodes[k].x_s[1], xu[2] - Nodes[k].x_s[2], par.d_x, par.d_y) * dn * Nodes[k].ds;
+				Fx_temp[i_real][j] += Nodes[k].f[1] * DeltaFunction(xu[1] - Nodes[k].x_s[1], xu[2] - Nodes[k].x_s[2], par.d_x, par.d_y) * l_dxdy * Nodes[k].ds;
 
 				if (par.BC == periodical) {
 
 					GeomVec xu_plus = xu;
 					xu_plus[1] += par.L;
-					Fx_temp[i_real][j] += Nodes[k].f[1] * DeltaFunction(xu_plus[1] - Nodes[k].x_s[1], xu_plus[2] - Nodes[k].x_s[2], par.d_x, par.d_y) * dn * Nodes[k].ds;
+					Fx_temp[i_real][j] += Nodes[k].f[1] * DeltaFunction(xu_plus[1] - Nodes[k].x_s[1], xu_plus[2] - Nodes[k].x_s[2], par.d_x, par.d_y) * l_dxdy * Nodes[k].ds;
 
 					GeomVec xu_minus = xu;
 					xu_minus[1] -= par.L;
-					Fx_temp[i_real][j] += Nodes[k].f[1] * DeltaFunction(xu_minus[1] - Nodes[k].x_s[1], xu_minus[2] - Nodes[k].x_s[2], par.d_x, par.d_y) * dn * Nodes[k].ds;
+					Fx_temp[i_real][j] += Nodes[k].f[1] * DeltaFunction(xu_minus[1] - Nodes[k].x_s[1], xu_minus[2] - Nodes[k].x_s[2], par.d_x, par.d_y) * l_dxdy * Nodes[k].ds;
 
 				}
 			}
@@ -522,22 +544,22 @@ void F_to_Euler_grid_old(std::vector<Node>& Nodes, Matrix &Fx_temp, Matrix &Fy_t
 			for (int j = jy_min; j <= jy_max; ++j) {
 				int i_real = i_real_v(i, par);
 				GeomVec xv = x_v(i_real, j, par);
-				Fy_temp[i_real][j] += Nodes[k].f[2] * DeltaFunction(xv[1] - Nodes[k].x_s[1], xv[2] - Nodes[k].x_s[2], par.d_x, par.d_y) * dn * Nodes[k].ds;
+				Fy_temp[i_real][j] += Nodes[k].f[2] * DeltaFunction(xv[1] - Nodes[k].x_s[1], xv[2] - Nodes[k].x_s[2], par.d_x, par.d_y) * l_dxdy * Nodes[k].ds;
 
 				if (par.BC == periodical) {
 
 					GeomVec xv_plus = xv;
 					xv_plus[1] += par.L;
-					Fy_temp[i_real][j] += Nodes[k].f[2] * DeltaFunction(xv_plus[1] - Nodes[k].x_s[1], xv_plus[2] - Nodes[k].x_s[2], par.d_x, par.d_y) * dn * Nodes[k].ds;
+					Fy_temp[i_real][j] += Nodes[k].f[2] * DeltaFunction(xv_plus[1] - Nodes[k].x_s[1], xv_plus[2] - Nodes[k].x_s[2], par.d_x, par.d_y) * l_dxdy * Nodes[k].ds;
 
 					GeomVec xv_minus = xv;
 					xv_minus[1] -= par.L;
-					Fy_temp[i_real][j] += Nodes[k].f[2] * DeltaFunction(xv_minus[1] - Nodes[k].x_s[1], xv_minus[2] - Nodes[k].x_s[2], par.d_x, par.d_y) * dn * Nodes[k].ds;
+					Fy_temp[i_real][j] += Nodes[k].f[2] * DeltaFunction(xv_minus[1] - Nodes[k].x_s[1], xv_minus[2] - Nodes[k].x_s[2], par.d_x, par.d_y) * l_dxdy * Nodes[k].ds;
 
 				}
 			}
 		}
 	}
 	std::clock_t end = std::clock();
-	std::cout << "time force " << end - begin << std::endl;
+	std::cout << "time f old " << end - begin << std::endl;
 }

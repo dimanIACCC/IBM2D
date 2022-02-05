@@ -41,7 +41,7 @@ public:
 	GeomVec integralV_du_dt;      // integral of the du/dt       over the Volume of the Solid
 	GeomVec integralV_dur_dt;     // integral of the d(u x r)/dt over the Volume of the Solid
 	std::vector<Node> Nodes;   // Nodes of the SolidBody mesh
-	size_t Nn;                    // Number of Nodes
+	int Nn;                    // Number of Nodes
 	int name;                     // integer name of the Solid
 	//int shape;                    // shape of the Solid
 	double r;
@@ -55,7 +55,7 @@ public:
 
 class Circle : public SolidBody{
 public:
-	Circle(double x, double y, double ux, double uy, double omega, double rho, int Nn, int moving, int name, double r);
+	Circle(double x, double y, double ux, double uy, double omega, double rho, int Nn, int moving, int name, double r, double d_x, double d_y);
 	Circle(double x, double y, Param &par);
 	~Circle();
 	void integrals(Matrix U_n, Matrix V_n, Matrix U_new, Matrix V_new, Param par);

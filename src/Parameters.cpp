@@ -263,10 +263,10 @@ double FunctionD(double r) {
 	if (2.0 <= fabs(r)) {
 		return 0.0;
 	}
-	return 0;
+	return 0.;
 }
 
-double FunctionD_(double r) restrict(amp) {
+inline double FunctionD_(double r) restrict(amp) {
 	if ((0.0 <= fabs(r)) && (fabs(r) < 1.0)) {
 		return 1.0 / 8.0*(3.0 - 2.0 * fabs(r) + sqrt(1.0 + 4.0 * fabs(r) - 4.0 * r * r));
 	}
@@ -276,7 +276,7 @@ double FunctionD_(double r) restrict(amp) {
 	if (2.0 <= fabs(r)) {
 		return 0.0;
 	}
-	return 0;
+	return 0.;
 }
 
 void GetInfluenceArea(int &i_min, int &i_max, int &j_min, int &j_max, size_t Ni, size_t Nj, GeomVec x, int size, Param par) {

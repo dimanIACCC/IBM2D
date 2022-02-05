@@ -46,15 +46,17 @@ bool operator >(const SolidBody& a, const SolidBody& b) {
 	else return false;
 }
 
-Circle::Circle(double x, double y, double ux, double uy, double omega, double rho, int Nn, int moving, int name, double r) :
-     SolidBody(       x,        y,        ux,        uy,        omega,        rho,     Nn,      moving,     name) {
+Circle::Circle(double x, double y, double ux, double uy, double omega, double rho,  int Nn, int moving, int name, double r, double d_x, double d_y) :
+     SolidBody(       x,        y,        ux,        uy,        omega,        rho,      Nn,     moving,     name) {
 	this->r = r;
-	for (int i = 0; i < Nn; ++i){
+	for (size_t i = 0; i < Nn; ++i){
 		Nodes[i].x_n[1] = cos(i * 2.0 * M_PI / Nn) * r;
 		Nodes[i].x_n[2] = sin(i * 2.0 * M_PI / Nn) * r;
 		Nodes[i].n[1]  = cos(i * 2.0 * M_PI / Nn);
 		Nodes[i].n[2]  = sin(i * 2.0 * M_PI / Nn);
-		Nodes[i].ds = 2.0 * M_PI * r / Nn;
+		Nodes[i].ds = 2.0 * M_PI * r / Nn
+			          * sqrt(d_x*d_x * Nodes[i].n[1] * Nodes[i].n[1]
+			               + d_y*d_y * Nodes[i].n[2] * Nodes[i].n[2]);
 		Nodes[i].x = Nodes[i].x_n;
 	}
 
@@ -63,7 +65,7 @@ Circle::Circle(double x, double y, double ux, double uy, double omega, double rh
 }
 
 Circle::Circle(double x, double y, Param &par):
-	    Circle(       x,        y, 0.0, 0.0, 0.0, par.rho, par.Nn, true, par.SolidName_max+1, par.r) {
+	    Circle(       x,        y, 0.0, 0.0, 0.0, par.rho, par.Nn, true, par.SolidName_max+1, par.r, par.d_x, par.d_y) {
 	this->u_n[1] = 0.0;  //  ux_Poiseuille(y, par.H);
 	this->omega_n[3] = 0.0; // -dux_dy_Poiseuille(y, par.H);
 	this->omega     = this->omega_n;
@@ -75,13 +77,13 @@ Circle::~Circle()
 }
 
 void SolidBody::velocities() {
-	for (int i = 0; i < Nn; ++i) {
+	for (size_t i = 0; i < Nn; ++i) {
 		Nodes[i].us = 0.5 * (u + u + x_product(omega+omega, Nodes[i].x));
 	}
 }
 
 void SolidBody::coordinates() {
-	for (int i = 0; i < Nn; ++i) {
+	for (size_t i = 0; i < Nn; ++i) {
 		Nodes[i].x_s = x + Nodes[i].x;
 	}
 }
@@ -160,7 +162,7 @@ void Read_Solids(std::string filename, std::vector<Circle>& Solids, Param &par) 
 					omega = - dux_dy_Poiseuille(y, par.H);
 				}
 				
-				Circle c(x, y, ux, uy, omega, rho, Nn, moving, par.SolidName_max+1, r);
+				Circle c(x, y, ux, uy, omega, rho, Nn, moving, par.SolidName_max+1, r, par.d_x, par.d_y);
 				if (c.name > par.SolidName_max) par.SolidName_max = c.name;
 				Solids.push_back(c);
 				c.log_init(par.WorkDir);

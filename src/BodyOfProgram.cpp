@@ -297,7 +297,7 @@ void Awake(std::string &filename, Param &par, std::vector<Circle>& solidList, Ma
 								}
 							}
 							if (line == "<\\Solid>") {
-								Circle c(x, y, ux, uy, omega, rho, Nn, moving, name, r);
+								Circle c(x, y, ux, uy, omega, rho, Nn, moving, name, r, par.d_x, par.d_y);
 								if (c.name > par.SolidName_max) par.SolidName_max = c.name;
 
 								c.x_n = x_n;
