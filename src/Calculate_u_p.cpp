@@ -87,7 +87,12 @@ void Calculate_u_p(Matrix &U_n   , Matrix &U_new,
 			V_f = V_new;
 
 			// apply force from immersed particles for several times to fulfill no-slip BC
-			Multidirect_Forcing_Method(dFx, dFy, U_f, V_f, solidList, par);
+			Solids_zero_force(solidList);
+			for (auto& it : solidList) {
+				it.Fr = 0.;
+				it.S = 0.;
+			}
+			CalculateForce(dFx, dFy, solidList, U_f, V_f, par);
 
 			if (par.IBM == 0) {
 				U_new += dFx * (par.d_t);

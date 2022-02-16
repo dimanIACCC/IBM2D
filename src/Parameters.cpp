@@ -29,7 +29,6 @@ Param::Param() {  // default parameters
 	Zeidel_eps = 1e-5;
 	s_max = 20;
 	eps_P = 1.e-5;
-	N_Force = 0;
 
 	// parameters for many particles
 	rho = 3.;
@@ -133,7 +132,6 @@ void Param::read_line(std::string line) {
 		else if (PAR == "Zeidel_eps")           Zeidel_eps = stod(VALUE);
 		else if (PAR == "s_max")                s_max = stoi(VALUE);
 		else if (PAR == "eps_P")                eps_P = stod(VALUE);
-		else if (PAR == "N_Force")              N_Force = stoi(VALUE);
 
 		// parameters for many particles
 		else if (PAR == "rho")                  rho = stod(VALUE);

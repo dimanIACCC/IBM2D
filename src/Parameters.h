@@ -40,7 +40,6 @@ public:
 	double Zeidel_eps;        // tolerance for Zeidel method
 	int s_max;                // max number of iterations for pressure and IBM force
 	double eps_P;             // tolerance for Pressure correction
-	int N_Force;              // number of iterations for force
 
 	// parameters for many particles
 	double rho;               // default density of Solid

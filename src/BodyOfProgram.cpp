@@ -125,7 +125,6 @@ void MakeHibernationFile(Param& par, std::vector<Circle>& solidList, Matrix& U_n
 	output << "Zeidel_eps = " << par.Zeidel_eps << std::endl;
 	output << "s_max = " << par.s_max << std::endl;
 	output << "eps_P = " << par.eps_P << std::endl;
-	output << "N_Force = " << par.N_Force << std::endl;
 
 	// parameters for many particles
 	output << "rho = " << par.rho << std::endl;

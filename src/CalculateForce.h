@@ -4,7 +4,6 @@
 #include "SolidBody.h"
 #include "Matrix.h"
 
-void Multidirect_Forcing_Method(Matrix &Fx, Matrix &Fy, Matrix &u, Matrix &v, std::vector<Circle> &solidList, Param par);
 void CalculateForce(Matrix& force_x, Matrix& force_y, std::vector<Circle> &iList, Matrix& u, Matrix& v, Param par);
 void deformation_velocity(Matrix &u, Matrix &v, Matrix &Exx, Matrix &Eyy, Matrix &Exy, Param par);
 void Solids_deformation_velocity_pressure(std::vector<Circle> &Solids, Matrix &Exx, Matrix &Eyy, Matrix &Exy, Matrix &p, Param par);

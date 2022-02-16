@@ -2,49 +2,17 @@
 #include "CalculateForce.h"
 #include "Output.h"
 
-void Multidirect_Forcing_Method(Matrix &Fx, Matrix &Fy, Matrix &u, Matrix &v, std::vector<Circle> &solidList, Param par) {
 
-	CreateMatrix(Fx_tmp, par.N1_u, par.N2_u);
-	CreateMatrix(Fy_tmp, par.N1_v, par.N2_v);
-
-	Solids_zero_force(solidList);
-	Fx = Fx * 0.;
-	Fy = Fy * 0.;
-	int f_max = par.N_Force;
-	// correct force and velocity $f_max$ times
-	for (int f = 0; f <= f_max; ++f) {
-		for (auto& it : solidList) {
-			it.Fr = 0.;
-			it.S = 0.;
-		}
-
-		CalculateForce(Fx_tmp, Fy_tmp, solidList, u, v, par);
-		Fx += Fx_tmp;
-		Fy += Fy_tmp;
-
-		//Output_U(u, "u", f, par);
-		//Output_V(v, "v", f, par);
-	}
-}
-
-void CalculateForce(Matrix &Fx, Matrix &Fy, std::vector<Circle> &iList, Matrix& u, Matrix& v, Param par) {
+void CalculateForce(Matrix &dFx, Matrix &dFy, std::vector<Circle> &iList, Matrix& u, Matrix& v, Param par) {
 
 	bool AMP = true;
+	int num_thr = 1;
 
-	for (size_t i = 0; i < par.N1_u; ++i) {
-		for (size_t j = 0; j < par.N2_u; ++j) {
-			Fx[i][j] = 0.0;
-		}
-	}
-	for (size_t i = 0; i < par.N1_v; ++i) {
-		for (size_t j = 0; j < par.N2_v; ++j) {
-			Fy[i][j] = 0.0;
-		}
-	}
+	std::clock_t begin, end;
 
 	std::vector<Circle>::iterator solid;
 
-#pragma omp parallel private(solid) num_threads(1)
+	#pragma omp parallel private(solid) num_threads(num_thr)
 	{
 		for (solid = iList.begin(); solid != iList.end(); solid++) {
 		#pragma omp single nowait
@@ -54,20 +22,34 @@ void CalculateForce(Matrix &Fx, Matrix &Fy, std::vector<Circle> &iList, Matrix& 
 				solid->coordinates();
 			}
 		}
+	}
 
+	//if (AMP == true) {
+		begin = std::clock();
 		for (solid = iList.begin(); solid != iList.end(); solid++) {
-			#pragma omp single nowait
-			{
-				if (AMP == true)
-					uf_in_Nodes    (solid->Nodes, u, v, par, solid->Nn);
-				else
-					uf_in_Nodes_old(solid->Nodes, u, v, par, solid->Nn);
-
-			}
+				uf_in_Nodes(solid->Nodes, u, v, par, solid->Nn);
 		}
+		end = std::clock();
+		std::cout << "time u new " << end - begin << std::endl;
+	//}
+
+	#pragma omp parallel private(solid) num_threads(num_thr)
+	{
+		/*if (AMP == false) {
+			begin = std::clock();
+			for (solid = iList.begin(); solid != iList.end(); solid++) {
+			#pragma omp single nowait
+				{
+					uf_in_Nodes_old(solid->Nodes, u, v, par, solid->Nn);
+				}
+			}
+			end = std::clock();
+			std::cout << "time u old " << end - begin << std::endl;
+		}*/
+
 
 		for (solid = iList.begin(); solid != iList.end(); solid++) {
-			#pragma omp single nowait
+		#pragma omp single nowait
 			{
 				for (size_t k = 0; k < solid->Nn; ++k) {
 					// mass force f in Lagrange nodes
@@ -87,61 +69,98 @@ void CalculateForce(Matrix &Fx, Matrix &Fy, std::vector<Circle> &iList, Matrix& 
 
 			}
 		}
+	}
 
+	for (size_t i = 0; i < par.N1_u; ++i) {
+		for (size_t j = 0; j < par.N2_u; ++j) {
+			dFx[i][j] = 0.0;
+		}
+	}
+	for (size_t i = 0; i < par.N1_v; ++i) {
+		for (size_t j = 0; j < par.N2_v; ++j) {
+			dFy[i][j] = 0.0;
+		}
+	}
+
+	if (AMP == true) {
+		begin = std::clock();
 		for (solid = iList.begin(); solid != iList.end(); solid++) {
-			#pragma omp single nowait
-			{
-				CreateMatrix(Fx_temp, par.N1_u, par.N2_u);
-				CreateMatrix(Fy_temp, par.N1_v, par.N2_v);
+			F_to_Euler_grid(solid->Nodes, dFx, dFy, par, solid->Nn);
+			Output_V(dFy, "Fy", 1, par);
+		}
+		end = std::clock();
+		std::cout << "time f new " << end - begin << std::endl;
+	}
 
-				if (AMP == true)
-					F_to_Euler_grid(solid->Nodes, Fx_temp, Fy_temp, par, solid->Nn);
-				else
-					F_to_Euler_grid_old(solid->Nodes, Fx_temp, Fy_temp, par, solid->Nn);
+	//#pragma omp parallel private(solid) num_threads(num_thr)
+	//{
+		if (AMP == false) {
+			begin = std::clock();
+			for (solid = iList.begin(); solid != iList.end(); solid++) {
+			//#pragma omp single nowait
+				{
+					CreateMatrix(dFx_temp, par.N1_u, par.N2_u);
+					CreateMatrix(dFy_temp, par.N1_v, par.N2_v);
 
-				int ix_max, ix_min;
-				int jx_max, jx_min;
-				int iy_max, iy_min;
-				int jy_max, jy_min;
+					//CreateMatrix(dFx_new, par.N1_u, par.N2_u);
+					//CreateMatrix(dFy_new, par.N1_v, par.N2_v);
+					//
+					//F_to_Euler_grid(solid->Nodes, dFx_new, dFy_new, par, solid->Nn);
+					//Output_V(dFy_new, "Fy", 1, par);
+					//Output(dFx_new, dFx_new, dFy_new, dFx_new, dFy_new, 111, iList, par);
+					//std::getchar();
 
-				GetInfluenceArea(ix_min, ix_max, jx_min, jx_max, par.N1_u - 1, par.N2_u - 1, solid->x, int(solid->r / par.d_x) + 4, par);
-				GetInfluenceArea(iy_min, iy_max, jy_min, jy_max, par.N1_v - 1, par.N2_v - 1, solid->x, int(solid->r / par.d_x) + 4, par);
+					F_to_Euler_grid_old(solid->Nodes, dFx_temp, dFy_temp, par, solid->Nn);
+					//Output_V(dFy_temp, "Fy", 0, par);
+					//Output(dFx_temp, dFx_temp, dFy_temp, dFx_temp, dFy_temp, 999, iList, par);
 
-				// summarizing force for Euler nodes and for solids
-				for (int i = ix_min; i <= ix_max; ++i) {
-					for (int j = jx_min; j <= jx_max; ++j) {
-						int i_real = i_real_u(i, par);
-						Fx[i_real][j] += Fx_temp[i_real][j];
+					int ix_max, ix_min;
+					int jx_max, jx_min;
+					int iy_max, iy_min;
+					int jy_max, jy_min;
+
+					GetInfluenceArea(ix_min, ix_max, jx_min, jx_max, par.N1_u - 1, par.N2_u - 1, solid->x, int(solid->r / par.d_x) + 4, par);
+					GetInfluenceArea(iy_min, iy_max, jy_min, jy_max, par.N1_v - 1, par.N2_v - 1, solid->x, int(solid->r / par.d_x) + 4, par);
+
+					// summarizing force for Euler nodes and for solids
+					for (int i = ix_min; i <= ix_max; ++i) {
+						for (int j = jx_min; j <= jx_max; ++j) {
+							int i_real = i_real_u(i, par);
+							dFx[i_real][j] += dFx_temp[i_real][j];
+						}
 					}
-				}
-				for (int i = iy_min; i <= iy_max; ++i) {
-					for (int j = jy_min; j <= jy_max; ++j) {
-						int i_real = i_real_v(i, par);
-						Fy[i_real][j] += Fy_temp[i_real][j];
+					for (int i = iy_min; i <= iy_max; ++i) {
+						for (int j = jy_min; j <= jy_max; ++j) {
+							int i_real = i_real_v(i, par);
+							dFy[i_real][j] += dFy_temp[i_real][j];
+						}
 					}
 				}
 			}
+
+			Output_V(dFy, "Fy", 0, par);
+
+			end = std::clock();
+			std::cout << "time f old " << end - begin << std::endl;
 		}
+	//}
 
-
-
-	}
 	// copy force to non-used boundary nodes
 	if (par.BC == periodical) {
 		for (size_t j = 0; j < par.N2_u; ++j) {
-			Fx[0         ][j] = Fx[par.N1    ][j];
-			Fx[par.N1 + 2][j] = Fx[2         ][j];
-			Fx[1         ][j] = Fx[par.N1 + 1][j];
+			dFx[0         ][j] = dFx[par.N1    ][j];
+			dFx[par.N1 + 2][j] = dFx[2         ][j];
+			dFx[1         ][j] = dFx[par.N1 + 1][j];
 		}
 
 		for (size_t j = 0; j < par.N2_v; ++j) {
-			Fy[0         ][j] = Fy[par.N1    ][j];
-			Fy[par.N1 + 1][j] = Fy[1         ][j];
+			dFy[0         ][j] = dFy[par.N1    ][j];
+			dFy[par.N1 + 1][j] = dFy[1         ][j];
 		}
 	}
 
 	//Output(u, u, v, Fx, Fy, par.N_step, iList, par);
-	//getchar();
+	getchar();
 }
 
 void deformation_velocity(Matrix &u, Matrix &v, Matrix &Exx, Matrix &Eyy, Matrix &Exy, Param par) {
@@ -309,7 +328,7 @@ void uf_in_Nodes(std::vector<Node>& Nodes, Matrix &u, Matrix &v, Param par, int 
 	double d_y = par.d_y;
 	boundary_conditions BC = par.BC;
 	double L = par.L;
-	std::clock_t begin = std::clock();
+	//std::clock_t begin = std::clock();
 
 	std::vector<Node_simple> Nodes_simple = Copy_Node_Simple_vector(Nodes, Nn);
 	array_view<Node_simple, 1> Nodes_AV(Nn, Nodes_simple);
@@ -361,8 +380,8 @@ void uf_in_Nodes(std::vector<Node>& Nodes, Matrix &u, Matrix &v, Param par, int 
 	);
 	Nodes_AV.synchronize();
 
-	std::clock_t end = std::clock();
-	std::cout << "time u new " << end - begin << std::endl;
+	//std::clock_t end = std::clock();
+	//std::cout << "time u new " << end - begin << std::endl;
 
 	Copy_Node_vector(Nodes_simple, Nodes, Nn);
 
@@ -370,7 +389,7 @@ void uf_in_Nodes(std::vector<Node>& Nodes, Matrix &u, Matrix &v, Param par, int 
 
 void uf_in_Nodes_old(std::vector<Node>& Nodes, Matrix &u, Matrix &v, Param par, int Nn){
 	
-	std::clock_t begin = std::clock();
+	//std::clock_t begin = std::clock();
 
 	for (size_t k = 0; k < Nn; ++k) {
 		//calculating fluid velocity uf in Lagrange nodes by using near Euler nodes and discrete delta function
@@ -409,8 +428,8 @@ void uf_in_Nodes_old(std::vector<Node>& Nodes, Matrix &u, Matrix &v, Param par, 
 			}
 		}
 	}
-	std::clock_t end = std::clock();
-	std::cout << "time u old " << end - begin << std::endl;
+	//std::clock_t end = std::clock();
+	//std::cout << "time u old " << end - begin << std::endl;
 }
 
 
@@ -427,7 +446,7 @@ void F_to_Euler_grid(std::vector<Node>& Nodes, Matrix &Fx_temp, Matrix &Fy_temp,
 	double L = par.L;
 	double l_dxdy = 1. / d_x / d_y;
 
-	std::clock_t begin = std::clock();
+	//std::clock_t begin = std::clock();
 
 	std::vector<Node_simple> Nodes_simple = Copy_Node_Simple_vector(Nodes, Nn);
 	array_view<Node_simple, 1> Nodes_AV(Nn, Nodes_simple);
@@ -498,13 +517,24 @@ void F_to_Euler_grid(std::vector<Node>& Nodes, Matrix &Fx_temp, Matrix &Fy_temp,
 	Fy_temp_AV.synchronize();
 	DoubleArray_to_Matrix(Fy_temp_, Fy_temp, par.BC);
 
-	std::clock_t end = std::clock();
-	std::cout << "time f new " << end - begin << std::endl;
+	//std::clock_t end = std::clock();
+	//std::cout << "time f new " << end - begin << std::endl;
 }
 
 void F_to_Euler_grid_old(std::vector<Node>& Nodes, Matrix &Fx_temp, Matrix &Fy_temp, Param par, int Nn) {
 
-	std::clock_t begin = std::clock();
+	//std::clock_t begin = std::clock();
+
+	for (size_t i = 0; i < par.N1_u; ++i) {
+		for (size_t j = 0; j < par.N2_u; ++j) {
+			Fx_temp[i][j] = 0.0;
+		}
+	}
+	for (size_t i = 0; i < par.N1_v; ++i) {
+		for (size_t j = 0; j < par.N2_v; ++j) {
+			Fy_temp[i][j] = 0.0;
+		}
+	}
 
 	for (size_t k = 0; k < Nn; ++k) {
 
@@ -560,6 +590,6 @@ void F_to_Euler_grid_old(std::vector<Node>& Nodes, Matrix &Fx_temp, Matrix &Fy_t
 			}
 		}
 	}
-	std::clock_t end = std::clock();
-	std::cout << "time f old " << end - begin << std::endl;
+	//std::clock_t end = std::clock();
+	//std::cout << "time f old " << end - begin << std::endl;
 }
