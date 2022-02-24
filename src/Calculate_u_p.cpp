@@ -94,6 +94,10 @@ void Calculate_u_p(Matrix &U_n   , Matrix &U_new,
 			}
 			CalculateForce(dFx, dFy, solidList, U_f, V_f, par);
 
+			Output_V(dFy, "Fy", s, par);
+			Output_V(V_f, "V" , s, par);
+			getchar();
+
 			if (par.IBM == 0) {
 				U_new += dFx * (par.d_t);
 				V_new += dFy * (par.d_t);

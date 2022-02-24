@@ -5,8 +5,8 @@
 
 void CalculateForce(Matrix &dFx, Matrix &dFy, std::vector<Circle> &iList, Matrix& u, Matrix& v, Param par) {
 
-	bool AMP = true;
-	int num_thr = 1;
+	bool AMP = false;
+	int num_thr = omp_get_max_threads();
 
 	std::clock_t begin, end;
 
@@ -24,28 +24,29 @@ void CalculateForce(Matrix &dFx, Matrix &dFy, std::vector<Circle> &iList, Matrix
 		}
 	}
 
-	//if (AMP == true) {
+	if (AMP == true) {
 		begin = std::clock();
 		for (solid = iList.begin(); solid != iList.end(); solid++) {
 				uf_in_Nodes(solid->Nodes, u, v, par, solid->Nn);
 		}
 		end = std::clock();
 		std::cout << "time u new " << end - begin << std::endl;
-	//}
+	}
 
 	#pragma omp parallel private(solid) num_threads(num_thr)
 	{
-		/*if (AMP == false) {
-			begin = std::clock();
+		if (AMP == false) {
+
 			for (solid = iList.begin(); solid != iList.end(); solid++) {
 			#pragma omp single nowait
 				{
+					begin = std::clock();
 					uf_in_Nodes_old(solid->Nodes, u, v, par, solid->Nn);
+					end = std::clock();
+					std::cout << "time u old " << end - begin << std::endl;
 				}
 			}
-			end = std::clock();
-			std::cout << "time u old " << end - begin << std::endl;
-		}*/
+		}
 
 
 		for (solid = iList.begin(); solid != iList.end(); solid++) {
@@ -71,48 +72,38 @@ void CalculateForce(Matrix &dFx, Matrix &dFy, std::vector<Circle> &iList, Matrix
 		}
 	}
 
-	for (size_t i = 0; i < par.N1_u; ++i) {
-		for (size_t j = 0; j < par.N2_u; ++j) {
-			dFx[i][j] = 0.0;
-		}
-	}
-	for (size_t i = 0; i < par.N1_v; ++i) {
-		for (size_t j = 0; j < par.N2_v; ++j) {
-			dFy[i][j] = 0.0;
-		}
-	}
+	//for (size_t i = 0; i < par.N1_u; ++i) {
+	//	for (size_t j = 0; j < par.N2_u; ++j) {
+	//		dFx[i][j] = 0.0;
+	//	}
+	//}
+	//for (size_t i = 0; i < par.N1_v; ++i) {
+	//	for (size_t j = 0; j < par.N2_v; ++j) {
+	//		dFy[i][j] = 0.0;
+	//	}
+	//}
 
 	if (AMP == true) {
 		begin = std::clock();
 		for (solid = iList.begin(); solid != iList.end(); solid++) {
 			F_to_Euler_grid(solid->Nodes, dFx, dFy, par, solid->Nn);
-			Output_V(dFy, "Fy", 1, par);
 		}
 		end = std::clock();
 		std::cout << "time f new " << end - begin << std::endl;
 	}
 
-	//#pragma omp parallel private(solid) num_threads(num_thr)
-	//{
+	#pragma omp parallel private(solid) num_threads(num_thr)
+	{
 		if (AMP == false) {
-			begin = std::clock();
+
 			for (solid = iList.begin(); solid != iList.end(); solid++) {
-			//#pragma omp single nowait
+			#pragma omp single nowait
 				{
+					begin = std::clock();
 					CreateMatrix(dFx_temp, par.N1_u, par.N2_u);
 					CreateMatrix(dFy_temp, par.N1_v, par.N2_v);
 
-					//CreateMatrix(dFx_new, par.N1_u, par.N2_u);
-					//CreateMatrix(dFy_new, par.N1_v, par.N2_v);
-					//
-					//F_to_Euler_grid(solid->Nodes, dFx_new, dFy_new, par, solid->Nn);
-					//Output_V(dFy_new, "Fy", 1, par);
-					//Output(dFx_new, dFx_new, dFy_new, dFx_new, dFy_new, 111, iList, par);
-					//std::getchar();
-
 					F_to_Euler_grid_old(solid->Nodes, dFx_temp, dFy_temp, par, solid->Nn);
-					//Output_V(dFy_temp, "Fy", 0, par);
-					//Output(dFx_temp, dFx_temp, dFy_temp, dFx_temp, dFy_temp, 999, iList, par);
 
 					int ix_max, ix_min;
 					int jx_max, jx_min;
@@ -135,15 +126,13 @@ void CalculateForce(Matrix &dFx, Matrix &dFy, std::vector<Circle> &iList, Matrix
 							dFy[i_real][j] += dFy_temp[i_real][j];
 						}
 					}
+
+					end = std::clock();
+					std::cout << "time f old " << end - begin << std::endl;
 				}
 			}
-
-			Output_V(dFy, "Fy", 0, par);
-
-			end = std::clock();
-			std::cout << "time f old " << end - begin << std::endl;
 		}
-	//}
+	}
 
 	// copy force to non-used boundary nodes
 	if (par.BC == periodical) {
@@ -159,8 +148,6 @@ void CalculateForce(Matrix &dFx, Matrix &dFy, std::vector<Circle> &iList, Matrix
 		}
 	}
 
-	//Output(u, u, v, Fx, Fy, par.N_step, iList, par);
-	getchar();
 }
 
 void deformation_velocity(Matrix &u, Matrix &v, Matrix &Exx, Matrix &Eyy, Matrix &Exy, Param par) {
@@ -525,16 +512,16 @@ void F_to_Euler_grid_old(std::vector<Node>& Nodes, Matrix &Fx_temp, Matrix &Fy_t
 
 	//std::clock_t begin = std::clock();
 
-	for (size_t i = 0; i < par.N1_u; ++i) {
-		for (size_t j = 0; j < par.N2_u; ++j) {
-			Fx_temp[i][j] = 0.0;
-		}
-	}
-	for (size_t i = 0; i < par.N1_v; ++i) {
-		for (size_t j = 0; j < par.N2_v; ++j) {
-			Fy_temp[i][j] = 0.0;
-		}
-	}
+	//for (size_t i = 0; i < par.N1_u; ++i) {
+	//	for (size_t j = 0; j < par.N2_u; ++j) {
+	//		Fx_temp[i][j] = 0.0;
+	//	}
+	//}
+	//for (size_t i = 0; i < par.N1_v; ++i) {
+	//	for (size_t j = 0; j < par.N2_v; ++j) {
+	//		Fy_temp[i][j] = 0.0;
+	//	}
+	//}
 
 	for (size_t k = 0; k < Nn; ++k) {
 
