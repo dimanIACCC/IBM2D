@@ -15,7 +15,7 @@ void Calculate_u_p(Matrix &U_n   , Matrix &U_new,
                    Matrix &P,
                    Matrix &Fx,
                    Matrix &Fy,
-                   std::vector<Circle> &solidList, Param par) {
+                   std::vector<Circle> &solidList, std::vector<Node> &Nodes, Param par) {
 
 	CreateMatrix(U_s, par.N1_u, par.N2_u);
 	CreateMatrix(V_s, par.N1_v, par.N2_v);
@@ -87,16 +87,16 @@ void Calculate_u_p(Matrix &U_n   , Matrix &U_new,
 			V_f = V_new;
 
 			// apply force from immersed particles for several times to fulfill no-slip BC
-			Solids_zero_force(solidList);
+			Solids_zero_force(solidList, Nodes, par.Nn_max);
 			for (auto& it : solidList) {
 				it.Fr = 0.;
 				it.S = 0.;
 			}
-			CalculateForce(dFx, dFy, solidList, U_f, V_f, par);
+			CalculateForce(dFx, dFy, solidList, Nodes, U_f, V_f, par);
 
-			Output_V(dFy, "Fy", s, par);
-			Output_V(V_f, "V" , s, par);
-			getchar();
+			//Output_V(dFy, "Fy", s, par);
+			//Output_V(V_f, "V" , s, par);
+			//getchar();
 
 			if (par.IBM == 0) {
 				U_new += dFx * (par.d_t);
@@ -241,7 +241,7 @@ void Calculate_u_p(Matrix &U_n   , Matrix &U_new,
 
 	// Calculation of the strain rate, pressure and HydroDynamic (HD) force in Lagrange mesh
 	deformation_velocity(U_new, V_new, Exx, Eyy, Exy, par);
-	Solids_deformation_velocity_pressure(solidList, Exx, Eyy, Exy, P, par);
+	Solids_deformation_velocity_pressure(solidList, Nodes, Exx, Eyy, Exy, P, par);
 	
 }
 

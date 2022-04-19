@@ -13,7 +13,6 @@ SolidBody::SolidBody(double x, double y, double ux, double uy, double omega, dou
 	this->omega_n[3] = omega;
 	this->rho = rho;
 	this->Nn = Nn;
-	this->Nodes.resize(Nn);
 	this->moving = moving;
 	this->name = name;
 	this->x     = this->x_n;
@@ -46,26 +45,31 @@ bool operator >(const SolidBody& a, const SolidBody& b) {
 	else return false;
 }
 
-Circle::Circle(double x, double y, double ux, double uy, double omega, double rho,  int Nn, int moving, int name, double r, double d_x, double d_y) :
+Circle::Circle(double x, double y, double ux, double uy, double omega, double rho,  int Nn, int moving, int name, std::vector<Node> &Nodes, double r, double d_x, double d_y, int &Nn_max) :
      SolidBody(       x,        y,        ux,        uy,        omega,        rho,      Nn,     moving,     name) {
 	this->r = r;
+	this->IndNodes.resize(Nn_max + Nn);
+	Nodes.resize(Nn_max + Nn);
 	for (size_t i = 0; i < Nn; ++i){
-		Nodes[i].x_n[1] = cos(i * 2.0 * M_PI / Nn) * r;
-		Nodes[i].x_n[2] = sin(i * 2.0 * M_PI / Nn) * r;
-		Nodes[i].n[1]  = cos(i * 2.0 * M_PI / Nn);
-		Nodes[i].n[2]  = sin(i * 2.0 * M_PI / Nn);
-		Nodes[i].ds = 2.0 * M_PI * r / Nn
-			          * sqrt(d_x*d_x * Nodes[i].n[1] * Nodes[i].n[1]
-			               + d_y*d_y * Nodes[i].n[2] * Nodes[i].n[2]);
-		Nodes[i].x = Nodes[i].x_n;
+		int Ind = Nn_max + i;
+		this->IndNodes[i] = Ind;
+		Nodes[Ind].x_n[1] = cos(i * 2.0 * M_PI / Nn) * r;
+		Nodes[Ind].x_n[2] = sin(i * 2.0 * M_PI / Nn) * r;
+		Nodes[Ind].n[1]  = cos(i * 2.0 * M_PI / Nn);
+		Nodes[Ind].n[2]  = sin(i * 2.0 * M_PI / Nn);
+		Nodes[Ind].ds = 2.0 * M_PI * r / Nn
+			          * sqrt(d_x*d_x * Nodes[Ind].n[1] * Nodes[Ind].n[1]
+			               + d_y*d_y * Nodes[Ind].n[2] * Nodes[Ind].n[2]);
+		Nodes[Ind].x = Nodes[Ind].x_n;
 	}
+	Nn_max += Nn;
 
 	V = M_PI * r * r;
 	I =  V * r * r / 2.0; // angular momentum for unit density
 }
 
-Circle::Circle(double x, double y, Param &par):
-	    Circle(       x,        y, 0.0, 0.0, 0.0, par.rho, par.Nn, true, par.SolidName_max+1, par.r, par.d_x, par.d_y) {
+Circle::Circle(double x, double y, Param &par, std::vector<Node> &Nodes):
+	    Circle(       x,        y, 0.0, 0.0, 0.0, par.rho, par.Nn, true, par.SolidName_max+1, Nodes, par.r, par.d_x, par.d_y, par.Nn_max) {
 	this->u_n[1] = 0.0;  //  ux_Poiseuille(y, par.H);
 	this->omega_n[3] = 0.0; // -dux_dy_Poiseuille(y, par.H);
 	this->omega     = this->omega_n;
@@ -76,15 +80,17 @@ Circle::~Circle()
 {
 }
 
-void SolidBody::velocities() {
-	for (size_t i = 0; i < Nn; ++i) {
-		Nodes[i].us = 0.5 * (u + u + x_product(omega+omega, Nodes[i].x));
+void velocities(std::vector<Circle>::iterator &Solid, std::vector<Node> &Nodes) {
+	for (size_t k = 0; k < Solid->Nn; ++k) {
+		int Ind = Solid->IndNodes[k];
+		Nodes[Ind].us = 0.5 * (Solid->u + Solid->u + x_product(Solid->omega+ Solid->omega, Nodes[Ind].x));
 	}
 }
 
-void SolidBody::coordinates() {
-	for (size_t i = 0; i < Nn; ++i) {
-		Nodes[i].x_s = x + Nodes[i].x;
+void coordinates(std::vector<Circle>::iterator &Solid, std::vector<Node> &Nodes) {
+	for (size_t k = 0; k < Solid->Nn; ++k) {
+		int Ind = Solid->IndNodes[k];
+		Nodes[Ind].x_s = Solid->x + Nodes[Ind].x;
 	}
 }
 
@@ -161,8 +167,8 @@ void Read_Solids(std::string filename, std::vector<Circle>& Solids, Param &par) 
 					uy = 0;
 					omega = - dux_dy_Poiseuille(y, par.H);
 				}
-				
-				Circle c(x, y, ux, uy, omega, rho, Nn, moving, par.SolidName_max+1, r, par.d_x, par.d_y);
+				std::vector<Node> Nodes;
+				Circle c(x, y, ux, uy, omega, rho, Nn, moving, par.SolidName_max+1, Nodes, r, par.d_x, par.d_y, par.Nn_max);
 				if (c.name > par.SolidName_max) par.SolidName_max = c.name;
 				Solids.push_back(c);
 				c.log_init(par.WorkDir);
@@ -175,7 +181,7 @@ void Read_Solids(std::string filename, std::vector<Circle>& Solids, Param &par) 
 
 }
 
-void Add_Solids(std::vector<Circle>& Solids, Param &par) {
+void Add_Solids(std::vector<Circle>& Solids, std::vector<Node>& Nodes, Param &par) {
 	if (   (par.N_step - par.AddSolids_start) % par.AddSolids_interval == 0   &&   (par.N_step >= par.AddSolids_start)) { //create new solids starting from $AddSolids_start$ iteration with interval of $AddSolids_interval$ iterations
 		for (int i = 0; i < par.AddSolids_N; i++) { // add $AddSolids_N$ solids
 			GeomVec x;
@@ -183,8 +189,7 @@ void Add_Solids(std::vector<Circle>& Solids, Param &par) {
 			x[1] = (par.L)  * (0.5 + (1 - 4 * par.r / par.L) * (double(rand()) - RAND_MAX / 2) / RAND_MAX);
 			x[2] = (par.H)  * (0.5 + (1 - 3 * par.r / par.H) * (double(rand()) - RAND_MAX / 2) / RAND_MAX);
 			x[3] = 0;
-			Circle c(x[1], x[2], par);
-			if (c.name > par.SolidName_max) par.SolidName_max = c.name;
+
 			// check if new Solid does not cross other Solids
 			bool add = true;
 			for (auto solid = Solids.begin(); solid != Solids.end(); solid++) {
@@ -195,6 +200,8 @@ void Add_Solids(std::vector<Circle>& Solids, Param &par) {
 				}
 			}
 			if (add) {
+				Circle c(x[1], x[2], par, Nodes);
+				if (c.name > par.SolidName_max) par.SolidName_max = c.name;
 				Solids.push_back(c);
 				c.log_init(par.WorkDir);
 			}
@@ -339,14 +346,15 @@ void Solids_collide(std::vector<Circle> &solidList, Param par) {
 
 }
 
-void Solids_move(std::vector<Circle> &solidList, Param par) {
+void Solids_move(std::vector<Circle> &solidList, std::vector<Node> &Nodes, Param par) {
 	for (auto it = solidList.begin(); it != solidList.end();) {
 			if (it->moving > 0) {
 				it->u_n    = it->u;
 				it->omega_n = it->omega;
 				it->x_n    = it->x;
 				for (size_t k = 0; k < it->Nn; ++k) {
-					it->Nodes[k].x_n = it->Nodes[k].x;
+					int Ind = it->IndNodes[k];
+					Nodes[Ind].x_n = Nodes[Ind].x;
 				}
 			}
 			it->log(par.WorkDir, par.N_step);
@@ -385,16 +393,17 @@ void h_average_of_Solids_Layer(std::vector<Circle> &solidList, Param par, double
 }
 
 
-void Solids_zero_force(std::vector<Circle>& Solids) {
+void Solids_zero_force(std::vector<Circle>& Solids, std::vector<Node>& Nodes, int Nn_max) {
 	for (auto& it : Solids) {
 		std::fill(it.f.begin(), it.f.end(), 0.0);
 		std::fill(it.tau.begin(), it.tau.end(), 0.0);
 		std::fill(it.d_uv_collide.begin(), it.d_uv_collide.end(), 0.0);
 		std::fill(it.d_ur_collide.begin(), it.d_ur_collide.end(), 0.0);
 		std::fill(it.d_omega_collide.begin(), it.d_omega_collide.end(), 0.0);
-		for (size_t k = 0; k < it.Nn; ++k) {
-			std::fill(it.Nodes[k].f.begin(), it.Nodes[k].f.end(), 0.0);
-		}
+		
+	}
+	for (size_t k = 0; k < Nn_max; ++k) {
+		std::fill(Nodes[k].f.begin(), Nodes[k].f.end(), 0.0);
 	}
 }
 
@@ -431,12 +440,13 @@ void Solids_velocity_new(std::vector<Circle>& Solids, Param par) {
 	}
 }
 
-void Solids_position_new(std::vector<Circle>& Solids, Param par) {
+void Solids_position_new(std::vector<Circle>& Solids, std::vector<Node>& Nodes, Param par) {
 	for (auto& it : Solids) {
 		if (it.moving>0) {
 			it.x = it.x_n + 0.5 * (it.u_n + it.u) * par.d_t;
 			for (size_t k = 0; k < it.Nn; ++k) {
-				it.Nodes[k].x = rotate_Vector_around_vector(it.Nodes[k].x_n, 0.5 * (it.omega_n + it.omega) * par.d_t); //rotate
+				int Ind = it.IndNodes[k];
+				Nodes[Ind].x = rotate_Vector_around_vector(Nodes[Ind].x_n, 0.5 * (it.omega_n + it.omega) * par.d_t); //rotate
 			}
 		}
 	}

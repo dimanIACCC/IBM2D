@@ -3,9 +3,9 @@
 #include "Output.h"
 
 
-void CalculateForce(Matrix &dFx, Matrix &dFy, std::vector<Circle> &iList, Matrix& u, Matrix& v, Param par) {
+void CalculateForce(Matrix &dFx, Matrix &dFy, std::vector<Circle> &iList, std::vector<Node> &Nodes, Matrix& u, Matrix& v, Param par) {
 
-	bool AMP = false;
+	bool AMP = true;
 	int num_thr = omp_get_max_threads();
 
 	std::clock_t begin, end;
@@ -18,8 +18,8 @@ void CalculateForce(Matrix &dFx, Matrix &dFy, std::vector<Circle> &iList, Matrix
 		#pragma omp single nowait
 			{
 				//calculating velocities us of the solid boundary
-				solid->velocities();
-				solid->coordinates();
+				velocities(solid,Nodes);
+				coordinates(solid,Nodes);
 			}
 		}
 	}
@@ -27,7 +27,7 @@ void CalculateForce(Matrix &dFx, Matrix &dFy, std::vector<Circle> &iList, Matrix
 	if (AMP == true) {
 		begin = std::clock();
 		for (solid = iList.begin(); solid != iList.end(); solid++) {
-				uf_in_Nodes(solid->Nodes, u, v, par, solid->Nn);
+				uf_in_Nodes(Nodes, u, v, par, par.Nn_max);
 		}
 		end = std::clock();
 		std::cout << "time u new " << end - begin << std::endl;
@@ -41,7 +41,7 @@ void CalculateForce(Matrix &dFx, Matrix &dFy, std::vector<Circle> &iList, Matrix
 			#pragma omp single nowait
 				{
 					begin = std::clock();
-					uf_in_Nodes_old(solid->Nodes, u, v, par, solid->Nn);
+					uf_in_Nodes_old(Nodes, u, v, par, par.Nn_max);
 					end = std::clock();
 					std::cout << "time u old " << end - begin << std::endl;
 				}
@@ -54,18 +54,20 @@ void CalculateForce(Matrix &dFx, Matrix &dFy, std::vector<Circle> &iList, Matrix
 			{
 				for (size_t k = 0; k < solid->Nn; ++k) {
 					// mass force f in Lagrange nodes
-					solid->Nodes[k].f = -(solid->Nodes[k].uf - solid->Nodes[k].us) / par.d_t;
-					GeomVec r = solid->Nodes[k].x / length(solid->Nodes[k].x);
-					solid->Fr += dot_product(r, solid->Nodes[k].f) * solid->Nodes[k].ds;   // compression force applied to the solid
-					solid->S += solid->Nodes[k].ds;
+					int Ind = solid->IndNodes[k];
+					Nodes[Ind].f = -(Nodes[Ind].uf - Nodes[Ind].us) / par.d_t;
+					GeomVec r = Nodes[Ind].x / length(Nodes[Ind].x);
+					solid->Fr += dot_product(r, Nodes[Ind].f) * Nodes[Ind].ds;   // compression force applied to the solid
+					solid->S += Nodes[Ind].ds;
 				}
 
 				solid->Fr /= solid->S;
 				for (size_t k = 0; k < solid->Nn; ++k) {
-					GeomVec r = (solid->Nodes[k].x) / length(solid->Nodes[k].x);
-					solid->Nodes[k].f -= solid->Fr * r;
-					solid->f += solid->Nodes[k].f * solid->Nodes[k].ds;
-					solid->tau += x_product(solid->Nodes[k].x, solid->Nodes[k].f) * solid->Nodes[k].ds;
+					int Ind = solid->IndNodes[k];
+					GeomVec r = (Nodes[Ind].x) / length(Nodes[Ind].x);
+					Nodes[Ind].f -= solid->Fr * r;
+					solid->f += Nodes[Ind].f * Nodes[Ind].ds;
+					solid->tau += x_product(Nodes[Ind].x, Nodes[Ind].f) * Nodes[Ind].ds;
 				}
 
 			}
@@ -86,7 +88,7 @@ void CalculateForce(Matrix &dFx, Matrix &dFy, std::vector<Circle> &iList, Matrix
 	if (AMP == true) {
 		begin = std::clock();
 		for (solid = iList.begin(); solid != iList.end(); solid++) {
-			F_to_Euler_grid(solid->Nodes, dFx, dFy, par, solid->Nn);
+			F_to_Euler_grid(Nodes, dFx, dFy, par, par.Nn_max);
 		}
 		end = std::clock();
 		std::cout << "time f new " << end - begin << std::endl;
@@ -103,7 +105,7 @@ void CalculateForce(Matrix &dFx, Matrix &dFy, std::vector<Circle> &iList, Matrix
 					CreateMatrix(dFx_temp, par.N1_u, par.N2_u);
 					CreateMatrix(dFy_temp, par.N1_v, par.N2_v);
 
-					F_to_Euler_grid_old(solid->Nodes, dFx_temp, dFy_temp, par, solid->Nn);
+					F_to_Euler_grid_old(Nodes, dFx_temp, dFy_temp, par, par.Nn_max);
 
 					int ix_max, ix_min;
 					int jx_max, jx_min;
@@ -178,7 +180,7 @@ void deformation_velocity(Matrix &u, Matrix &v, Matrix &Exx, Matrix &Eyy, Matrix
 
 }
 
-void Solids_deformation_velocity_pressure(std::vector<Circle> &Solids, Matrix &Exx, Matrix &Eyy, Matrix &Exy, Matrix &p, Param par) {
+void Solids_deformation_velocity_pressure(std::vector<Circle> &Solids, std::vector<Node> &Nodes, Matrix &Exx, Matrix &Eyy, Matrix &Exy, Matrix &p, Param par) {
 
 	size_t np1 = par.N1_p;
 	size_t np2 = par.N2_p;
@@ -192,35 +194,35 @@ void Solids_deformation_velocity_pressure(std::vector<Circle> &Solids, Matrix &E
 
 			int i_max, i_min;
 			int j_max, j_min;
+			int Ind = solid.IndNodes[k];
 
-
-			GetInfluenceArea(i_min, i_max, j_min, j_max, np1 - 1, np2 - 1, solid.x + solid.Nodes[k].x, 4, par);
-			solid.Nodes[k].Eps(1, 1) = 0.0;
-			solid.Nodes[k].Eps(2, 2) = 0.0;
-			solid.Nodes[k].p         = 0.0;
+			GetInfluenceArea(i_min, i_max, j_min, j_max, np1 - 1, np2 - 1, solid.x + Nodes[Ind].x, 4, par);
+			Nodes[Ind].Eps(1, 1) = 0.0;
+			Nodes[Ind].Eps(2, 2) = 0.0;
+			Nodes[Ind].p         = 0.0;
 			for (int i = i_min; i <= i_max; ++i) {
 				for (int j = j_min; j <= j_max; ++j) {
 					int i_real = i;
 					if (i_real <  1      ) i_real += np1 - 2;
 					if (i_real >  np1 - 2) i_real -= np1 - 2;
 					GeomVec xp = x_p(i_real, j, par);
-					GeomVec xs = solid.x + solid.Nodes[k].x;
-					solid.Nodes[k].Eps(1, 1) += Exx[i_real][j] * DeltaFunction(xp[1] - xs[1], xp[2] - xs[2], par.d_x, par.d_y);
-					solid.Nodes[k].Eps(2, 2) += Eyy[i_real][j] * DeltaFunction(xp[1] - xs[1], xp[2] - xs[2], par.d_x, par.d_y);
-					solid.Nodes[k].p         +=   p[i_real][j] * DeltaFunction(xp[1] - xs[1], xp[2] - xs[2], par.d_x, par.d_y);
+					GeomVec xs = solid.x + Nodes[Ind].x;
+					Nodes[Ind].Eps(1, 1) += Exx[i_real][j] * DeltaFunction(xp[1] - xs[1], xp[2] - xs[2], par.d_x, par.d_y);
+					Nodes[Ind].Eps(2, 2) += Eyy[i_real][j] * DeltaFunction(xp[1] - xs[1], xp[2] - xs[2], par.d_x, par.d_y);
+					Nodes[Ind].p         +=   p[i_real][j] * DeltaFunction(xp[1] - xs[1], xp[2] - xs[2], par.d_x, par.d_y);
 					if (par.BC == periodical) {
-						solid.Nodes[k].Eps(1, 1) += Exx[i_real][j] * DeltaFunction(xp[1] - xs[1] - par.L, xp[2] - xs[2], par.d_x, par.d_y);
-						solid.Nodes[k].Eps(1, 1) += Exx[i_real][j] * DeltaFunction(xp[1] - xs[1] + par.L, xp[2] - xs[2], par.d_x, par.d_y);
-						solid.Nodes[k].Eps(2, 2) += Eyy[i_real][j] * DeltaFunction(xp[1] - xs[1] - par.L, xp[2] - xs[2], par.d_x, par.d_y);
-						solid.Nodes[k].Eps(2, 2) += Eyy[i_real][j] * DeltaFunction(xp[1] - xs[1] + par.L, xp[2] - xs[2], par.d_x, par.d_y);
-						solid.Nodes[k].p         +=   (p[i_real][j] + dpdx_Poiseuille(par.H, par.Re)*par.L) * DeltaFunction(xp[1] - xs[1] - par.L, xp[2] - xs[2], par.d_x, par.d_y);
-						solid.Nodes[k].p         +=   (p[i_real][j] - dpdx_Poiseuille(par.H, par.Re)*par.L) * DeltaFunction(xp[1] - xs[1] + par.L, xp[2] - xs[2], par.d_x, par.d_y);
+						Nodes[Ind].Eps(1, 1) += Exx[i_real][j] * DeltaFunction(xp[1] - xs[1] - par.L, xp[2] - xs[2], par.d_x, par.d_y);
+						Nodes[Ind].Eps(1, 1) += Exx[i_real][j] * DeltaFunction(xp[1] - xs[1] + par.L, xp[2] - xs[2], par.d_x, par.d_y);
+						Nodes[Ind].Eps(2, 2) += Eyy[i_real][j] * DeltaFunction(xp[1] - xs[1] - par.L, xp[2] - xs[2], par.d_x, par.d_y);
+						Nodes[Ind].Eps(2, 2) += Eyy[i_real][j] * DeltaFunction(xp[1] - xs[1] + par.L, xp[2] - xs[2], par.d_x, par.d_y);
+						Nodes[Ind].p         +=   (p[i_real][j] + dpdx_Poiseuille(par.H, par.Re)*par.L) * DeltaFunction(xp[1] - xs[1] - par.L, xp[2] - xs[2], par.d_x, par.d_y);
+						Nodes[Ind].p         +=   (p[i_real][j] - dpdx_Poiseuille(par.H, par.Re)*par.L) * DeltaFunction(xp[1] - xs[1] + par.L, xp[2] - xs[2], par.d_x, par.d_y);
 					}
 				}
 			}
 
-			GetInfluenceArea(i_min, i_max, j_min, j_max, nc1 - 1, nc2 - 1, solid.x + solid.Nodes[k].x, 4, par);
-			solid.Nodes[k].Eps(1, 2) = 0.0;
+			GetInfluenceArea(i_min, i_max, j_min, j_max, nc1 - 1, nc2 - 1, solid.x + Nodes[Ind].x, 4, par);
+			Nodes[Ind].Eps(1, 2) = 0.0;
 			for (int i = i_min; i <= i_max; ++i) {
 				for (int j = j_min; j <= j_max; ++j) {
 					int i_real = i;
@@ -228,11 +230,11 @@ void Solids_deformation_velocity_pressure(std::vector<Circle> &Solids, Matrix &E
 					if (i_real >  nc1 - 1) i_real -= nc1 - 1;
 					if (i_real == 0      ) i_real  = nc1 - 1;
 					GeomVec xc = x_c(i_real, j, par);
-					GeomVec xs = solid.x + solid.Nodes[k].x;
-					solid.Nodes[k].Eps(1, 2) += Exy[i_real][j] * DeltaFunction(xc[1] - xs[1], xc[2] - xs[2], par.d_x, par.d_y);
+					GeomVec xs = solid.x + Nodes[Ind].x;
+					Nodes[Ind].Eps(1, 2) += Exy[i_real][j] * DeltaFunction(xc[1] - xs[1], xc[2] - xs[2], par.d_x, par.d_y);
 					if (par.BC == periodical) {
-						solid.Nodes[k].Eps(1, 2) += Exy[i_real][j] * DeltaFunction(xc[1] - xs[1] - par.L, xc[2] - xs[2], par.d_x, par.d_y);
-						solid.Nodes[k].Eps(1, 2) += Exy[i_real][j] * DeltaFunction(xc[1] - xs[1] + par.L, xc[2] - xs[2], par.d_x, par.d_y);
+						Nodes[Ind].Eps(1, 2) += Exy[i_real][j] * DeltaFunction(xc[1] - xs[1] - par.L, xc[2] - xs[2], par.d_x, par.d_y);
+						Nodes[Ind].Eps(1, 2) += Exy[i_real][j] * DeltaFunction(xc[1] - xs[1] + par.L, xc[2] - xs[2], par.d_x, par.d_y);
 					}
 				}
 			}

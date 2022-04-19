@@ -24,6 +24,7 @@ int main(int argc, char *argv[]) {
 
 	fs::path WorkDir = L"Result/";
 	std::vector<Circle> solidList; // list of immersed solids
+	std::vector<Node> Nodes; // list of Nodes
 
 	for (int i = 1; i < argc; i++) {
 		std::string line, PAR, VALUE;
@@ -35,8 +36,8 @@ int main(int argc, char *argv[]) {
 			Param par;
 		    par.WorkDir = WorkDir.string();
 			std::string file = par.WorkDir + VALUE;
-			Awake(file, par, solidList, U_n, V_n, P);
-			BodyOfProgram(par, solidList, U_n, V_n, P);
+			Awake(file, par, solidList, Nodes, U_n, V_n, P);
+			BodyOfProgram(par, solidList, Nodes, U_n, V_n, P);
 			return 0;
 		}
 		else if (PAR == "-post") {
@@ -82,7 +83,7 @@ int main(int argc, char *argv[]) {
 	CreateMatrix(P  , par.N1_p, par.N2_p);					    //
 	fill_exact(U_n, V_n, P, par, 0.0, par.d_t*0.5);             // Initial conditions for velocity and pressure
 
-	BodyOfProgram(par, solidList, U_n, V_n, P);					// start solver
+	BodyOfProgram(par, solidList, Nodes, U_n, V_n, P);					// start solver
 
 
 	std::cout << "The End" << std::endl;

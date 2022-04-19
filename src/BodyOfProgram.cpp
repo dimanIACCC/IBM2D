@@ -1,7 +1,7 @@
 #include "stdafx.h"
 #include "BodyOfProgram.h"
 
-void BodyOfProgram(Param par, std::vector<Circle> solidList, Matrix U_n, Matrix V_n, Matrix P) {
+void BodyOfProgram(Param &par, std::vector<Circle> &solidList, std::vector<Node> &Nodes, Matrix &U_n, Matrix &V_n, Matrix &P) {
 																		 
 #pragma region SetMatrices 
 	CreateMatrix(U_new, par.N1_u, par.N2_u);
@@ -24,14 +24,15 @@ void BodyOfProgram(Param par, std::vector<Circle> solidList, Matrix U_n, Matrix 
 	history_init(par.WorkDir, "history", par.BC);
 
 	for ( ; par.N_step <= 5000000; ++par.N_step) {                                 // main cycle of time iterations
-		if (par.N_step % 100 == 0)
-			MakeHibernationFile(par, solidList, U_n, V_n, P);              // writting hibernation file for prior time step
 
-		Add_Solids(solidList, par);                                                     // add solids if the conditions are fulfilled
+		Add_Solids(solidList, Nodes, par);                                                     // add solids if the conditions are fulfilled
 		std::cout << "Add_Solids finished" << std::endl;
 
-		Calculate_u_p(U_n, U_new, V_n, V_new, P, Fx, Fy, solidList, par);  // calculate velocity and pressure at the new time step
-		Solids_position_new(solidList, par);
+		if (par.N_step % 100 == 0)
+			MakeHibernationFile(par, solidList, Nodes, U_n, V_n, P);              // writting hibernation file for prior time step
+
+		Calculate_u_p(U_n, U_new, V_n, V_new, P, Fx, Fy, solidList, Nodes, par);  // calculate velocity and pressure at the new time step
+		Solids_position_new(solidList, Nodes, par);
 
 		// Output_eq_terms("eq_terms", par.N_step, U_n, V_n, U_new, V_new, P_n, P_new, Fx_new, par, Du);
 
@@ -39,7 +40,7 @@ void BodyOfProgram(Param par, std::vector<Circle> solidList, Matrix U_n, Matrix 
 		double eps_v = diff(V_n, V_new);
 
 		if (par.N_step % par.output_step == 0 || par.N_step < 1)
-			Output(P, U_new, V_new, Fx, Fy, par.N_step, solidList, par);
+			Output(P, U_new, V_new, Fx, Fy, par.N_step, solidList, Nodes, par);
 
 		fill_exact(U_exact, V_exact, P_exact, par, par.d_t*(par.N_step + 1), par.d_t*(par.N_step + 0.5));
 		dU = U_new - U_exact;
@@ -69,7 +70,7 @@ void BodyOfProgram(Param par, std::vector<Circle> solidList, Matrix U_n, Matrix 
 		//}
 
 
-		Solids_move(solidList, par);												// moving solids if it is necessary (checking it up inside)
+		Solids_move(solidList, Nodes, par);												// moving solids if it is necessary (checking it up inside)
 																					        // and detection of collisions
 		double h_average;
 		h_average_of_Solids_Layer(solidList, par, h_average);
@@ -95,7 +96,7 @@ void BodyOfProgram(Param par, std::vector<Circle> solidList, Matrix U_n, Matrix 
 	//log.close();
 }
 
-void MakeHibernationFile(Param& par, std::vector<Circle>& solidList, Matrix& U_n, Matrix& V_n, Matrix& P_n) {
+void MakeHibernationFile(Param& par, std::vector<Circle>& solidList, std::vector<Node> &Nodes, Matrix& U_n, Matrix& V_n, Matrix& P_n) {
 	std::ofstream output;
 	std::string filename = par.WorkDir + "step" + std::to_string(par.N_step) + ".txt";
 	output.open(filename);
@@ -180,8 +181,8 @@ void MakeHibernationFile(Param& par, std::vector<Circle>& solidList, Matrix& U_n
 		output << "<Nodes>" << std::endl;
 		for (int j = 0; j < one->Nn; j++) {
 			output << "Node{" << std::endl;
-			output << "x_n = " << std::endl << one->Nodes[j].x_n << std::endl;
-			output << "n = " << std::endl << one->Nodes[j].n << std::endl;
+			output << "x_n = " << std::endl << Nodes[one->IndNodes[j]].x_n << std::endl;
+			output << "n = " << std::endl << Nodes[one->IndNodes[j]].n << std::endl;
 			output << "}" << std::endl;
 		}
 		output << "<\\Nodes>" << std::endl;
@@ -193,7 +194,7 @@ void MakeHibernationFile(Param& par, std::vector<Circle>& solidList, Matrix& U_n
 
 
 //this method is restoring calculated values to continue calculations
-void Awake(std::string &filename, Param &par, std::vector<Circle>& solidList, Matrix& U_n, Matrix& V_n, Matrix& P_n) {
+void Awake(std::string &filename, Param &par, std::vector<Circle>& solidList, std::vector<Node> &Nodes, Matrix& U_n, Matrix& V_n, Matrix& P_n) {
 	std::ifstream hibernation_source;
 	std::string line;
 	std::string PAR, VALUE;
@@ -259,8 +260,6 @@ void Awake(std::string &filename, Param &par, std::vector<Circle>& solidList, Ma
 						double r = par.r;
 						bool Poiseuille = false;   //key for initial ux, uy and omega_new corresponding to Poiseuille flow
 
-						std::vector<Node> Nodes;   // Nodes of the SolidBody mesh
-
 						while (line != "<\\Solid>") {
 							getline(hibernation_source, line);
 							GetParValue(line, PAR, VALUE);
@@ -296,7 +295,8 @@ void Awake(std::string &filename, Param &par, std::vector<Circle>& solidList, Ma
 								}
 							}
 							if (line == "<\\Solid>") {
-								Circle c(x, y, ux, uy, omega, rho, Nn, moving, name, r, par.d_x, par.d_y);
+								std::vector<Node> Nodes;
+								Circle c(x, y, ux, uy, omega, rho, Nn, moving, name, Nodes, r, par.d_x, par.d_y, par.Nn_max);
 								if (c.name > par.SolidName_max) par.SolidName_max = c.name;
 
 								c.x_n = x_n;
@@ -305,7 +305,6 @@ void Awake(std::string &filename, Param &par, std::vector<Circle>& solidList, Ma
 								c.u   = u_n;
 								c.omega_n = omega_n;
 								c.omega = omega_n;
-								c.Nodes = Nodes;
 
 								solidList.push_back(c);
 								break;

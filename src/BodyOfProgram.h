@@ -6,6 +6,6 @@
 #include "PredictVel.h"
 
 
-void BodyOfProgram(Param par, std::vector<Circle> solidList, Matrix U_n, Matrix V_n, Matrix P);
-void MakeHibernationFile(Param& par, std::vector<Circle>& solidList, Matrix& U_n, Matrix& V_n, Matrix& P);
-void Awake(std::string &file, Param& par, std::vector<Circle>& solidList, Matrix& U_n, Matrix& V_n, Matrix& P);
+void BodyOfProgram(Param& par, std::vector<Circle>& solidList, std::vector<Node>& Nodes, Matrix& U_n, Matrix& V_n, Matrix& P);
+void MakeHibernationFile(Param& par, std::vector<Circle>& solidList, std::vector<Node>& Nodes, Matrix& U_n, Matrix& V_n, Matrix& P);
+void Awake(std::string &file, Param& par, std::vector<Circle>& solidList, std::vector<Node>& Nodes, Matrix& U_n, Matrix& V_n, Matrix& P);

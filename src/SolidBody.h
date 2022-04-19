@@ -40,34 +40,37 @@ public:
 	double V;       // volume
 	GeomVec integralV_du_dt;      // integral of the du/dt       over the Volume of the Solid
 	GeomVec integralV_dur_dt;     // integral of the d(u x r)/dt over the Volume of the Solid
-	std::vector<Node> Nodes;   // Nodes of the SolidBody mesh
+	//std::vector<Node> Nodes;   // Nodes of the SolidBody mesh
+	std::vector<int> IndNodes; // Indices of the Nodes
 	int Nn;                    // Number of Nodes
 	int name;                     // integer name of the Solid
 	//int shape;                    // shape of the Solid
 	double r;
 	SolidBody(double x, double y, double ux, double uy, double omega, double rho, int Nn, int moving, int name);
 	~SolidBody();
-	void velocities();      // calculates the velocities  in all Nodes of the SolidBody
-	void coordinates();     // calculates the coordinates of all Nodes of the SolidBody in global coordinate system
 	void log_init(std::string WorkDir);
 	void log(std::string WorkDir, int n);
 };
 
 class Circle : public SolidBody{
 public:
-	Circle(double x, double y, double ux, double uy, double omega, double rho, int Nn, int moving, int name, double r, double d_x, double d_y);
-	Circle(double x, double y, Param &par);
+	Circle(double x, double y, double ux, double uy, double omega, double rho, int Nn, int moving, int name, std::vector<Node> &Nodes, double r, double d_x, double d_y, int &Nn_max);
+	Circle(double x, double y, Param &par, std::vector<Node> &Nodes);
 	~Circle();
 	void integrals(Matrix U_n, Matrix V_n, Matrix U_new, Matrix V_new, Param par);
 };
 
 void Read_Solids(std::string filename, std::vector<Circle>& Solids, Param &par);
-void Add_Solids(std::vector<Circle>& Solids, Param &par);
+void Add_Solids(std::vector<Circle>& Solids, std::vector<Node>& Nodes, Param &par);
 bool Collide(Circle& s1, Circle& s2, Param par, double alpha, double beta, double friction, double kr);
-void Solids_move(std::vector<Circle> &solidList, Param par);
+void Solids_move(std::vector<Circle> &solidList, std::vector<Node> &Nodes, Param par);
 void Solids_collide(std::vector<Circle> &solidList, Param par);
 void h_average_of_Solids_Layer(std::vector<Circle> &solidList, Param par, double& h_average);
-void Solids_zero_force(std::vector<Circle>& Solids);
+void Solids_zero_force(std::vector<Circle>& Solids, std::vector<Node> &Nodes, int N_max);
 void Solids_velocity_new(std::vector<Circle>& Solids, Param par);
-void Solids_position_new(std::vector<Circle>& Solids, Param par);
+void Solids_position_new(std::vector<Circle>& Solids, std::vector<Node> &Nodes, Param par);
+
+void velocities(std::vector<Circle>::iterator &Solid, std::vector<Node> &Nodes);      // calculates the velocities  in all Nodes of the SolidBody
+void coordinates(std::vector<Circle>::iterator &Solid, std::vector<Node> &Nodes);     // calculates the coordinates of all Nodes of the SolidBody in global coordinate system
+
 GeomVec Circle_Equation(GeomVec xc, double r, double theta);

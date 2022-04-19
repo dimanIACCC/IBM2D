@@ -21,7 +21,6 @@ Param::Param() {  // default parameters
 	// numerical parameters
 	N1 = 100;
 	N2 = 100;
-	Nn = 200;
 	output_step = 10;
 	IBM = 1;
 	DeltaP_method = 1;
@@ -33,6 +32,8 @@ Param::Param() {  // default parameters
 	// parameters for many particles
 	rho = 3.;
 	r = 0.05;
+	Nn_max = 0;
+	Nn = 200;
 	AddSolids_N = 0;
 	AddSolids_start = 0;
 	AddSolids_interval = 5000000;

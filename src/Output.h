@@ -15,7 +15,7 @@ void history_log(std::string WorkDir, std::string file, double t, double var1, d
 
 void Output_U(Matrix data, std::string filename, int n, Param par);
 void Output_V(Matrix data, std::string filename, int n, Param par);
-void Output(Matrix p, Matrix u, Matrix v, Matrix Fx, Matrix Fy, int n, std::vector<Circle> iList, Param par);
+void Output(Matrix p, Matrix u, Matrix v, Matrix Fx, Matrix Fy, int n, std::vector<Circle> iList, std::vector<Node> Nodes, Param par);
 void Output_P(Matrix dp, std::string filename, int n, Param par);
 bool Read_plt(std::string filename, Param &par, std::vector<Circle>& solidList);
 void Output_c(Matrix c , std::string filename, int n, Param par);

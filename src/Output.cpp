@@ -75,7 +75,7 @@ void Output_V(Matrix v, std::string filename, int n, Param par) {
 	output.close();
 }
 
-void Output(Matrix p, Matrix u, Matrix v, Matrix Fx, Matrix Fy, int n, std::vector<Circle> iList, Param par) {
+void Output(Matrix p, Matrix u, Matrix v, Matrix Fx, Matrix Fy, int n, std::vector<Circle> iList, std::vector<Node> Nodes, Param par) {
 
 	std::ofstream output;
 	std::string filename = par.WorkDir + "step" + std::to_string(n) + ".plt";
@@ -112,25 +112,27 @@ void Output(Matrix p, Matrix u, Matrix v, Matrix Fx, Matrix Fy, int n, std::vect
 		       << solid.f[1] << " "
 		       << solid.f[2] << " "
 		       << std::endl;
-		for (int i = 0; i < solid.Nn; ++i) {
+		for (int k = 0; k < solid.Nn; ++k) {
+			int Ind = solid.IndNodes[k];
 
-			output << solid.Nodes[i].x_n[1] + solid.x_n[1] << " "
-			       << solid.Nodes[i].x_n[2] + solid.x_n[2] << " "
-			       << solid.Nodes[i].p << " "
-			       << solid.Nodes[i].us[1] << " "
-			       << solid.Nodes[i].us[2] << " "
-			       << solid.Nodes[i].f[1] << " "
-			       << solid.Nodes[i].f[2] << " "
+			output << Nodes[Ind].x_n[1] + solid.x_n[1] << " "
+			       << Nodes[Ind].x_n[2] + solid.x_n[2] << " "
+			       << Nodes[Ind].p << " "
+			       << Nodes[Ind].us[1] << " "
+			       << Nodes[Ind].us[2] << " "
+			       << Nodes[Ind].f[1] << " "
+			       << Nodes[Ind].f[2] << " "
 			       << std::endl;
 
 		}
-		output << solid.Nodes[0].x_n[1] + solid.x_n[1] << " "
-		       << solid.Nodes[0].x_n[2] + solid.x_n[2] << " "
-		       << solid.Nodes[0].p << " "
-		       << solid.Nodes[0].us[1] << " "
-		       << solid.Nodes[0].us[2] << " "
-		       << solid.Nodes[0].f[1] << " "
-		       << solid.Nodes[0].f[2] << " "
+		int Ind = solid.IndNodes[0];
+		output << Nodes[Ind].x_n[1] + solid.x_n[1] << " "
+		       << Nodes[Ind].x_n[2] + solid.x_n[2] << " "
+		       << Nodes[Ind].p << " "
+		       << Nodes[Ind].us[1] << " "
+		       << Nodes[Ind].us[2] << " "
+		       << Nodes[Ind].f[1] << " "
+		       << Nodes[Ind].f[2] << " "
 		       << std::endl;
 	}
 
@@ -147,7 +149,8 @@ bool Read_plt(std::string filename, Param &par, std::vector<Circle>& solidList) 
 	if (input.is_open()) {
 		while (getline(input, line)) { // read line from file to string $line$
 			if (line.substr(0, 15) == "zone T = circle") {
-				Circle c(0, 0, par); //Create circle
+				std::vector<Node> Nodes;
+				Circle c(0, 0, par, Nodes); //Create circle
 				
 				//Get the number of nodes in particle
 				//auto strings = split_string(line, ",");  // split line into parts by delimeter ","

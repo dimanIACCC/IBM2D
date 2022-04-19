@@ -32,7 +32,6 @@ public:
 	// numerical parameters
 	int N1;                   // number of points in x-direction
 	int N2;                   // number of points in y-direction
-	int Nn;                   // number of nodes of Solid
 	int output_step;          // frequency of output
 	int IBM;                  // type of Immersed Boundary Method
 	int DeltaP_method;        // method for pressure correction equation
@@ -44,6 +43,8 @@ public:
 	// parameters for many particles
 	double rho;               // default density of Solid
 	double r;                 // default radius of Solid
+	int Nn_max;               // number of nodes
+	int Nn;                   // number of nodes per added Solid
 	int AddSolids_N;          // number of added Solids
 	int AddSolids_start;      // step when Solids start to add
 	int AddSolids_interval;   // interval for Solids adding
