@@ -26,28 +26,20 @@ void CalculateForce(Matrix &dFx, Matrix &dFy, std::vector<Circle> &iList, std::v
 
 	if (AMP == true) {
 		begin = std::clock();
-		for (solid = iList.begin(); solid != iList.end(); solid++) {
-				uf_in_Nodes(Nodes, u, v, par, par.Nn_max);
-		}
+			uf_in_Nodes(Nodes, u, v, par, par.Nn_max);
 		end = std::clock();
 		std::cout << "time u new " << end - begin << std::endl;
 	}
 
-	#pragma omp parallel private(solid) num_threads(num_thr)
+	if (AMP == false) {
+		begin = std::clock();
+			uf_in_Nodes_old(Nodes, u, v, par, par.Nn_max);
+		end = std::clock();
+		std::cout << "time u old " << end - begin << std::endl;
+	}
+
+    #pragma omp parallel private(solid) num_threads(num_thr)
 	{
-		if (AMP == false) {
-
-			for (solid = iList.begin(); solid != iList.end(); solid++) {
-			#pragma omp single nowait
-				{
-					begin = std::clock();
-					uf_in_Nodes_old(Nodes, u, v, par, par.Nn_max);
-					end = std::clock();
-					std::cout << "time u old " << end - begin << std::endl;
-				}
-			}
-		}
-
 
 		for (solid = iList.begin(); solid != iList.end(); solid++) {
 		#pragma omp single nowait
@@ -74,67 +66,20 @@ void CalculateForce(Matrix &dFx, Matrix &dFy, std::vector<Circle> &iList, std::v
 		}
 	}
 
-	//for (size_t i = 0; i < par.N1_u; ++i) {
-	//	for (size_t j = 0; j < par.N2_u; ++j) {
-	//		dFx[i][j] = 0.0;
-	//	}
-	//}
-	//for (size_t i = 0; i < par.N1_v; ++i) {
-	//	for (size_t j = 0; j < par.N2_v; ++j) {
-	//		dFy[i][j] = 0.0;
-	//	}
-	//}
-
 	if (AMP == true) {
 		begin = std::clock();
-		for (solid = iList.begin(); solid != iList.end(); solid++) {
 			F_to_Euler_grid(Nodes, dFx, dFy, par, par.Nn_max);
-		}
 		end = std::clock();
 		std::cout << "time f new " << end - begin << std::endl;
 	}
 
-	#pragma omp parallel private(solid) num_threads(num_thr)
-	{
-		if (AMP == false) {
-
-			for (solid = iList.begin(); solid != iList.end(); solid++) {
-			#pragma omp single nowait
-				{
-					begin = std::clock();
-					CreateMatrix(dFx_temp, par.N1_u, par.N2_u);
-					CreateMatrix(dFy_temp, par.N1_v, par.N2_v);
-
-					F_to_Euler_grid_old(Nodes, dFx_temp, dFy_temp, par, par.Nn_max);
-
-					int ix_max, ix_min;
-					int jx_max, jx_min;
-					int iy_max, iy_min;
-					int jy_max, jy_min;
-
-					GetInfluenceArea(ix_min, ix_max, jx_min, jx_max, par.N1_u - 1, par.N2_u - 1, solid->x, int(solid->r / par.d_x) + 4, par);
-					GetInfluenceArea(iy_min, iy_max, jy_min, jy_max, par.N1_v - 1, par.N2_v - 1, solid->x, int(solid->r / par.d_x) + 4, par);
-
-					// summarizing force for Euler nodes and for solids
-					for (int i = ix_min; i <= ix_max; ++i) {
-						for (int j = jx_min; j <= jx_max; ++j) {
-							int i_real = i_real_u(i, par);
-							dFx[i_real][j] += dFx_temp[i_real][j];
-						}
-					}
-					for (int i = iy_min; i <= iy_max; ++i) {
-						for (int j = jy_min; j <= jy_max; ++j) {
-							int i_real = i_real_v(i, par);
-							dFy[i_real][j] += dFy_temp[i_real][j];
-						}
-					}
-
-					end = std::clock();
-					std::cout << "time f old " << end - begin << std::endl;
-				}
-			}
-		}
+	if (AMP == false) {
+		begin = std::clock();
+			F_to_Euler_grid_old(Nodes, dFx, dFy, par, par.Nn_max);
+		end = std::clock();
+		std::cout << "time f old " << end - begin << std::endl;
 	}
+
 
 	// copy force to non-used boundary nodes
 	if (par.BC == periodical) {
