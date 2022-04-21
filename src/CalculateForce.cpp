@@ -66,6 +66,17 @@ void CalculateForce(Matrix &dFx, Matrix &dFy, std::vector<Circle> &iList, std::v
 		}
 	}
 
+	for (size_t i = 0; i < par.N1_u; ++i) {
+		for (size_t j = 0; j < par.N2_u; ++j) {
+			dFx[i][j] = 0.0;
+		}
+	}
+	for (size_t i = 0; i < par.N1_v; ++i) {
+		for (size_t j = 0; j < par.N2_v; ++j) {
+			dFy[i][j] = 0.0;
+		}
+	}
+
 	if (AMP == true) {
 		begin = std::clock();
 			F_to_Euler_grid(Nodes, dFx, dFy, par, par.Nn_max);
@@ -394,7 +405,7 @@ void F_to_Euler_grid(std::vector<Node>& Nodes, Matrix &Fx_temp, Matrix &Fy_temp,
 	array_view <double, 2> Fx_temp_AV(N2_u, N1_u, Fx_temp_);
 	array_view <double, 2> Fy_temp_AV(N2_v, N1_v, Fy_temp_);
 
-	Fx_temp_AV.discard_data();
+	//Fx_temp_AV.discard_data();
 	parallel_for_each(Fx_temp_AV.extent, [=](index<2> idx) restrict(amp) {
 		int i = idx[1];
 		int j = idx[0];
@@ -424,7 +435,7 @@ void F_to_Euler_grid(std::vector<Node>& Nodes, Matrix &Fx_temp, Matrix &Fy_temp,
 	//Output_2DArray(Fx_temp_, N1_u, N2_u, "Result/", "Array", 555);
 	//std::getchar();
 
-	Fy_temp_AV.discard_data();
+	//Fy_temp_AV.discard_data();
 	parallel_for_each(Fy_temp_AV.extent, [=](index<2> idx) restrict(amp) {
 		int i = idx[1];
 		int j = idx[0];

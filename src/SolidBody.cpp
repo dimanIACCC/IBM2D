@@ -48,7 +48,7 @@ bool operator >(const SolidBody& a, const SolidBody& b) {
 Circle::Circle(double x, double y, double ux, double uy, double omega, double rho,  int Nn, int moving, int name, std::vector<Node> &Nodes, double r, double d_x, double d_y, int &Nn_max) :
      SolidBody(       x,        y,        ux,        uy,        omega,        rho,      Nn,     moving,     name) {
 	this->r = r;
-	this->IndNodes.resize(Nn_max + Nn);
+	this->IndNodes.resize(Nn);
 	Nodes.resize(Nn_max + Nn);
 	for (size_t i = 0; i < Nn; ++i){
 		int Ind = Nn_max + i;
