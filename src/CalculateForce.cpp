@@ -77,19 +77,19 @@ void CalculateForce(Matrix &dFx, Matrix &dFy, std::vector<Circle> &iList, std::v
 		}
 	}
 
-	if (AMP == true) {
+	/*if (AMP == true) {
 		begin = std::clock();
 			F_to_Euler_grid(Nodes, dFx, dFy, par, par.Nn_max);
 		end = std::clock();
 		std::cout << "time f new " << end - begin << std::endl;
-	}
+	}*/
 
-	if (AMP == false) {
+	//if (AMP == false) {
 		begin = std::clock();
 			F_to_Euler_grid_old(Nodes, dFx, dFy, par, par.Nn_max);
 		end = std::clock();
 		std::cout << "time f old " << end - begin << std::endl;
-	}
+	//}
 
 
 	// copy force to non-used boundary nodes
@@ -230,35 +230,35 @@ public:
 
 
 
-std::vector<Node_simple> Copy_Node_Simple_vector(std::vector<Node>& Nodes, int Nn) {
+std::vector<Node_simple> Copy_Node_Simple_vector(std::vector<Node>& Nodes, int N1, int N2) {
 
-	std::vector<Node_simple> Nodes_simple(Nn);
-	for (int k = 0; k < Nn; ++k) {
-		Nodes_simple[k].x_s[1] = Nodes[k].x_s[1];
-		Nodes_simple[k].x_s[2] = Nodes[k].x_s[2];
-		Nodes_simple[k].uf[1] = Nodes[k].uf[1];
-		Nodes_simple[k].uf[2] = Nodes[k].uf[2];
-		Nodes_simple[k].f[1] = Nodes[k].f[1];
-		Nodes_simple[k].f[2] = Nodes[k].f[2];
-		Nodes_simple[k].n[1] = Nodes[k].n[1];
-		Nodes_simple[k].n[2] = Nodes[k].n[2];
-		Nodes_simple[k].ds = Nodes[k].ds;
+	std::vector<Node_simple> Nodes_simple(N2-N1);
+	for (int k = 0; k < N2-N1; ++k) {
+		Nodes_simple[k].x_s[1] = Nodes[N1 +k ].x_s[1];
+		Nodes_simple[k].x_s[2] = Nodes[N1 + k].x_s[2];
+		Nodes_simple[k].uf[1] = Nodes[N1 + k].uf[1];
+		Nodes_simple[k].uf[2] = Nodes[N1 + k].uf[2];
+		Nodes_simple[k].f[1] = Nodes[N1 + k].f[1];
+		Nodes_simple[k].f[2] = Nodes[N1 + k].f[2];
+		Nodes_simple[k].n[1] = Nodes[N1 + k].n[1];
+		Nodes_simple[k].n[2] = Nodes[N1 + k].n[2];
+		Nodes_simple[k].ds = Nodes[N1 + k].ds;
 	}
 	return Nodes_simple;
 }
 
-void Copy_Node_vector(std::vector<Node_simple>& Nodes_simple, std::vector<Node>& Nodes, int Nn) {
+void Copy_Node_vector(std::vector<Node_simple>& Nodes_simple, std::vector<Node>& Nodes, int N1, int N2) {
 
-	for (size_t k = 0; k < Nn; ++k) {
-		Nodes[k].x_s[1] = Nodes_simple[k].x_s[1];
-		Nodes[k].x_s[2] = Nodes_simple[k].x_s[2];
-		Nodes[k].uf[1] = Nodes_simple[k].uf[1];
-		Nodes[k].uf[2] = Nodes_simple[k].uf[2];
-		Nodes[k].f[1] = Nodes_simple[k].f[1];
-		Nodes[k].f[2] = Nodes_simple[k].f[2];
-		Nodes[k].f[1] = Nodes_simple[k].n[1];
-		Nodes[k].f[2] = Nodes_simple[k].n[2];
-		Nodes[k].ds = Nodes_simple[k].ds;
+	for (size_t k = 0; k < N2-N1; ++k) {
+		Nodes[N1 + k].x_s[1] = Nodes_simple[k].x_s[1];
+		Nodes[N1 + k].x_s[2] = Nodes_simple[k].x_s[2];
+		Nodes[N1 + k].uf[1] = Nodes_simple[k].uf[1];
+		Nodes[N1 + k].uf[2] = Nodes_simple[k].uf[2];
+		Nodes[N1 + k].f[1] = Nodes_simple[k].f[1];
+		Nodes[N1 + k].f[2] = Nodes_simple[k].f[2];
+		Nodes[N1 + k].f[1] = Nodes_simple[k].n[1];
+		Nodes[N1 + k].f[2] = Nodes_simple[k].n[2];
+		Nodes[N1 + k].ds = Nodes_simple[k].ds;
 	}
 }
 
@@ -275,7 +275,7 @@ void uf_in_Nodes(std::vector<Node>& Nodes, Matrix &u, Matrix &v, Param par, int 
 	double L = par.L;
 	//std::clock_t begin = std::clock();
 
-	std::vector<Node_simple> Nodes_simple = Copy_Node_Simple_vector(Nodes, Nn);
+	std::vector<Node_simple> Nodes_simple = Copy_Node_Simple_vector(Nodes, 0, Nn);
 	array_view<Node_simple, 1> Nodes_AV(Nn, Nodes_simple);
 
 	double *u_ = new double[N1_u*N2_u];
@@ -328,7 +328,7 @@ void uf_in_Nodes(std::vector<Node>& Nodes, Matrix &u, Matrix &v, Param par, int 
 	//std::clock_t end = std::clock();
 	//std::cout << "time u new " << end - begin << std::endl;
 
-	Copy_Node_vector(Nodes_simple, Nodes, Nn);
+	Copy_Node_vector(Nodes_simple, Nodes, 0, Nn);
 
 }
 
@@ -391,10 +391,7 @@ void F_to_Euler_grid(std::vector<Node>& Nodes, Matrix &Fx_temp, Matrix &Fy_temp,
 	double L = par.L;
 	double l_dxdy = 1. / d_x / d_y;
 
-	//std::clock_t begin = std::clock();
-
-	std::vector<Node_simple> Nodes_simple = Copy_Node_Simple_vector(Nodes, Nn);
-	array_view<Node_simple, 1> Nodes_AV(Nn, Nodes_simple);
+	std::clock_t begin, end;
 
 	double *Fx_temp_ = new double[N1_u*N2_u];
 	double *Fy_temp_ = new double[N1_v*N2_v];
@@ -402,68 +399,88 @@ void F_to_Euler_grid(std::vector<Node>& Nodes, Matrix &Fx_temp, Matrix &Fy_temp,
 	Matrix_to_DoubleArray(Fx_temp, Fx_temp_, par.BC);
 	Matrix_to_DoubleArray(Fy_temp, Fy_temp_, par.BC);
 
-	array_view <double, 2> Fx_temp_AV(N2_u, N1_u, Fx_temp_);
-	array_view <double, 2> Fy_temp_AV(N2_v, N1_v, Fy_temp_);
+	int m = 0;
+	int mp = 16;
 
-	//Fx_temp_AV.discard_data();
-	parallel_for_each(Fx_temp_AV.extent, [=](index<2> idx) restrict(amp) {
-		int i = idx[1];
-		int j = idx[0];
+	for (int m = 0; m < mp; m++)
+	{
+		//std::cout << "test x 1" << std::endl;
+		std::vector<Node_simple> Nodes_simple = Copy_Node_Simple_vector(Nodes, m*Nn/ mp, (m+1)*Nn/ mp);
+		array_view<Node_simple, 1> Nodes_AV(Nn/ mp, Nodes_simple);
 
-		int i_real = i_real_u_(i, N1_period);
-		double* xu = x_u_(i, j, d_x, d_y);
-		for (int k = 0; k < Nn; ++k) {
+		array_view <double, 2> Fx_temp_AV(N2_u, N1_u, Fx_temp_);
+		array_view <double, 2> Fy_temp_AV(N2_v, N1_v, Fy_temp_);
 
-			Fx_temp_AV(j, i_real) += Nodes_AV[k].f[1] * DeltaFunction_(xu[1] - Nodes_AV[k].x_s[1], xu[2] - Nodes_AV[k].x_s[2], d_x, d_y) * l_dxdy * Nodes_AV[k].ds;
+		//Fx_temp_AV.discard_data();
+		parallel_for_each(Fx_temp_AV.extent, [=](index<2> idx) restrict(amp) {
+			int i = idx[1];
+			int j = idx[0];
 
-			if (BC == periodical) {
+			int i_real = i_real_u_(i, N1_period);
+			double* xu = x_u_(i, j, d_x, d_y);
+			for (int k = 0; k < Nn/mp; ++k) {
+				if (xu[1] - Nodes_AV[k].x_s[1] < 4.*d_x && xu[2] - Nodes_AV[k].x_s[2] < 4.*d_y) {
+					Fx_temp_AV(j, i_real) += Nodes_AV[k].f[1] * DeltaFunction_(xu[1] - Nodes_AV[k].x_s[1], xu[2] - Nodes_AV[k].x_s[2], d_x, d_y) * l_dxdy * Nodes_AV[k].ds;
 
-				double* xu_plus = xu;
-				xu_plus[1] += L;
-				Fx_temp_AV(j, i_real) += Nodes_AV[k].f[1] * DeltaFunction_(xu_plus[1] - Nodes_AV[k].x_s[1], xu_plus[2] - Nodes_AV[k].x_s[2], d_x, d_y) * l_dxdy * Nodes_AV[k].ds;
+					if (BC == periodical) {
 
-				double* xu_minus = xu;
-				xu_minus[1] -= L;
-				Fx_temp_AV(j, i_real) += Nodes_AV[k].f[1] * DeltaFunction_(xu_minus[1] - Nodes_AV[k].x_s[1], xu_minus[2] - Nodes_AV[k].x_s[2], d_x, d_y) * l_dxdy * Nodes_AV[k].ds;
+						double* xu_plus = xu;
+						xu_plus[1] += L;
+						Fx_temp_AV(j, i_real) += Nodes_AV[k].f[1] * DeltaFunction_(xu_plus[1] - Nodes_AV[k].x_s[1], xu_plus[2] - Nodes_AV[k].x_s[2], d_x, d_y) * l_dxdy * Nodes_AV[k].ds;
+
+						double* xu_minus = xu;
+						xu_minus[1] -= L;
+						Fx_temp_AV(j, i_real) += Nodes_AV[k].f[1] * DeltaFunction_(xu_minus[1] - Nodes_AV[k].x_s[1], xu_minus[2] - Nodes_AV[k].x_s[2], d_x, d_y) * l_dxdy * Nodes_AV[k].ds;
+					}
+				}
 			}
 		}
-	}
-	);
-	Fx_temp_AV.synchronize();
-	DoubleArray_to_Matrix(Fx_temp_, Fx_temp, par.BC);
+		);
 
-	//Output_2DArray(Fx_temp_, N1_u, N2_u, "Result/", "Array", 555);
-	//std::getchar();
+		//Fy_temp_AV.discard_data();
+		parallel_for_each(Fy_temp_AV.extent, [=](index<2> idx) restrict(amp) {
+			int i = idx[1];
+			int j = idx[0];
 
-	//Fy_temp_AV.discard_data();
-	parallel_for_each(Fy_temp_AV.extent, [=](index<2> idx) restrict(amp) {
-		int i = idx[1];
-		int j = idx[0];
+			int i_real = i_real_v_(i, N1_period);
+			double* xv = x_v_(i_real, j, d_x, d_y);
+			for (int k = 0; k < Nn/mp; ++k) {
+				if (xv[1] - Nodes_AV[k].x_s[1] < 4.*d_x && xv[2] - Nodes_AV[k].x_s[2] < 4.*d_y) {
+					Fy_temp_AV(j, i_real) += Nodes_AV[k].f[2] * DeltaFunction_(xv[1] - Nodes_AV[k].x_s[1], xv[2] - Nodes_AV[k].x_s[2], d_x, d_y) * l_dxdy * Nodes_AV[k].ds;
 
-		int i_real = i_real_v_(i, N1_period);
-		double* xv = x_v_(i_real, j, d_x, d_y);
-		for (int k = 0; k < Nn; ++k) {
+					if (BC == periodical) {
 
-			Fy_temp_AV(j, i_real) += Nodes_AV[k].f[2] * DeltaFunction_(xv[1] - Nodes_AV[k].x_s[1], xv[2] - Nodes_AV[k].x_s[2], d_x, d_y) * l_dxdy * Nodes_AV[k].ds;
+						double* xv_plus = xv;
+						xv_plus[1] += L;
+						Fy_temp_AV(j, i_real) += Nodes_AV[k].f[2] * DeltaFunction_(xv_plus[1] - Nodes_AV[k].x_s[1], xv_plus[2] - Nodes_AV[k].x_s[2], d_x, d_y) * l_dxdy * Nodes_AV[k].ds;
 
-			if (BC == periodical) {
-
-				double* xv_plus = xv;
-				xv_plus[1] += L;
-				Fy_temp_AV(j, i_real) += Nodes_AV[k].f[2] * DeltaFunction_(xv_plus[1] - Nodes_AV[k].x_s[1], xv_plus[2] - Nodes_AV[k].x_s[2], d_x, d_y) * l_dxdy * Nodes_AV[k].ds;
-
-				double* xv_minus = xv;
-				xv_minus[1] -= L;
-				Fy_temp_AV(j, i_real) += Nodes_AV[k].f[2] * DeltaFunction_(xv_minus[1] - Nodes_AV[k].x_s[1], xv_minus[2] - Nodes_AV[k].x_s[2], d_x, d_y) * l_dxdy * Nodes_AV[k].ds;
+						double* xv_minus = xv;
+						xv_minus[1] -= L;
+						Fy_temp_AV(j, i_real) += Nodes_AV[k].f[2] * DeltaFunction_(xv_minus[1] - Nodes_AV[k].x_s[1], xv_minus[2] - Nodes_AV[k].x_s[2], d_x, d_y) * l_dxdy * Nodes_AV[k].ds;
+					}
+				}
 			}
 		}
-	}
-	);
-	Fy_temp_AV.synchronize();
-	DoubleArray_to_Matrix(Fy_temp_, Fy_temp, par.BC);
+		);
 
-	//std::clock_t end = std::clock();
-	//std::cout << "time f new " << end - begin << std::endl;
+		begin = std::clock();
+		Fx_temp_AV.synchronize();
+		end = std::clock();
+		//std::cout << "time copy Fx" << end - begin << std::endl;
+
+		DoubleArray_to_Matrix(Fx_temp_, Fx_temp, par.BC);
+
+		//Output_2DArray(Fx_temp_, N1_u, N2_u, "Result/", "Array", 555);
+		//std::getchar();
+
+		begin = std::clock();
+		Fy_temp_AV.synchronize();
+		end = std::clock();
+		//std::cout << "time copy Fy" << end - begin << std::endl;
+
+		DoubleArray_to_Matrix(Fy_temp_, Fy_temp, par.BC);
+	}
+
 }
 
 void F_to_Euler_grid_old(std::vector<Node>& Nodes, Matrix &Fx_temp, Matrix &Fy_temp, Param par, int Nn) {

@@ -48,23 +48,27 @@ public:
 	double r;
 	SolidBody(double x, double y, double ux, double uy, double omega, double rho, int Nn, int moving, int name);
 	~SolidBody();
+	void add_Nodes(std::vector<Node> &Nodes, const int Nn_max);
 	void log_init(std::string WorkDir);
 	void log(std::string WorkDir, int n);
 };
 
 class Circle : public SolidBody{
 public:
-	Circle(double x, double y, double ux, double uy, double omega, double rho, int Nn, int moving, int name, std::vector<Node> &Nodes, double r, double d_x, double d_y, int &Nn_max);
-	Circle(double x, double y, Param &par, std::vector<Node> &Nodes);
+	Circle(double x, double y, double ux, double uy, double omega, double rho, int Nn, int moving, int name, double r);
+	Circle(double x, double y, Param &par);
 	~Circle();
 	void integrals(Matrix U_n, Matrix V_n, Matrix U_new, Matrix V_new, Param par);
 };
 
-void Read_Solids(std::string filename, std::vector<Circle>& Solids, Param &par);
+void fill_circle_coordinates(std::vector<Node> &Nodes, const int Nn_max, const int Nn, double r, double e);
+void fill_ds_x(std::vector<Node> &Nodes, const int Nn_max, const int Nn, const double r, const double d_x, const double d_y);
+
+void Read_Solids(std::string filename, std::vector<Circle>& Solids, std::vector<Node>& Nodes, Param &par);
 void Add_Solids(std::vector<Circle>& Solids, std::vector<Node>& Nodes, Param &par);
-bool Collide(Circle& s1, Circle& s2, Param par, double alpha, double beta, double friction, double kr);
+bool Collide(Circle& s1, Circle& s2, std::vector<Node> &Nodes, Param par, double alpha, double beta, double friction, double kr);
 void Solids_move(std::vector<Circle> &solidList, std::vector<Node> &Nodes, Param par);
-void Solids_collide(std::vector<Circle> &solidList, Param par);
+void Solids_collide(std::vector<Circle> &solidList, std::vector<Node> &Nodes, Param par);
 void h_average_of_Solids_Layer(std::vector<Circle> &solidList, Param par, double& h_average);
 void Solids_zero_force(std::vector<Circle>& Solids, std::vector<Node> &Nodes, int N_max);
 void Solids_velocity_new(std::vector<Circle>& Solids, Param par);

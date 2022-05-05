@@ -150,7 +150,7 @@ bool Read_plt(std::string filename, Param &par, std::vector<Circle>& solidList) 
 		while (getline(input, line)) { // read line from file to string $line$
 			if (line.substr(0, 15) == "zone T = circle") {
 				std::vector<Node> Nodes;
-				Circle c(0, 0, par, Nodes); //Create circle
+				Circle c(0, 0, par); //Create circle
 				
 				//Get the number of nodes in particle
 				//auto strings = split_string(line, ",");  // split line into parts by delimeter ","

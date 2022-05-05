@@ -69,7 +69,7 @@ int main(int argc, char *argv[]) {
 
 	Param par(WorkDir.string(), "input.txt");					// create the variable which contains parameters according to input data
 
-	Read_Solids(par.WorkDir + "Solids.txt", solidList, par);	// read Solids from file and write them into list of solids
+	Read_Solids(par.WorkDir + "Solids.txt", solidList, Nodes, par);	// read Solids from file and write them into list of solids
 
 	if (par.BC == Lamb_Oseen) {
 		for (auto& it : solidList) {

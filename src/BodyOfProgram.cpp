@@ -32,6 +32,7 @@ void BodyOfProgram(Param &par, std::vector<Circle> &solidList, std::vector<Node>
 			MakeHibernationFile(par, solidList, Nodes, U_n, V_n, P);              // writting hibernation file for prior time step
 
 		Calculate_u_p(U_n, U_new, V_n, V_new, P, Fx, Fy, solidList, Nodes, par);  // calculate velocity and pressure at the new time step
+
 		Solids_position_new(solidList, Nodes, par);
 
 		// Output_eq_terms("eq_terms", par.N_step, U_n, V_n, U_new, V_new, P_n, P_new, Fx_new, par, Du);
@@ -273,11 +274,12 @@ void Awake(std::string &filename, Param &par, std::vector<Circle>& solidList, st
 							else if (PAR == "name")          name = stoi(VALUE);
 							else if (PAR == "r")             r = stod(VALUE);
 							else if (PAR == "<Nodes>") {
-								Nodes.resize(Nn);
+								Nodes.resize(par.Nn_max + Nn);
 								while (line != "<\\Nodes>") {
 									getline(hibernation_source, line);
 									if (line == "<\\Nodes>") break;
 									for (int j = 0; j < Nn; j++) {
+										int Ind = par.Nn_max + j;
 										if (line == "Node{") {
 											while (line != "}") {
 												getline(hibernation_source, line);
@@ -286,17 +288,20 @@ void Awake(std::string &filename, Param &par, std::vector<Circle>& solidList, st
 													break;
 												}
 												GetParValue(line, PAR, VALUE);
-												if (PAR == "x_n")				hibernation_source >> Nodes[j].x_n;
-												else if (PAR == "n")			hibernation_source >> Nodes[j].n;
-												Nodes[j].x = Nodes[j].x_n;
+												if (PAR == "x_n")				hibernation_source >> Nodes[Ind].x_n;
+												else if (PAR == "n")			hibernation_source >> Nodes[Ind].n;
+												Nodes[Ind].x = Nodes[Ind].x_n;
 											}
 										}
 									}
 								}
 							}
 							if (line == "<\\Solid>") {
-								std::vector<Node> Nodes;
-								Circle c(x, y, ux, uy, omega, rho, Nn, moving, name, Nodes, r, par.d_x, par.d_y, par.Nn_max);
+								Circle c(x, y, ux, uy, omega, rho, Nn, moving, name, r);
+								c.add_Nodes(Nodes, par.Nn_max);
+								fill_ds_x(Nodes, par.Nn_max, c.Nn, r, par.d_x, par.d_y);
+								par.Nn_max += c.Nn;
+
 								if (c.name > par.SolidName_max) par.SolidName_max = c.name;
 
 								c.x_n = x_n;
