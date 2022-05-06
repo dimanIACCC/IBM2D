@@ -28,6 +28,7 @@ Param::Param() {  // default parameters
 	Zeidel_eps = 1e-5;
 	s_max = 20;
 	eps_P = 1.e-5;
+	AMP = true;
 
 	// parameters for many particles
 	rho = 3.;

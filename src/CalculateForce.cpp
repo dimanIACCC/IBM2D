@@ -3,9 +3,8 @@
 #include "Output.h"
 
 
-void CalculateForce(Matrix &dFx, Matrix &dFy, std::vector<Circle> &iList, std::vector<Node> &Nodes, Matrix& u, Matrix& v, Param par) {
+void CalculateForce(Matrix &dFx, Matrix &dFy, int* Ax_beg, int* Ax_end, int* Ay_beg, int* Ay_end, std::vector<Circle> &iList, std::vector<Node> &Nodes, Matrix& u, Matrix& v, Param par) {
 
-	bool AMP = true;
 	int num_thr = omp_get_max_threads();
 
 	std::clock_t begin, end;
@@ -24,19 +23,19 @@ void CalculateForce(Matrix &dFx, Matrix &dFy, std::vector<Circle> &iList, std::v
 		}
 	}
 
-	if (AMP == true) {
+	//if (par.AMP == true) {
 		begin = std::clock();
 			uf_in_Nodes(Nodes, u, v, par, par.Nn_max);
 		end = std::clock();
 		std::cout << "time u new " << end - begin << std::endl;
-	}
+	//}
 
-	if (AMP == false) {
+	//if (par.AMP == false) {
 		begin = std::clock();
 			uf_in_Nodes_old(Nodes, u, v, par, par.Nn_max);
 		end = std::clock();
 		std::cout << "time u old " << end - begin << std::endl;
-	}
+	//}
 
     #pragma omp parallel private(solid) num_threads(num_thr)
 	{
@@ -77,14 +76,14 @@ void CalculateForce(Matrix &dFx, Matrix &dFy, std::vector<Circle> &iList, std::v
 		}
 	}
 
-	/*if (AMP == true) {
+	//if (par.AMP == true) {
 		begin = std::clock();
-			F_to_Euler_grid(Nodes, dFx, dFy, par, par.Nn_max);
+			F_to_Euler_grid(Nodes, dFx, dFy, Ax_beg, Ax_end, Ay_beg, Ay_end, par, par.Nn_max);
 		end = std::clock();
 		std::cout << "time f new " << end - begin << std::endl;
-	}*/
+	//}
 
-	//if (AMP == false) {
+	//if (par.AMP == false) {
 		begin = std::clock();
 			F_to_Euler_grid_old(Nodes, dFx, dFy, par, par.Nn_max);
 		end = std::clock();
@@ -224,7 +223,7 @@ public:
 	double x_s[4];
 	double uf[4];
 	double f[4];
-	double n[4];
+
 	double ds;
 };
 
@@ -240,8 +239,7 @@ std::vector<Node_simple> Copy_Node_Simple_vector(std::vector<Node>& Nodes, int N
 		Nodes_simple[k].uf[2] = Nodes[N1 + k].uf[2];
 		Nodes_simple[k].f[1] = Nodes[N1 + k].f[1];
 		Nodes_simple[k].f[2] = Nodes[N1 + k].f[2];
-		Nodes_simple[k].n[1] = Nodes[N1 + k].n[1];
-		Nodes_simple[k].n[2] = Nodes[N1 + k].n[2];
+
 		Nodes_simple[k].ds = Nodes[N1 + k].ds;
 	}
 	return Nodes_simple;
@@ -256,8 +254,6 @@ void Copy_Node_vector(std::vector<Node_simple>& Nodes_simple, std::vector<Node>&
 		Nodes[N1 + k].uf[2] = Nodes_simple[k].uf[2];
 		Nodes[N1 + k].f[1] = Nodes_simple[k].f[1];
 		Nodes[N1 + k].f[2] = Nodes_simple[k].f[2];
-		Nodes[N1 + k].f[1] = Nodes_simple[k].n[1];
-		Nodes[N1 + k].f[2] = Nodes_simple[k].n[2];
 		Nodes[N1 + k].ds = Nodes_simple[k].ds;
 	}
 }
@@ -377,8 +373,71 @@ void uf_in_Nodes_old(std::vector<Node>& Nodes, Matrix &u, Matrix &v, Param par, 
 	//std::cout << "time u old " << end - begin << std::endl;
 }
 
+void Make_interaction_Matrix(int* A_beg, int* A_end, int N1, int N2, double d_x, double d_y, std::vector<Node>& Nodes, int Nn_max, Direction Dir) {
 
-void F_to_Euler_grid(std::vector<Node>& Nodes, Matrix &Fx_temp, Matrix &Fy_temp, Param par, int Nn) {
+	array_view <int, 2> A_beg_(N2, N1, A_beg);
+	array_view <int, 2> A_end_(N2, N1, A_end);
+
+	std::vector<Node_simple> Nodes_simple = Copy_Node_Simple_vector(Nodes, 0, Nn_max);
+	array_view<Node_simple, 1> Nodes_AV(Nn_max, Nodes_simple);
+
+	parallel_for_each(A_beg_.extent, [=](index<2> idx) restrict(amp) {
+		int i = idx[1];
+		int j = idx[0];
+
+		double* x;
+		int i_real = i;
+
+		A_beg_(j, i_real) = 0;
+		A_end_(j, i_real) = 0;
+
+		if (Dir == Du) {
+			//i_real = i_real_u_(i, N1_period);
+			x = x_u_(i_real, j, d_x, d_y);
+		}
+		else if (Dir == Dv) {
+			//i_real = i_real_v_(i, N1_period);
+			x = x_v_(i_real, j, d_x, d_y);
+		}
+
+		for (int k = 0; k < Nn_max; ++k) {
+			if (fabs(x[1] - Nodes_AV[k].x_s[1]) < 2.1*d_x && fabs(x[2] - Nodes_AV[k].x_s[2]) < 2.1*d_y) {
+				A_beg_(j, i_real) = k;
+				break;
+				/*if (BC == periodical) {
+
+					double* xu_plus = xu;
+					xu_plus[1] += L;
+					A_beg_(j, i_real) = k;
+
+					double* xu_minus = xu;
+					xu_minus[1] -= L;
+					A_beg_(j, i_real) = k;
+				}*/
+			}
+		}
+
+		for (int k = Nn_max-1; k >= 0; --k) {
+			if (fabs(x[1] - Nodes_AV[k].x_s[1]) < 2.1*d_x && fabs(x[2] - Nodes_AV[k].x_s[2]) < 2.1*d_y) {
+				A_end_(j, i_real) = k;
+				break;
+				/*if (BC == periodical) {
+
+				double* xu_plus = xu;
+				xu_plus[1] += L;
+				A_end_(j, i_real) = k;
+
+				double* xu_minus = xu;
+				xu_minus[1] -= L;
+				A_end_(j, i_real) = k;
+				}*/
+			}
+		}
+	}
+	);
+}
+
+void F_to_Euler_grid(std::vector<Node>& Nodes, Matrix &Fx_temp, Matrix &Fy_temp, int* Ax_beg, int* Ax_end, int* Ay_beg, int* Ay_end, Param par, int Nn) {
 
 	int N1_period = par.N1;
 	int N1_u = par.N1_u;
@@ -393,36 +452,35 @@ void F_to_Euler_grid(std::vector<Node>& Nodes, Matrix &Fx_temp, Matrix &Fy_temp,
 
 	std::clock_t begin, end;
 
+	array_view <int, 2> Ax_beg_(N2_u, N1_u, Ax_beg);
+	array_view <int, 2> Ax_end_(N2_u, N1_u, Ax_end);
+	array_view <int, 2> Ay_beg_(N2_v, N1_v, Ay_beg);
+	array_view <int, 2> Ay_end_(N2_v, N1_v, Ay_end);
+
 	double *Fx_temp_ = new double[N1_u*N2_u];
 	double *Fy_temp_ = new double[N1_v*N2_v];
 
 	Matrix_to_DoubleArray(Fx_temp, Fx_temp_, par.BC);
 	Matrix_to_DoubleArray(Fy_temp, Fy_temp_, par.BC);
 
-	int m = 0;
-	int mp = 16;
+	array_view <double, 2> Fx_temp_AV(N2_u, N1_u, Fx_temp_);
+	array_view <double, 2> Fy_temp_AV(N2_v, N1_v, Fy_temp_);
 
-	for (int m = 0; m < mp; m++)
-	{
-		//std::cout << "test x 1" << std::endl;
-		std::vector<Node_simple> Nodes_simple = Copy_Node_Simple_vector(Nodes, m*Nn/ mp, (m+1)*Nn/ mp);
-		array_view<Node_simple, 1> Nodes_AV(Nn/ mp, Nodes_simple);
-
-		array_view <double, 2> Fx_temp_AV(N2_u, N1_u, Fx_temp_);
-		array_view <double, 2> Fy_temp_AV(N2_v, N1_v, Fy_temp_);
+	std::vector<Node_simple> Nodes_simple = Copy_Node_Simple_vector(Nodes, 0, Nn);
+	array_view<Node_simple, 1> Nodes_AV(Nn, Nodes_simple);
 
 		//Fx_temp_AV.discard_data();
 		parallel_for_each(Fx_temp_AV.extent, [=](index<2> idx) restrict(amp) {
 			int i = idx[1];
 			int j = idx[0];
-
 			int i_real = i_real_u_(i, N1_period);
 			double* xu = x_u_(i, j, d_x, d_y);
-			for (int k = 0; k < Nn/mp; ++k) {
-				if (xu[1] - Nodes_AV[k].x_s[1] < 4.*d_x && xu[2] - Nodes_AV[k].x_s[2] < 4.*d_y) {
-					Fx_temp_AV(j, i_real) += Nodes_AV[k].f[1] * DeltaFunction_(xu[1] - Nodes_AV[k].x_s[1], xu[2] - Nodes_AV[k].x_s[2], d_x, d_y) * l_dxdy * Nodes_AV[k].ds;
 
-					if (BC == periodical) {
+			for (int k = Ax_beg_(j, i_real); k <= Ax_end_(j, i_real); ++k) {
+				if (fabs(xu[1] - Nodes_AV[k].x_s[1]) < 2.1*d_x && fabs(xu[2] - Nodes_AV[k].x_s[2]) < 2.1*d_y) {
+					Fx_temp_AV(j, i_real) += Nodes_AV[k].f[1] * DeltaFunction_(xu[1] - Nodes_AV[k].x_s[1], xu[2] - Nodes_AV[k].x_s[2], d_x, d_y) * l_dxdy * Nodes_AV[k].ds;
+				}
+					/*if (BC == periodical) {
 
 						double* xu_plus = xu;
 						xu_plus[1] += L;
@@ -431,8 +489,7 @@ void F_to_Euler_grid(std::vector<Node>& Nodes, Matrix &Fx_temp, Matrix &Fy_temp,
 						double* xu_minus = xu;
 						xu_minus[1] -= L;
 						Fx_temp_AV(j, i_real) += Nodes_AV[k].f[1] * DeltaFunction_(xu_minus[1] - Nodes_AV[k].x_s[1], xu_minus[2] - Nodes_AV[k].x_s[2], d_x, d_y) * l_dxdy * Nodes_AV[k].ds;
-					}
-				}
+					}*/
 			}
 		}
 		);
@@ -441,14 +498,14 @@ void F_to_Euler_grid(std::vector<Node>& Nodes, Matrix &Fx_temp, Matrix &Fy_temp,
 		parallel_for_each(Fy_temp_AV.extent, [=](index<2> idx) restrict(amp) {
 			int i = idx[1];
 			int j = idx[0];
-
 			int i_real = i_real_v_(i, N1_period);
 			double* xv = x_v_(i_real, j, d_x, d_y);
-			for (int k = 0; k < Nn/mp; ++k) {
-				if (xv[1] - Nodes_AV[k].x_s[1] < 4.*d_x && xv[2] - Nodes_AV[k].x_s[2] < 4.*d_y) {
-					Fy_temp_AV(j, i_real) += Nodes_AV[k].f[2] * DeltaFunction_(xv[1] - Nodes_AV[k].x_s[1], xv[2] - Nodes_AV[k].x_s[2], d_x, d_y) * l_dxdy * Nodes_AV[k].ds;
 
-					if (BC == periodical) {
+			for (int k = Ay_beg_(j, i_real); k <= Ay_end_(j, i_real); ++k) {
+				if (fabs(xv[1] - Nodes_AV[k].x_s[1]) < 2.1*d_x && fabs(xv[2] - Nodes_AV[k].x_s[2]) < 2.1*d_y) {
+					Fy_temp_AV(j, i_real) += Nodes_AV[k].f[2] * DeltaFunction_(xv[1] - Nodes_AV[k].x_s[1], xv[2] - Nodes_AV[k].x_s[2], d_x, d_y) * l_dxdy * Nodes_AV[k].ds;
+				}
+					/*if (BC == periodical) {
 
 						double* xv_plus = xv;
 						xv_plus[1] += L;
@@ -457,8 +514,7 @@ void F_to_Euler_grid(std::vector<Node>& Nodes, Matrix &Fx_temp, Matrix &Fy_temp,
 						double* xv_minus = xv;
 						xv_minus[1] -= L;
 						Fy_temp_AV(j, i_real) += Nodes_AV[k].f[2] * DeltaFunction_(xv_minus[1] - Nodes_AV[k].x_s[1], xv_minus[2] - Nodes_AV[k].x_s[2], d_x, d_y) * l_dxdy * Nodes_AV[k].ds;
-					}
-				}
+					}*/
 			}
 		}
 		);
@@ -479,7 +535,6 @@ void F_to_Euler_grid(std::vector<Node>& Nodes, Matrix &Fx_temp, Matrix &Fy_temp,
 		//std::cout << "time copy Fy" << end - begin << std::endl;
 
 		DoubleArray_to_Matrix(Fy_temp_, Fy_temp, par.BC);
-	}
 
 }
 

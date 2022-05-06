@@ -52,6 +52,21 @@ void Calculate_u_p(Matrix &U_n   , Matrix &U_new,
 	CreateMatrix(RHS_u, par.N1_u, par.N2_u);
 	CreateMatrix(RHS_v, par.N1_v, par.N2_v);
 
+	std::vector<Circle>::iterator solid;
+	for (solid = solidList.begin(); solid != solidList.end(); solid++) {
+		coordinates(solid, Nodes);
+	}
+
+	int *Ax_beg = new int[par.N1_u*par.N2_u];
+	int *Ax_end = new int[par.N1_u*par.N2_u];
+	int *Ay_beg = new int[par.N1_v*par.N2_v];
+	int *Ay_end = new int[par.N1_v*par.N2_v];
+	if (par.AMP == true) {
+		Make_interaction_Matrix(Ax_beg, Ax_end, par.N1_u, par.N2_u, par.d_x, par.d_y, Nodes, par.Nn_max, Du);
+		Make_interaction_Matrix(Ay_beg, Ay_end, par.N1_v, par.N2_v, par.d_x, par.d_y, Nodes, par.Nn_max, Dv);
+		std::cout << "Matrix" << std::endl;
+	}
+
 	Fx = Fx * 0.;
 	Fy = Fy * 0.;
 
@@ -92,7 +107,7 @@ void Calculate_u_p(Matrix &U_n   , Matrix &U_new,
 				it.Fr = 0.;
 				it.S = 0.;
 			}
-			CalculateForce(dFx, dFy, solidList, Nodes, U_f, V_f, par);
+			CalculateForce(dFx, dFy, Ax_beg, Ax_end, Ay_beg, Ay_end, solidList, Nodes, U_f, V_f, par);
 
 			//Output_V(dFy, "Fy", s, par);
 			//Output_V(V_f, "V" , s, par);
