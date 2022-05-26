@@ -86,7 +86,7 @@ void Output(Matrix p, Matrix u, Matrix v, Matrix Fx, Matrix Fy, int n, std::vect
 	output << "title = " << '"' << filename << '"' << std::endl;
 	output << "Variables = x y p u v fx fy" << std::endl;
 	output << "zone T=" << '"' << n << '"' << ",  i=" << par.N1_p << ", j=" << par.N2_p << ", f=point" << std::endl;
-	output << "SolutionTime = " << n * par.d_t << std::endl;
+	output << "SolutionTime = " << par.time << std::endl;
 
 	for (int j = 0; j < par.N2_p; ++j) {
 	//for (int j = par.N2_p - 1 ; j >= 0; --j) {
@@ -102,7 +102,7 @@ void Output(Matrix p, Matrix u, Matrix v, Matrix Fx, Matrix Fy, int n, std::vect
 
 	for (auto& solid : iList) {
 		output << "zone T = circle" << ",  i=" << solid.Nn + 2 << ", f=point" << std::endl;
-		output << "SolutionTime = " << n * par.d_t << std::endl;
+		output << "SolutionTime = " << par.time << std::endl;
 
 		output << solid.x_n[1] << " "
 		       << solid.x_n[2] << " "

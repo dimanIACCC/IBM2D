@@ -7,6 +7,7 @@ Param::Param() {  // default parameters
 
 	WorkDir = "";
 	N_step = 0;
+	time = 0.;
 	BC = u_infinity;
 
 	// physical parameters
@@ -112,6 +113,7 @@ void Param::read_line(std::string line) {
 	GetParValue(line, PAR, VALUE);
 	if (VALUE.size() > 0) {
 		if      (PAR == "N_step")               N_step = stoi(VALUE);
+		else if (PAR == "time")                 time = stod(VALUE);
 		else if (PAR == "BC")                   BC = string_to_BC(VALUE);
 
 		// physical parameters

@@ -85,6 +85,7 @@ void BodyOfProgram(Param &par, std::vector<Circle> &solidList, std::vector<Node>
 
 		std::cout << "n = " << std::setw(6) << par.N_step << std::endl;
 
+		par.time += par.d_t;
 
 		const double epsilon = 1e-13;
 		if (eps_u < epsilon && eps_v < epsilon && par.N_step > 1000) {
@@ -105,6 +106,7 @@ void MakeHibernationFile(Param& par, std::vector<Circle>& solidList, std::vector
 	output << "par{" << std::endl;
 
 	output << "N_step = " << par.N_step << std::endl;
+	output << "time = " << par.time << std::endl;
 	output << "BC = " << par.BC << std::endl;
 
 	// physical parameters

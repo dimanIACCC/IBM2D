@@ -18,6 +18,7 @@ class Param{
 public:
 	std::string WorkDir;      // WorkDir
 	int N_step;               // step number
+	double time;              // time
 	boundary_conditions BC;   // Boundary Conditions
 
 	// physical parameters
