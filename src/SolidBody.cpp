@@ -73,25 +73,25 @@ Circle::~Circle()
 {
 }
 
-void fill_circle_coordinates(std::vector<Node> &Nodes, const int Nn_max, const int Nn, double r, double e) {
-	for (size_t i = 0; i < Nn; ++i) {
-		int Ind = Nn_max + i;
-		double phi = i * 2.0 * M_PI / Nn;
-		Nodes[Ind].x_n[1] = cos(phi) * r / sqrt(1 - e*e*cos(phi)*cos(phi)) * sqrt(1 - e*e);
-		Nodes[Ind].x_n[2] = sin(phi) * r / sqrt(1 - e*e*cos(phi)*cos(phi)) * sqrt(1 - e*e);
-		Nodes[Ind].n[1] = cos(phi) / sqrt(1 - e*e*cos(phi)*cos(phi)) * sqrt(1 - e*e);
-		Nodes[Ind].n[2] = sin(phi) / sqrt(1 - e*e*cos(phi)*cos(phi)) * sqrt(1 - e*e);
-		Nodes[Ind].ds = 2.0 * M_PI * r / Nn;
-		Nodes[Ind].x = Nodes[Ind].x_n;
-	}
-}
+void fill_solid_coordinates(std::vector<Node> &Nodes, const int Nn_max, const int Nn, const double r, const double e, const double alpha, const double dxy) {
+	GeomVec o;
+	o[3] = M_PI / 180 * alpha;
 
-void fill_ds_x(std::vector<Node> &Nodes, const int Nn_max, const int Nn, const double r, const double d_x, const double d_y) {
 	for (size_t i = 0; i < Nn; ++i) {
 		int Ind = Nn_max + i;
-		Nodes[Ind].ds = 2.0 * M_PI * r / Nn
-		               * sqrt(d_x*d_x * Nodes[Ind].n[1] * Nodes[Ind].n[1]
-		                    + d_y*d_y * Nodes[Ind].n[2] * Nodes[Ind].n[2]);
+		if (e < 0.999) {    // ellipse
+			double phi = i * 2.0 * M_PI / Nn;
+			Nodes[Ind].x_n[1] = cos(phi) * r / sqrt(1 - e*e*cos(phi)*cos(phi)) * sqrt(1 - e*e);
+			Nodes[Ind].x_n[2] = sin(phi) * r / sqrt(1 - e*e*cos(phi)*cos(phi)) * sqrt(1 - e*e);
+			Nodes[Ind].ds = 2.0 * M_PI * r / Nn * dxy;
+		}
+		else{  // line
+			double x = 2 * r * (i - 0.5*Nn) / Nn;
+			Nodes[Ind].x_n[1] = x;
+			Nodes[Ind].x_n[2] = 0.;
+			Nodes[Ind].ds = 2. * r / Nn * dxy;
+		}
+		Nodes[Ind].x_n = rotate_Vector_around_vector(Nodes[Ind].x_n, o);
 		Nodes[Ind].x = Nodes[Ind].x_n;
 	}
 }
@@ -154,6 +154,8 @@ void Read_Solids(std::string filename, std::vector<Circle>& Solids, std::vector<
 				int Nn = par.Nn;
 				int moving = 1;
 				double r = par.r;
+				double e = par.e;
+				double alpha = 0.;
 				bool Poiseuille = false;   //key for initial ux, uy and omega_new corresponding to Poiseuille flow
 
 				while (line != "}") {
@@ -172,6 +174,8 @@ void Read_Solids(std::string filename, std::vector<Circle>& Solids, std::vector<
 						else if (PAR == "moving")     moving       = stoi(VALUE);
 						else if (PAR == "Poiseuille") Poiseuille   = bool(stoi(VALUE));
 						else if (PAR == "r")          r            = stod(VALUE);
+						else if (PAR == "e")          e            = stod(VALUE);
+						else if (PAR == "alpha")      alpha        = stod(VALUE);
 						else    std::cout << "Read_Solids: unknown parameter " << PAR << std::endl;
 					}
 					else {
@@ -185,8 +189,7 @@ void Read_Solids(std::string filename, std::vector<Circle>& Solids, std::vector<
 				}
 				Circle c(x, y, ux, uy, omega, rho, Nn, moving, par.SolidName_max+1, r);
 				c.add_Nodes(Nodes, par.Nn_max);
-				fill_circle_coordinates(Nodes, par.Nn_max, c.Nn, r, 0.0);
-				fill_ds_x(Nodes, par.Nn_max, c.Nn, r, par.d_x, par.d_y);
+				fill_solid_coordinates(Nodes, par.Nn_max, c.Nn, c.r, e, alpha, 0.5*(par.d_x+par.d_y));
 				par.Nn_max += c.Nn;
 				if (c.name > par.SolidName_max) par.SolidName_max = c.name;
 				Solids.push_back(c);
@@ -206,13 +209,14 @@ void Add_Solids(std::vector<Circle>& Solids, std::vector<Node>& Nodes, Param &pa
 			GeomVec x;
 			x[0] = 0;
 			x[1] = (par.L)  * (0.5 + (1 - 4 * par.r / par.L) * (double(rand()) - RAND_MAX / 2) / RAND_MAX);
-			x[2] = (par.H)  * (0.5 + (1 - 3 * par.r / par.H) * (double(rand()) - RAND_MAX / 2) / RAND_MAX);
+			x[2] = (par.H)  * (0.75 + 0.5*(1 - 6 * par.r / par.H) * (double(rand()) - RAND_MAX / 2) / RAND_MAX);
 			x[3] = 0;
 
 			// check if new Solid does not cross other Solids
 			bool add = true;
 			for (auto solid = Solids.begin(); solid != Solids.end(); solid++) {
-				if (length(x - solid->x) < 1.25 * (par.r + solid->r) && solid->moving == 1 ) {
+				if (length(x - solid->x) < 1.25 * (par.r + solid->r)) {
+				//if (length(x - solid->x) < 1.25 * (par.r + solid->r) && solid->moving == 1) { // flow inside Solid
 					add = false;
 					i--;
 					break;
@@ -221,8 +225,7 @@ void Add_Solids(std::vector<Circle>& Solids, std::vector<Node>& Nodes, Param &pa
 			if (add) {
 				Circle c(x[1], x[2], par);
 				c.add_Nodes(Nodes, par.Nn_max);
-				fill_circle_coordinates(Nodes, par.Nn_max, c.Nn, par.r, 0.0);
-				fill_ds_x(Nodes, par.Nn_max, c.Nn, par.r, par.d_x, par.d_y);
+				fill_solid_coordinates(Nodes, par.Nn_max, c.Nn, par.r, par.e, 0., 0.5*(par.d_x + par.d_y));
 				par.Nn_max += c.Nn;
 				if (c.name > par.SolidName_max) par.SolidName_max = c.name;
 				Solids.push_back(c);
@@ -291,7 +294,7 @@ bool Collide(Circle& s1, Circle& s2, std::vector<Node> &Nodes, Param par, double
 
 	GeomVec r = s1.x - s2.x;
 	double dist = Distance_2Solids(s1, s2, par, r);
-	//if (dist < 10 * par.d_x) dist = Distance_2Solids_(s1, s2, Nodes, par, r);
+	if (dist < 10 * par.d_x) dist = Distance_2Solids_(s1, s2, Nodes, par, r);
 
 	double dist_u = par.k_dist*par.d_x;
 	double dist_r = par.k_dist*par.d_x * kr;

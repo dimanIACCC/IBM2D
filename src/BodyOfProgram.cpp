@@ -185,7 +185,7 @@ void MakeHibernationFile(Param& par, std::vector<Circle>& solidList, std::vector
 		for (int j = 0; j < one->Nn; j++) {
 			output << "Node{" << std::endl;
 			output << "x_n = " << std::endl << Nodes[one->IndNodes[j]].x_n << std::endl;
-			output << "n = " << std::endl << Nodes[one->IndNodes[j]].n << std::endl;
+			output << "ds = "  << std::endl << Nodes[one->IndNodes[j]].ds << std::endl;
 			output << "}" << std::endl;
 		}
 		output << "<\\Nodes>" << std::endl;
@@ -290,8 +290,8 @@ void Awake(std::string &filename, Param &par, std::vector<Circle>& solidList, st
 													break;
 												}
 												GetParValue(line, PAR, VALUE);
-												if (PAR == "x_n")				hibernation_source >> Nodes[Ind].x_n;
-												else if (PAR == "n")			hibernation_source >> Nodes[Ind].n;
+												if (PAR == "x_n")               hibernation_source >> Nodes[Ind].x_n;
+												if (PAR == "ds")                hibernation_source >> Nodes[Ind].ds;
 												Nodes[Ind].x = Nodes[Ind].x_n;
 											}
 										}
@@ -301,7 +301,6 @@ void Awake(std::string &filename, Param &par, std::vector<Circle>& solidList, st
 							if (line == "<\\Solid>") {
 								Circle c(x, y, ux, uy, omega, rho, Nn, moving, name, r);
 								c.add_Nodes(Nodes, par.Nn_max);
-								fill_ds_x(Nodes, par.Nn_max, c.Nn, r, par.d_x, par.d_y);
 								par.Nn_max += c.Nn;
 
 								if (c.name > par.SolidName_max) par.SolidName_max = c.name;

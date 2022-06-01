@@ -152,8 +152,6 @@ void Solids_deformation_velocity_pressure(std::vector<Circle> &Solids, std::vect
 			int Ind = solid.IndNodes[k];
 
 			GetInfluenceArea(i_min, i_max, j_min, j_max, np1 - 1, np2 - 1, solid.x + Nodes[Ind].x, 4, par);
-			Nodes[Ind].Eps(1, 1) = 0.0;
-			Nodes[Ind].Eps(2, 2) = 0.0;
 			Nodes[Ind].p         = 0.0;
 			for (int i = i_min; i <= i_max; ++i) {
 				for (int j = j_min; j <= j_max; ++j) {
@@ -162,34 +160,10 @@ void Solids_deformation_velocity_pressure(std::vector<Circle> &Solids, std::vect
 					if (i_real >  np1 - 2) i_real -= np1 - 2;
 					GeomVec xp = x_p(i_real, j, par);
 					GeomVec xs = solid.x + Nodes[Ind].x;
-					Nodes[Ind].Eps(1, 1) += Exx[i_real][j] * DeltaFunction(xp[1] - xs[1], xp[2] - xs[2], par.d_x, par.d_y);
-					Nodes[Ind].Eps(2, 2) += Eyy[i_real][j] * DeltaFunction(xp[1] - xs[1], xp[2] - xs[2], par.d_x, par.d_y);
 					Nodes[Ind].p         +=   p[i_real][j] * DeltaFunction(xp[1] - xs[1], xp[2] - xs[2], par.d_x, par.d_y);
 					if (par.BC == periodical) {
-						Nodes[Ind].Eps(1, 1) += Exx[i_real][j] * DeltaFunction(xp[1] - xs[1] - par.L, xp[2] - xs[2], par.d_x, par.d_y);
-						Nodes[Ind].Eps(1, 1) += Exx[i_real][j] * DeltaFunction(xp[1] - xs[1] + par.L, xp[2] - xs[2], par.d_x, par.d_y);
-						Nodes[Ind].Eps(2, 2) += Eyy[i_real][j] * DeltaFunction(xp[1] - xs[1] - par.L, xp[2] - xs[2], par.d_x, par.d_y);
-						Nodes[Ind].Eps(2, 2) += Eyy[i_real][j] * DeltaFunction(xp[1] - xs[1] + par.L, xp[2] - xs[2], par.d_x, par.d_y);
 						Nodes[Ind].p         +=   (p[i_real][j] + dpdx_Poiseuille(par.H, par.Re)*par.L) * DeltaFunction(xp[1] - xs[1] - par.L, xp[2] - xs[2], par.d_x, par.d_y);
 						Nodes[Ind].p         +=   (p[i_real][j] - dpdx_Poiseuille(par.H, par.Re)*par.L) * DeltaFunction(xp[1] - xs[1] + par.L, xp[2] - xs[2], par.d_x, par.d_y);
-					}
-				}
-			}
-
-			GetInfluenceArea(i_min, i_max, j_min, j_max, nc1 - 1, nc2 - 1, solid.x + Nodes[Ind].x, 4, par);
-			Nodes[Ind].Eps(1, 2) = 0.0;
-			for (int i = i_min; i <= i_max; ++i) {
-				for (int j = j_min; j <= j_max; ++j) {
-					int i_real = i;
-					if (i_real <  0      ) i_real += nc1 - 1;
-					if (i_real >  nc1 - 1) i_real -= nc1 - 1;
-					if (i_real == 0      ) i_real  = nc1 - 1;
-					GeomVec xc = x_c(i_real, j, par);
-					GeomVec xs = solid.x + Nodes[Ind].x;
-					Nodes[Ind].Eps(1, 2) += Exy[i_real][j] * DeltaFunction(xc[1] - xs[1], xc[2] - xs[2], par.d_x, par.d_y);
-					if (par.BC == periodical) {
-						Nodes[Ind].Eps(1, 2) += Exy[i_real][j] * DeltaFunction(xc[1] - xs[1] - par.L, xc[2] - xs[2], par.d_x, par.d_y);
-						Nodes[Ind].Eps(1, 2) += Exy[i_real][j] * DeltaFunction(xc[1] - xs[1] + par.L, xc[2] - xs[2], par.d_x, par.d_y);
 					}
 				}
 			}

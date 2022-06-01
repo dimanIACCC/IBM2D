@@ -17,8 +17,6 @@ public:
 	GeomVec uf;       // velocity of the fluid in the Node
 	GeomVec us;       // velocity of the SolidBody in the Node
 	GeomVec f;        // force
-	GeomVec n;        // norm
-	GeomMat Eps;      // deformation velocity
 	double ds;        // size of Lagrange element
 	double p;         // pressure
 };
@@ -61,9 +59,7 @@ public:
 	void integrals(Matrix U_n, Matrix V_n, Matrix U_new, Matrix V_new, Param par);
 };
 
-void fill_circle_coordinates(std::vector<Node> &Nodes, const int Nn_max, const int Nn, double r, double e);
-void fill_ds_x(std::vector<Node> &Nodes, const int Nn_max, const int Nn, const double r, const double d_x, const double d_y);
-
+void fill_solid_coordinates(std::vector<Node> &Nodes, const int Nn_max, const int Nn, const double r, const double e, const double alpha, const double dxy);
 void Read_Solids(std::string filename, std::vector<Circle>& Solids, std::vector<Node>& Nodes, Param &par);
 void Add_Solids(std::vector<Circle>& Solids, std::vector<Node>& Nodes, Param &par);
 bool Collide(Circle& s1, Circle& s2, std::vector<Node> &Nodes, Param par, double alpha, double beta, double friction, double kr);

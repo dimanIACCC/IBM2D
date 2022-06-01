@@ -34,6 +34,7 @@ Param::Param() {  // default parameters
 	// parameters for many particles
 	rho = 3.;
 	r = 0.05;
+	e = 0.;
 	Nn_max = 0;
 	Nn = 200;
 	AddSolids_N = 0;
@@ -140,6 +141,7 @@ void Param::read_line(std::string line) {
 		// parameters for many particles
 		else if (PAR == "rho")                  rho = stod(VALUE);
 		else if (PAR == "r")                    r = stod(VALUE);
+		else if (PAR == "e")                    e = stod(VALUE);
 		else if (PAR == "AddSolids_N")          AddSolids_N = stoi(VALUE);
 		else if (PAR == "AddSolids_start")      AddSolids_start = stoi(VALUE);
 		else if (PAR == "AddSolids_interval")   AddSolids_interval = stoi(VALUE);
