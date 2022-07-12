@@ -74,7 +74,7 @@ void BodyOfProgram(Param &par, std::vector<Circle> &solidList, std::vector<Node>
 		Solids_move(solidList, Nodes, par);												// moving solids if it is necessary (checking it up inside)
 																					        // and detection of collisions
 		double h_average;
-		h_average_of_Solids_Layer(solidList, par, h_average);
+		//h_average_of_Solids_Layer(solidList, par, h_average);
 		
 		if (par.BC == box) {
 			history_log(par.WorkDir, "history", par.N_step*par.d_t, h_average, 0., 0.);
@@ -136,7 +136,6 @@ void MakeHibernationFile(Param& par, std::vector<Circle>& solidList, std::vector
 	output << "AddSolids_N = " << par.AddSolids_N << std::endl;
 	output << "AddSolids_start = " << par.AddSolids_start << std::endl;
 	output << "AddSolids_interval = " << par.AddSolids_interval << std::endl;
-	output << "output_step = " << par.output_step << std::endl;
 	output << "SolidName_max = " << par.SolidName_max << std::endl;
 	output << "k_dist = " << par.k_dist << std::endl;
 
@@ -203,6 +202,7 @@ void Awake(std::string &filename, Param &par, std::vector<Circle>& solidList, st
 	std::string PAR, VALUE;
 	char ch;
 
+	std::cout << "Awake" << std::endl;
 
 	std::cout << filename << std::endl;
 	hibernation_source.open(filename);
@@ -301,6 +301,7 @@ void Awake(std::string &filename, Param &par, std::vector<Circle>& solidList, st
 							if (line == "<\\Solid>") {
 								Circle c(x, y, ux, uy, omega, rho, Nn, moving, name, r);
 								c.add_Nodes(Nodes, par.Nn_max);
+								fill_solid_ds(Nodes, par.Nn_max, c.Nn, par.e, 0.5*(par.d_x + par.d_y));
 								par.Nn_max += c.Nn;
 
 								if (c.name > par.SolidName_max) par.SolidName_max = c.name;

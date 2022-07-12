@@ -83,17 +83,47 @@ void fill_solid_coordinates(std::vector<Node> &Nodes, const int Nn_max, const in
 			double phi = i * 2.0 * M_PI / Nn;
 			Nodes[Ind].x_n[1] = cos(phi) * r / sqrt(1 - e*e*cos(phi)*cos(phi)) * sqrt(1 - e*e);
 			Nodes[Ind].x_n[2] = sin(phi) * r / sqrt(1 - e*e*cos(phi)*cos(phi)) * sqrt(1 - e*e);
-			Nodes[Ind].ds = 2.0 * M_PI * r / Nn * dxy;
+			//Nodes[Ind].ds = 2.0 * M_PI * r / Nn * dxy;
 		}
 		else{  // line
 			double x = 2 * r * (i - 0.5*Nn) / Nn;
 			Nodes[Ind].x_n[1] = x;
 			Nodes[Ind].x_n[2] = 0.;
-			Nodes[Ind].ds = 2. * r / Nn * dxy;
+			//Nodes[Ind].ds = 2. * r / Nn * dxy;
 		}
 		Nodes[Ind].x_n = rotate_Vector_around_vector(Nodes[Ind].x_n, o);
 		Nodes[Ind].x = Nodes[Ind].x_n;
 	}
+
+	for (size_t i = 1; i < Nn-1; ++i) {
+		int Ind = Nn_max + i;
+		Nodes[Ind].ds = 0.5 * length(Nodes[Ind + 1].x_n - Nodes[Ind - 1].x_n) * dxy;
+	}
+	if (e < 0.999) {    // ellipse
+		Nodes[Nn_max + 0     ].ds = 0.5 * length(Nodes[Nn_max + 1].x_n - Nodes[Nn_max + Nn - 1].x_n) * dxy;
+		Nodes[Nn_max + Nn - 1].ds = 0.5 * length(Nodes[Nn_max + 0].x_n - Nodes[Nn_max + Nn - 2].x_n) * dxy;
+	}
+	else {  // line
+		Nodes[Nn_max + 0     ].ds = length(Nodes[Nn_max      + 1].x_n - Nodes[Nn_max      + 0].x_n) * dxy;
+		Nodes[Nn_max + Nn - 1].ds = length(Nodes[Nn_max + Nn - 1].x_n - Nodes[Nn_max + Nn - 2].x_n) * dxy;
+	}
+}
+
+void fill_solid_ds(std::vector<Node> &Nodes, const int Nn_max, const int Nn, const double e, const double dxy) {
+
+	for (size_t i = 1; i < Nn - 1; ++i) {
+		int Ind = Nn_max + i;
+		Nodes[Ind].ds = 0.5 * length(Nodes[Ind + 1].x_n - Nodes[Ind - 1].x_n) * dxy;
+	}
+	if (e < 0.999) {    // ellipse
+		Nodes[Nn_max + 0].ds = 0.5 * length(Nodes[Nn_max + 1].x_n - Nodes[Nn_max + Nn - 1].x_n) * dxy;
+		Nodes[Nn_max + Nn - 1].ds = 0.5 * length(Nodes[Nn_max + 0].x_n - Nodes[Nn_max + Nn - 2].x_n) * dxy;
+	}
+	else {  // line
+		Nodes[Nn_max + 0].ds = length(Nodes[Nn_max + 1].x_n - Nodes[Nn_max + 0].x_n) * dxy;
+		Nodes[Nn_max + Nn - 1].ds = length(Nodes[Nn_max + Nn - 1].x_n - Nodes[Nn_max + Nn - 2].x_n) * dxy;
+	}
+
 }
 
 void velocities(std::vector<Circle>::iterator &Solid, std::vector<Node> &Nodes) {
@@ -262,7 +292,7 @@ double Distance_2Solids(SolidBody& s1, SolidBody& s2, Param& par, GeomVec& r) {
 	return dist;
 }
 
-double Distance_2Solids_(SolidBody& s1, SolidBody& s2, std::vector<Node> Nodes, Param& par, GeomVec& r_out) {
+double Distance_2Solids_(SolidBody& s1, SolidBody& s2, std::vector<Node> Nodes, Param& par, GeomVec& r_out, GeomVec& x1, GeomVec& x2) {
 	double dist = +1.e99;
 
 	for (size_t k1 = 0; k1 < s1.Nn; ++k1) {
@@ -281,6 +311,8 @@ double Distance_2Solids_(SolidBody& s1, SolidBody& s2, std::vector<Node> Nodes, 
 			}
 			if (rrr < dist) {
 				dist = rrr;
+				x1 = Nodes[Ind1].x_s - s1.x_n;
+				x2 = Nodes[Ind2].x_s - s2.x_n;
 				r_out = r / rrr;
 			}
 		}
@@ -293,8 +325,12 @@ bool Collide(Circle& s1, Circle& s2, std::vector<Node> &Nodes, Param par, double
 	bool result = false;
 
 	GeomVec r = s1.x - s2.x;
+	GeomVec x1 = s1.x;
+	GeomVec x2 = s2.x;
+	GeomVec omega0;
+	omega0[3] = 1.;
 	double dist = Distance_2Solids(s1, s2, par, r);
-	if (dist < 10 * par.d_x) dist = Distance_2Solids_(s1, s2, Nodes, par, r);
+	if (dist < 10 * par.d_x) dist = Distance_2Solids_(s1, s2, Nodes, par, r, x1, x2);
 
 	double dist_u = par.k_dist*par.d_x;
 	double dist_r = par.k_dist*par.d_x * kr;
@@ -321,6 +357,10 @@ bool Collide(Circle& s1, Circle& s2, std::vector<Node> &Nodes, Param par, double
 			double Delta_u = (dist_r - dist)*(dist_r - dist) / dist_r / dist_r * par.Gravity_module * par.d_t;  // distance force
 			if (s1.moving == 1) s1.d_ur_collide += beta*m2 / (m1 + m2)*Delta_u*r;
 			if (s2.moving == 1) s2.d_ur_collide -= beta*m1 / (m1 + m2)*Delta_u*r;
+
+			if (s1.moving == 1) s1.d_omega_collide[3] += beta*m2 / (m1 + m2)*Delta_u*dot_product(x_product(x1, r), omega0) * s1.V / s1.I;
+			if (s2.moving == 1) s2.d_omega_collide[3] -= beta*m1 / (m1 + m2)*Delta_u*dot_product(x_product(x2, r), omega0) * s2.V / s2.I;
+
 			//if (Debug) std::cout << "Collision r" << std::endl;
 		}
 	}
@@ -334,7 +374,7 @@ void Solids_collide(std::vector<Circle> &solidList, std::vector<Node> &Nodes, Pa
 	double dist_r = par.k_dist*par.d_x * kr;
 
 	double alpha = 0.3; // coefficient for the collision force based on velocity value
-	double beta  = 20.; // coefficient for the collision force based on distance between particles value
+	double beta  = 50.; // coefficient for the collision force based on distance between particles value
 	double friction = 0.1; // coefficient for the friction force based on velocity value
 
 	///-------------collision with walls--------------------------

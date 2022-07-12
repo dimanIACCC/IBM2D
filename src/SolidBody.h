@@ -60,6 +60,7 @@ public:
 };
 
 void fill_solid_coordinates(std::vector<Node> &Nodes, const int Nn_max, const int Nn, const double r, const double e, const double alpha, const double dxy);
+void fill_solid_ds(std::vector<Node> &Nodes, const int Nn_max, const int Nn, const double e, const double dxy);
 void Read_Solids(std::string filename, std::vector<Circle>& Solids, std::vector<Node>& Nodes, Param &par);
 void Add_Solids(std::vector<Circle>& Solids, std::vector<Node>& Nodes, Param &par);
 bool Collide(Circle& s1, Circle& s2, std::vector<Node> &Nodes, Param par, double alpha, double beta, double friction, double kr);

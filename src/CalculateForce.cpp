@@ -361,12 +361,19 @@ void Make_interaction_Matrix(float* A_beg, float* A_end, int N1, int N2, double 
 		int j = idx[0];
 		int i_real = i;
 		A_beg_(j, i_real) = Nn_max;
+	}
+	);
+
+	parallel_for_each(A_end_.extent, [=](index<2> idx) restrict(amp) {
+		int i = idx[1];
+		int j = idx[0];
+		int i_real = i;
 		A_end_(j, i_real) = 0;
 	}
 	);
 
 	int m = 0;
-	int mp = Nn_max / 30000 + 1;
+	int mp = Nn_max / 10000 + 1;
 	int Nnp_max = Nn_max / mp;
 
 	for (int m = 0; m < mp; m++)
