@@ -41,7 +41,7 @@ Param::Param() {  // default parameters
 	AddSolids_start = 0;
 	AddSolids_interval = 5000000;
 	SolidName_max = 0;
-	k_dist = 3.0;
+	k_dist = 4.0;
 
 	// parameters for special problems
 	u_wall = 0.;

@@ -3,7 +3,7 @@
 #include "Output.h"
 
 
-void CalculateForce(Matrix &dFx, Matrix &dFy, float* Ax_beg, float* Ax_end, float* Ay_beg, float* Ay_end, std::vector<Circle> &iList, std::vector<Node> &Nodes, Matrix& u, Matrix& v, Param par) {
+void CalculateForce(Matrix &dFx, Matrix &dFy, int* Ax_beg, int* Ax_end, int* Ay_beg, int* Ay_end, std::vector<Circle> &iList, std::vector<Node> &Nodes, Matrix& u, Matrix& v, Param par) {
 
 	int num_thr = 1.; // omp_get_max_threads();
 
@@ -349,10 +349,10 @@ void uf_in_Nodes_old(std::vector<Node>& Nodes, Matrix &u, Matrix &v, Param par, 
 	//std::cout << "time u old " << end - begin << std::endl;
 }
 
-void Make_interaction_Matrix(float* A_beg, float* A_end, int N1, int N2, double d_x, double d_y, std::vector<Node>& Nodes, int Nn_max, Direction Dir) {
+void Make_interaction_Matrix(int* A_beg, int* A_end, int N1, int N2, double d_x, double d_y, std::vector<Node>& Nodes, int Nn_max, Direction Dir) {
 
-	array_view <float, 2> A_beg_(N2, N1, A_beg);
-	array_view <float, 2> A_end_(N2, N1, A_end);
+	array_view <int, 2> A_beg_(N2, N1, A_beg);
+	array_view <int, 2> A_end_(N2, N1, A_end);
 
 	std::cout << "start Make_interaction_Matrix" << std::endl;
 
@@ -378,8 +378,8 @@ void Make_interaction_Matrix(float* A_beg, float* A_end, int N1, int N2, double 
 
 	for (int m = 0; m < mp; m++)
 	{
-		float kb_beg = m*Nn_max / mp;
-		float kb_end = (m + 1)*Nn_max / mp;
+		int kb_beg = m*Nn_max / mp;
+		int kb_end = (m + 1)*Nn_max / mp;
 
 		std::vector<Node_simple> Nodes_simple = Copy_Node_Simple_vector(Nodes, kb_beg, kb_end);
 		array_view<Node_simple, 1> Nodes_AV(Nnp_max, Nodes_simple);
@@ -446,7 +446,7 @@ void Make_interaction_Matrix(float* A_beg, float* A_end, int N1, int N2, double 
 
 }
 
-void F_to_Euler_grid(std::vector<Node>& Nodes, Matrix &Fx_temp, Matrix &Fy_temp, float* Ax_beg, float* Ax_end, float* Ay_beg, float* Ay_end, Param par, int Nn_max) {
+void F_to_Euler_grid(std::vector<Node>& Nodes, Matrix &Fx_temp, Matrix &Fy_temp, int* Ax_beg, int* Ax_end, int* Ay_beg, int* Ay_end, Param par, int Nn_max) {
 
 	int N1_period = par.N1;
 	int N1_u = par.N1_u;
@@ -461,10 +461,10 @@ void F_to_Euler_grid(std::vector<Node>& Nodes, Matrix &Fx_temp, Matrix &Fy_temp,
 
 	std::clock_t begin, end;
 
-	array_view <float, 2> Ax_beg_(N2_u, N1_u, Ax_beg);
-	array_view <float, 2> Ax_end_(N2_u, N1_u, Ax_end);
-	array_view <float, 2> Ay_beg_(N2_v, N1_v, Ay_beg);
-	array_view <float, 2> Ay_end_(N2_v, N1_v, Ay_end);
+	array_view <int, 2> Ax_beg_(N2_u, N1_u, Ax_beg);
+	array_view <int, 2> Ax_end_(N2_u, N1_u, Ax_end);
+	array_view <int, 2> Ay_beg_(N2_v, N1_v, Ay_beg);
+	array_view <int, 2> Ay_end_(N2_v, N1_v, Ay_end);
 
 	double *Fx_temp_ = new double[N1_u*N2_u];
 	double *Fy_temp_ = new double[N1_v*N2_v];

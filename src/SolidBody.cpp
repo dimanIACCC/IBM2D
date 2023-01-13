@@ -238,15 +238,15 @@ void Add_Solids(std::vector<Circle>& Solids, std::vector<Node>& Nodes, Param &pa
 		for (int i = 0; i < par.AddSolids_N; i++) { // add $AddSolids_N$ solids
 			GeomVec x;
 			x[0] = 0;
-			x[1] = (par.L)  * (0.5 + (1 - 4 * par.r / par.L) * (double(rand()) - RAND_MAX / 2) / RAND_MAX);
-			x[2] = (par.H)  * (0.75 + 0.5*(1 - 6 * par.r / par.H) * (double(rand()) - RAND_MAX / 2) / RAND_MAX);
+			x[1] = (par.L)  * (0.5 + 0.5*(1 - 4 * par.r / par.L) * (double(rand()) - RAND_MAX / 2) / RAND_MAX);
+			x[2] = (par.H)  * (0.5 + 0.5*(1 - 6 * par.r / par.H) * (double(rand()) - RAND_MAX / 2) / RAND_MAX);
 			x[3] = 0;
 
 			// check if new Solid does not cross other Solids
 			bool add = true;
 			for (auto solid = Solids.begin(); solid != Solids.end(); solid++) {
-				if (length(x - solid->x) < 1.25 * (par.r + solid->r)) {
-				//if (length(x - solid->x) < 1.25 * (par.r + solid->r) && solid->moving == 1) { // flow inside Solid
+				//if (length(x - solid->x) < 1.1 * (par.r + solid->r)) {
+				if (length(x - solid->x) < 1.25 * (par.r + solid->r) && solid->moving == 1) { // flow inside Solid
 					add = false;
 					i--;
 					break;
@@ -373,7 +373,7 @@ void Solids_collide(std::vector<Circle> &solidList, std::vector<Node> &Nodes, Pa
 	double dist_u = par.k_dist*par.d_x;
 	double dist_r = par.k_dist*par.d_x * kr;
 
-	double alpha = 0.3; // coefficient for the collision force based on velocity value
+	double alpha = 1500 * par.d_t; // coefficient for the collision force based on velocity value
 	double beta  = 50.; // coefficient for the collision force based on distance between particles value
 	double friction = 0.1; // coefficient for the friction force based on velocity value
 

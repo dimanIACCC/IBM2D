@@ -57,10 +57,10 @@ void Calculate_u_p(Matrix &U_n   , Matrix &U_new,
 		coordinates(solid, Nodes);
 	}
 
-	float *Ax_beg = new float[par.N1_u*par.N2_u];
-	float *Ax_end = new float[par.N1_u*par.N2_u];
-	float *Ay_beg = new float[par.N1_v*par.N2_v];
-	float *Ay_end = new float[par.N1_v*par.N2_v];
+	int *Ax_beg = new int[par.N1_u*par.N2_u];
+	int *Ax_end = new int[par.N1_u*par.N2_u];
+	int *Ay_beg = new int[par.N1_v*par.N2_v];
+	int *Ay_end = new int[par.N1_v*par.N2_v];
 	if (par.AMP == true) {
 		Make_interaction_Matrix(Ax_beg, Ax_end, par.N1_u, par.N2_u, par.d_x, par.d_y, Nodes, par.Nn_max, Du);
 		Make_interaction_Matrix(Ay_beg, Ay_end, par.N1_v, par.N2_v, par.d_x, par.d_y, Nodes, par.Nn_max, Dv);
