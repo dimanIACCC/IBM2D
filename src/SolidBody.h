@@ -28,6 +28,7 @@ public:
 	GeomVec x_n, x;          // coordinates of the mass center
 	GeomVec u_n, u, u_s;          // velocity of the mass center
 	GeomVec omega, omega_n, omega_s;  // angular velocity
+	GeomVec alpha;                    // angular orientation
 	GeomVec d_uv_collide, d_ur_collide, d_omega_collide;   // velocity and andgular velocity corrections due to the collision
 	GeomVec f_new, f;      // force applied to the whole SolidBody
 	GeomVec tau_new, tau;    // torque, moment of force applied to the whole SolidBody
@@ -43,8 +44,9 @@ public:
 	int Nn;                    // Number of Nodes
 	int name;                     // integer name of the Solid
 	//int shape;                    // shape of the Solid
-	double r;
-	SolidBody(double x, double y, double ux, double uy, double omega, double rho, int Nn, int moving, int name);
+	double r;                     // radius
+	double e;                     // eccentricity 
+	SolidBody(double x, double y, double ux, double uy, double alpha, double omega, double rho, int Nn, int moving, int name);
 	~SolidBody();
 	void add_Nodes(std::vector<Node> &Nodes, const int Nn_max);
 	void log_init(std::string WorkDir);
@@ -53,7 +55,7 @@ public:
 
 class Circle : public SolidBody{
 public:
-	Circle(double x, double y, double ux, double uy, double omega, double rho, int Nn, int moving, int name, double r);
+	Circle(double x, double y, double ux, double uy, double alpha, double omega, double rho, int Nn, int moving, int name, double r, double e);
 	Circle(double x, double y, Param &par);
 	~Circle();
 	void integrals(Matrix U_n, Matrix V_n, Matrix U_new, Matrix V_new, Param par);

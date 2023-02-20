@@ -174,6 +174,7 @@ void MakeHibernationFile(Param& par, std::vector<Circle>& solidList, std::vector
 		output << "x_n = " << std::endl << one->x_n << std::endl;
 		output << "u_n = " << std::endl << one->u_n << std::endl;
 		output << "omega_n = " << std::endl << one->omega_n << std::endl;
+		output << "alpha = " << std::endl << one->alpha << std::endl;
 		output << "I = " << one->I << std::endl;
 		output << "rho = " << one->rho << std::endl;
 		output << "V = " << one->V << std::endl;
@@ -254,13 +255,14 @@ void Awake(std::string &filename, Param &par, std::vector<Circle>& solidList, st
 						double uy = 0;
 						double omega = 0;
 
-						GeomVec x_n, u_n, omega_n;
+						GeomVec x_n, u_n, omega_n, alpha;
 
 						double rho = par.rho;
 						int name = par.SolidName_max+1;
 						int Nn = par.Nn;
 						int moving = 1;
 						double r = par.r;
+						double e = par.e;
 						bool Poiseuille = false;   //key for initial ux, uy and omega_new corresponding to Poiseuille flow
 
 						while (line != "<\\Solid>") {
@@ -271,10 +273,12 @@ void Awake(std::string &filename, Param &par, std::vector<Circle>& solidList, st
 							else if (PAR == "x_n")           hibernation_source >> x_n;//
 							else if (PAR == "u_n")           hibernation_source >> u_n;//
 							else if (PAR == "omega_n")       hibernation_source >> omega_n;//
+							else if (PAR == "alpha")         hibernation_source >> alpha;
 							else if (PAR == "rho")           rho = stod(VALUE);
 							else if (PAR == "Nn")            Nn = stoi(VALUE);
 							else if (PAR == "name")          name = stoi(VALUE);
 							else if (PAR == "r")             r = stod(VALUE);
+							else if (PAR == "e")             e = stod(VALUE);
 							else if (PAR == "<Nodes>") {
 								Nodes.resize(par.Nn_max + Nn);
 								while (line != "<\\Nodes>") {
@@ -299,9 +303,10 @@ void Awake(std::string &filename, Param &par, std::vector<Circle>& solidList, st
 								}
 							}
 							if (line == "<\\Solid>") {
-								Circle c(x, y, ux, uy, omega, rho, Nn, moving, name, r);
+								double alpha0 = length(alpha);
+								Circle c(x, y, ux, uy, alpha0, omega, rho, Nn, moving, name, r, e);
 								c.add_Nodes(Nodes, par.Nn_max);
-								fill_solid_ds(Nodes, par.Nn_max, c.Nn, par.e, 0.5*(par.d_x + par.d_y));
+								fill_solid_ds(Nodes, par.Nn_max, c.Nn, c.e, 0.5*(par.d_x + par.d_y));
 								par.Nn_max += c.Nn;
 
 								if (c.name > par.SolidName_max) par.SolidName_max = c.name;

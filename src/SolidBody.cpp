@@ -1,16 +1,18 @@
 #include "stdafx.h"
 #include "SolidBody.h"
 
-SolidBody::SolidBody(double x, double y, double ux, double uy, double omega, double rho, int Nn, int moving, int name)
+SolidBody::SolidBody(double x, double y, double ux, double uy, double alpha, double omega, double rho, int Nn, int moving, int name)
 {
 	std::fill(this->x_n.begin()   , this->x_n.end(),    0.0); // fill vector x_n    with zeros
 	std::fill(this->u_n.begin()   , this->u_n.end()   , 0.0); // fill vector u_n    with zeros
 	std::fill(this->omega_n.begin(), this->omega_n.end(), 0.0); // fill vector omega_n with zeros
+	std::fill(this->alpha.begin()  , this->alpha.end(), 0.0); // fill vector omega_n with zeros
 	this->x_n[1] = x;
 	this->x_n[2] = y;
 	this->u_n[1] = ux;
 	this->u_n[2] = uy;
 	this->omega_n[3] = omega;
+	this->alpha[3] = alpha;
 	this->rho = rho;
 	this->Nn = Nn;
 	this->moving = moving;
@@ -54,15 +56,16 @@ bool operator >(const SolidBody& a, const SolidBody& b) {
 	else return false;
 }
 
-Circle::Circle(double x, double y, double ux, double uy, double omega, double rho,  int Nn, int moving, int name, double r) :
-     SolidBody(       x,        y,        ux,        uy,        omega,        rho,      Nn,     moving,     name) {
+Circle::Circle(double x, double y, double ux, double uy, double alpha, double omega, double rho,  int Nn, int moving, int name, double r, double e) :
+     SolidBody(       x,        y,        ux,        uy,        alpha,        omega,        rho,      Nn,     moving,     name) {
 	this->r = r;
+	this->e = e;
 	V = M_PI * r * r;
-	I =  V * r * r / 2.0; // angular momentum for unit density
+	I =  V * r * r / 4.0 * (2.0-e*e)/sqrt(1.0-e*e); // angular momentum for unit density
 }
 
 Circle::Circle(double x, double y, Param &par):
-	    Circle(       x,        y, 0.0, 0.0, 0.0, par.rho, par.Nn, true, par.SolidName_max+1, par.r) {
+	    Circle(       x,        y, 0.0, 0.0, 0.0, 0.0, par.rho, par.Nn, true, par.SolidName_max+1, par.r, par.e) {
 	this->u_n[1] = 0.0;  //  ux_Poiseuille(y, par.H);
 	this->omega_n[3] = 0.0; // -dux_dy_Poiseuille(y, par.H);
 	this->omega     = this->omega_n;
@@ -75,14 +78,14 @@ Circle::~Circle()
 
 void fill_solid_coordinates(std::vector<Node> &Nodes, const int Nn_max, const int Nn, const double r, const double e, const double alpha, const double dxy) {
 	GeomVec o;
-	o[3] = M_PI / 180 * alpha;
+	o[3] = alpha;
 
 	for (size_t i = 0; i < Nn; ++i) {
 		int Ind = Nn_max + i;
 		if (e < 0.999) {    // ellipse
 			double phi = i * 2.0 * M_PI / Nn;
-			Nodes[Ind].x_n[1] = cos(phi) * r / sqrt(1 - e*e*cos(phi)*cos(phi)) * sqrt(1 - e*e);
-			Nodes[Ind].x_n[2] = sin(phi) * r / sqrt(1 - e*e*cos(phi)*cos(phi)) * sqrt(1 - e*e);
+			Nodes[Ind].x_n[1] = cos(phi) * r / sqrt(1 - e*e*cos(phi)*cos(phi)) * pow(1 - e*e, 0.25);
+			Nodes[Ind].x_n[2] = sin(phi) * r / sqrt(1 - e*e*cos(phi)*cos(phi)) * pow(1 - e*e, 0.25);
 			//Nodes[Ind].ds = 2.0 * M_PI * r / Nn * dxy;
 		}
 		else{  // line
@@ -146,7 +149,7 @@ void SolidBody::log_init(std::string WorkDir) {
 	output.open(filename);
 
 	output << "title = " << '"' << "Solid" << name << '"' << std::endl;
-	output << "Variables = n x y u v fx fy omega tau" << std::endl;
+	output << "Variables = n x y u v fx fy omega tau alpha" << std::endl;
 }
 
 void SolidBody::log(std::string WorkDir, int n) {
@@ -164,6 +167,7 @@ void SolidBody::log(std::string WorkDir, int n) {
 	       << f_new[2] << "   "
 	       << omega_n[3] << "   "
 	       << tau_new[3]   << "   "
+		   << alpha[3] << "   "
 	       << std::endl;
 }
 
@@ -205,7 +209,7 @@ void Read_Solids(std::string filename, std::vector<Circle>& Solids, std::vector<
 						else if (PAR == "Poiseuille") Poiseuille   = bool(stoi(VALUE));
 						else if (PAR == "r")          r            = stod(VALUE);
 						else if (PAR == "e")          e            = stod(VALUE);
-						else if (PAR == "alpha")      alpha        = stod(VALUE);
+						else if (PAR == "alpha")      alpha        = stod(VALUE) * M_PI / 180;
 						else    std::cout << "Read_Solids: unknown parameter " << PAR << std::endl;
 					}
 					else {
@@ -217,9 +221,11 @@ void Read_Solids(std::string filename, std::vector<Circle>& Solids, std::vector<
 					uy = 0;
 					omega = - dux_dy_Poiseuille(y, par.H);
 				}
-				Circle c(x, y, ux, uy, omega, rho, Nn, moving, par.SolidName_max+1, r);
+
+				Circle c(x, y, ux, uy, alpha, omega, rho, Nn, moving, par.SolidName_max+1, r, e);
+				std::cout << c.I << std::endl;
 				c.add_Nodes(Nodes, par.Nn_max);
-				fill_solid_coordinates(Nodes, par.Nn_max, c.Nn, c.r, e, alpha, 0.5*(par.d_x+par.d_y));
+				fill_solid_coordinates(Nodes, par.Nn_max, c.Nn, c.r, c.e, alpha, 0.5*(par.d_x+par.d_y));
 				par.Nn_max += c.Nn;
 				if (c.name > par.SolidName_max) par.SolidName_max = c.name;
 				Solids.push_back(c);
@@ -568,6 +574,7 @@ void Solids_position_new(std::vector<Circle>& Solids, std::vector<Node>& Nodes, 
 	for (auto& it : Solids) {
 		if (it.moving>0) {
 			it.x = it.x_n + 0.5 * (it.u_n + it.u) * par.d_t;
+			it.alpha = it.alpha + 0.5 * (it.omega_n + it.omega) * par.d_t;
 			for (size_t k = 0; k < it.Nn; ++k) {
 				int Ind = it.IndNodes[k];
 				Nodes[Ind].x = rotate_Vector_around_vector(Nodes[Ind].x_n, 0.5 * (it.omega_n + it.omega) * par.d_t); //rotate
