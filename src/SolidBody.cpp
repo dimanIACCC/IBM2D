@@ -402,7 +402,7 @@ void Solids_collide(std::vector<Circle> &solidList, std::vector<Node> &Nodes, Pa
 	double dist_r = par.k_dist*par.d_x * kr;
 
 	double alpha = 1500 * par.d_t; // coefficient for the collision force based on velocity value
-	double beta  = 50.; // coefficient for the collision force based on distance between particles value
+	double beta  = 20.; // coefficient for the collision force based on distance between particles value
 	double friction = 0.1; // coefficient for the friction force based on velocity value
 
 	///-------------collision with walls--------------------------

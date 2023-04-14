@@ -303,7 +303,7 @@ void Awake(std::string &filename, Param &par, std::vector<Circle>& solidList, st
 								}
 							}
 							if (line == "<\\Solid>") {
-								double alpha0 = length(alpha);
+								double alpha0 = alpha[3];
 								Circle c(x, y, ux, uy, alpha0, omega, rho, Nn, moving, name, r, e);
 								c.add_Nodes(Nodes, par.Nn_max);
 								fill_solid_ds(Nodes, par.Nn_max, c.Nn, c.e, 0.5*(par.d_x + par.d_y));
