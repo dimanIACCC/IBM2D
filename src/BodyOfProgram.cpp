@@ -73,7 +73,7 @@ void BodyOfProgram(Param &par, std::vector<Circle> &solidList, std::vector<Node>
 
 		Solids_move(solidList, Nodes, par);												// moving solids if it is necessary (checking it up inside)
 																					        // and detection of collisions
-		double h_average;
+		double h_average=0;
 		//h_average_of_Solids_Layer(solidList, par, h_average);
 		
 		if (par.BC == box) {

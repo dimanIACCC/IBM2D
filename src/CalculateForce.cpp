@@ -388,7 +388,7 @@ void Make_interaction_Matrix(int* A_beg, int* A_end, int N1, int N2, double d_x,
 			int i = idx[1];
 			int j = idx[0];
 
-			double* x;
+			double* x=NULL;
 			int i_real = i;
 
 			if (Dir == Du) {
