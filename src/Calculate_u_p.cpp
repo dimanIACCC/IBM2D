@@ -162,7 +162,7 @@ void Calculate_u_p(Matrix &U_n   , Matrix &U_new,
 
 		#pragma region New P and U																
 
-			P += Delta_P;
+			P += Delta_P * 0.5;
 
 			if (par.BC == Lamb_Oseen || par.BC == Line_Vortex) {
 				BC_exact_p(P, par, par.d_t * (par.N_step + 0.5));

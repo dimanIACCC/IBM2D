@@ -1,0 +1,20 @@
+circle{
+   x = 0.5
+   y = 11.5
+   moving = 1
+   r = 0.125
+   e = 0.9
+   Poiseuille = 0
+   rho = 1.25
+   Nn = 400
+   alpha=00
+}
+
+//circle{
+   x = 0.00002
+   y = 0.0001
+   moving = 1
+   r = 0.00001
+   Poiseuille = 0
+   rho = 3.0e0
+}
