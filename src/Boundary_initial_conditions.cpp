@@ -9,8 +9,8 @@ void Boundary_Conditions(Matrix &u, Param par, Direction Dir, double time) {
 	if (par.BC == u_inflow || par.BC == u_infinity || par.BC == periodical) {
 		for (size_t i = 0; i < Nx; ++i) {
 			if (Dir == Du) {
-				u[i][0           ] = 2 * par.u_wall - u[i][1];
-				u[i][par.N2_u - 1] = 2 * par.u_wall - u[i][par.N2_u - 2];
+				u[i][0           ] = 2 * par.u_down - u[i][1];
+				u[i][par.N2_u - 1] = 2 * par.u_up   - u[i][par.N2_u - 2];
 
 				// zero derivative of the horizontal velocity
 				if (par.BC == u_infinity) {
@@ -42,8 +42,8 @@ void Boundary_Conditions(Matrix &u, Param par, Direction Dir, double time) {
 	if (par.BC == box) {
 		for (size_t i = 0; i < Nx; ++i) {
 			if (Dir == Du) {
-				u[i][0           ] = par.u_wall;
-				u[i][par.N2_u - 1] = par.u_wall;
+				u[i][0           ] = par.u_down;
+				u[i][par.N2_u - 1] = par.u_up;
 			}
 			else if (Dir == Dv) {
 				u[i][0           ] = 0.;
@@ -53,12 +53,12 @@ void Boundary_Conditions(Matrix &u, Param par, Direction Dir, double time) {
 
 		for (size_t j = 0; j < Ny; ++j) {
 			if (Dir == Du) {
-				u[0           ][j] = 0.; // 2 * par.u_wall - u[2][j];
-				u[par.N1_u - 1][j] = 0.; // 2 * par.u_wall - u[par.N1_u - 2][j];
+				u[0           ][j] = 0.; // 2 * par.u_down - u[2][j];
+				u[par.N1_u - 1][j] = 0.; // 2 * par.u_up   - u[par.N1_u - 2][j];
 			}
 			else if (Dir == Dv) {
-				u[0           ][j] = 0.; // 2 * par.u_wall - u[1           ][j];
-				u[par.N1_v - 1][j] = 0.; // 2 * par.u_wall - u[par.N1_v - 2][j];
+				u[0           ][j] = 0.; // 2 * par.u_down - u[1           ][j];
+				u[par.N1_v - 1][j] = 0.; // 2 * par.u_up   - u[par.N1_v - 2][j];
 			}
 		}
 	}
@@ -118,7 +118,7 @@ void Boundary_Conditions(Matrix &u, Param par, Direction Dir, double time) {
 
 void fill_exact(Matrix &u, Matrix &v, Matrix &p, Param &par, double time_uv, double time_p) {
 	par.grad_p_x = 0.;
-	if (par.BC == u_inflow || par.BC == periodical) par.grad_p_x = dpdx_Poiseuille(par.H, par.Re);
+	if (par.BC == u_inflow || par.BC == periodical) par.grad_p_x = dpdx_Poiseuille(par.H, par.Re) * par.u_in;
 	fill_exact_u(u, par, time_uv);
 	fill_exact_v(v, par, time_uv);
 	fill_exact_p(p, par, time_p);

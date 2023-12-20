@@ -62,8 +62,8 @@ void Calculate_u_p(Matrix &U_n   , Matrix &U_new,
 	int *Ay_beg = new int[par.N1_v*par.N2_v];
 	int *Ay_end = new int[par.N1_v*par.N2_v];
 	if (par.AMP == true) {
-		Make_interaction_Matrix(Ax_beg, Ax_end, par.N1_u, par.N2_u, par.d_x, par.d_y, Nodes, par.Nn_max, Du);
-		Make_interaction_Matrix(Ay_beg, Ay_end, par.N1_v, par.N2_v, par.d_x, par.d_y, Nodes, par.Nn_max, Dv);
+		Make_interaction_Matrix(Ax_beg, Ax_end, par.N1_u, par.N2_u, par.d_x, par.d_y, Nodes, par.Nn_max, Du, par.BC, par.L);
+		Make_interaction_Matrix(Ay_beg, Ay_end, par.N1_v, par.N2_v, par.d_x, par.d_y, Nodes, par.Nn_max, Dv, par.BC, par.L);
 	}
 
 	Fx = Fx * 0.;
@@ -71,7 +71,8 @@ void Calculate_u_p(Matrix &U_n   , Matrix &U_new,
 
 	double Delta_P_max = 1.;
 	double P_max = 1.;
-
+	double coef = 1. + 0.01*par.d_t * (par.ldxdx + par.ldydy) / par.Re;
+	std::cout << "B_f = " << coef << std::endl;
 	// start iterations for pressure and velocity to fulfil the continuity equation
 	for (int s = 1; s <= par.s_max; ++s) {													// cycle while (delta_P / P > eps_P)
 
@@ -106,6 +107,7 @@ void Calculate_u_p(Matrix &U_n   , Matrix &U_new,
 				it.Fr = 0.;
 				it.S = 0.;
 			}
+
 			CalculateForce(dFx, dFy, Ax_beg, Ax_end, Ay_beg, Ay_end, solidList, Nodes, U_f, V_f, par);
 
 			//Output_V(dFy, "Fy", s, par);
@@ -117,7 +119,6 @@ void Calculate_u_p(Matrix &U_n   , Matrix &U_new,
 				V_new += dFy * (par.d_t);
 			}
 			else if (par.IBM == 1) {
-				double coef = fast_math::fmax(1., 0.01*par.d_t * (par.ldxdx + par.ldydy) / par.Re);
 				Fx += dFx * coef;
 				Fy += dFy * coef;
 			}

@@ -56,7 +56,9 @@ public:
 
 	// parameters for special problems
 	double Lamb_Oseen_r0;     // initial radius of Lamb_Oseen vortex
-	double u_wall;            // velocity of the channel walls
+	double u_in;              // velocity of down channel wall
+	double u_down;       // velocity of down channel wall
+	double u_up;         // velocity of up   channel wall
 	double omega_BC;          // omega of the circle driven by external force
 
 	// calculated parameters (dependent on basic ones)

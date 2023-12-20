@@ -192,7 +192,7 @@ void prepare_solve_helmholtz_velocity(Matrix &A, Matrix &RHS, double q, Param pa
 	bd_by = (double*)mkl_malloc((nx + 1) * sizeof(double), 64);
 
 	if (Dir == Du) MatrixU_to_DoubleArray(RHS, f_mkl, par.BC);
-	if (Dir == Dv) Matrix_to_DoubleArray(RHS, f_mkl, par.BC);
+	if (Dir == Dv) MatrixV_to_DoubleArray(RHS, f_mkl, par.BC);
 
 	for (MKL_INT iy = 0; iy <= ny; iy++) {
 		bd_ax[iy] = 0.;
@@ -206,6 +206,10 @@ void prepare_solve_helmholtz_velocity(Matrix &A, Matrix &RHS, double q, Param pa
 	for (MKL_INT ix = 0; ix <= nx; ix++) {
 		bd_ay[ix] = 0.;
 		bd_by[ix] = 0.;
+		if (par.BC == periodical || par.BC == u_inflow || par.BC == u_infinity) {
+			if (Dir == Du) bd_ay[ix] = par.u_down;
+			if (Dir == Du) bd_by[ix] = par.u_up;
+		}
 		if (par.BC == Taylor_Green || par.BC == Lamb_Oseen || par.BC == Line_Vortex) {
 			bd_ay[ix] = A[ix][0];
 			bd_by[ix] = A[ix][ny];
@@ -215,7 +219,7 @@ void prepare_solve_helmholtz_velocity(Matrix &A, Matrix &RHS, double q, Param pa
 	Helmholtz_MKL(f_mkl, ax, bx, ay, by, bd_ax, bd_bx, bd_ay, bd_by, nx, ny, BCtype, 2 * par.Re / par.d_t, par.d_x, par.d_y);
 
 	if (Dir == Du) DoubleArray_to_MatrixU(f_mkl, A, par.BC);
-	if (Dir == Dv) DoubleArray_to_Matrix(f_mkl, A, par.BC);
+	if (Dir == Dv) DoubleArray_to_MatrixV(f_mkl, A, par.BC);
 
 	mkl_free(f_mkl);
 }

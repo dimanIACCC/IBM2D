@@ -38,5 +38,7 @@ Matrix operator*(const Matrix &A, const double &b);
 
 void Matrix_to_DoubleArray(Matrix &M, double* D, boundary_conditions BC);
 void DoubleArray_to_Matrix(double* D, Matrix &M, boundary_conditions BC);
+void MatrixV_to_DoubleArray(Matrix &M, double* D, boundary_conditions BC);
+void DoubleArray_to_MatrixV(double* D, Matrix &M, boundary_conditions BC);
 void MatrixU_to_DoubleArray(Matrix &M, double* D, boundary_conditions BC);
 void DoubleArray_to_MatrixU(double* D, Matrix &M, boundary_conditions BC);

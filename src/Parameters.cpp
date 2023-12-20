@@ -44,7 +44,9 @@ Param::Param() {  // default parameters
 	k_dist = 4.0;
 
 	// parameters for special problems
-	u_wall = 0.;
+	u_in = 0.;
+	u_down = 0.;
+	u_up   = 0.;
 	omega_BC = 0.;
 	Lamb_Oseen_r0 = 0.1;
 
@@ -150,7 +152,9 @@ void Param::read_line(std::string line) {
 
 		// parameters for special problems
 		else if (PAR == "Lamb_Oseen_r0")        Lamb_Oseen_r0 = (stod(VALUE));
-		else if (PAR == "u_wall")               u_wall = (stod(VALUE));
+		else if (PAR == "u_in")                 u_in = (stod(VALUE));
+		else if (PAR == "u_down")               u_down = (stod(VALUE));
+		else if (PAR == "u_up")                 u_up   = (stod(VALUE));
 		else if (PAR == "omega_BC")             omega_BC = (stod(VALUE));
 
 		else    std::cout << "unknown parameter " << PAR << std::endl;

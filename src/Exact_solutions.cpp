@@ -12,15 +12,17 @@ double dux_dy_Poiseuille(double y, double H) {           //    dux/dy for Poiseu
 	return -(y - H / 2.0) / pow(H / 2.0, 2);
 }
 
-
+double ux_linear(double y, double H) {
+	return y/H;
+}
 
 double exact_u(GeomVec x, Param par, double time) {
 	if      (par.BC == Taylor_Green) return Taylor_Green_u(x, par.k , par.Re, time);
 	else if (par.BC == Lamb_Oseen  ) return Lamb_Oseen_u  (x, par.x0, par.Re, time, par.Lamb_Oseen_r0);
 	else if (par.BC == Line_Vortex ) return Line_Vortex_u (x, par.x0, par.Re, time);
-	else if (par.BC == u_infinity  ) return 1.0;
-	else if (par.BC == u_inflow    ) return ux_Poiseuille(x[2], par.H);
-	else if (par.BC == periodical  ) return ux_Poiseuille(x[2], par.H);
+	else if (par.BC == u_infinity  ) return par.u_down + (par.u_up - par.u_down) * x[2] / par.H;
+	else if (par.BC == u_inflow    ) return par.u_down + (par.u_up - par.u_down) * x[2] / par.H + par.u_in * ux_Poiseuille(x[2], par.H);
+	else if (par.BC == periodical  ) return par.u_down + (par.u_up - par.u_down) * x[2] / par.H + par.u_in * ux_Poiseuille(x[2], par.H);
 	else if (par.BC == box         ) return 0.0;
 	else { std::cout << "exact_u: unknown BC" << std::endl; return 0.; }
 }

@@ -141,7 +141,9 @@ void MakeHibernationFile(Param& par, std::vector<Circle>& solidList, std::vector
 
 	// parameters for special problems
 	output << "Lamb_Oseen_r0 = " << par.Lamb_Oseen_r0 << std::endl;
-	output << "u_wall = " << par.u_wall << std::endl;
+	output << "u_in        = " << par.u_in << std::endl;
+	output << "u_down = " << par.u_down << std::endl;
+	output << "u_up   = " << par.u_up   << std::endl;
 	output << "omega_BC = " << par.omega_BC << std::endl;
 
 	output << "}" << std::endl;
@@ -313,6 +315,8 @@ void Awake(std::string &filename, Param &par, std::vector<Circle>& solidList, st
 
 								c.x_n = x_n;
 								c.x   = x_n;
+								c.x_n_plt = x_n;
+								c.x_plt   = x_n;
 								c.u_n = u_n;
 								c.u   = u_n;
 								c.omega_n = omega_n;

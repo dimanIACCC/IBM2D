@@ -142,6 +142,7 @@ Matrix operator*(const Matrix &A, const double &b) {
 	return C;
 }
 
+
 void Matrix_to_DoubleArray(Matrix &M, double* D, boundary_conditions BC) {
 
 	int Nx = M.size();
@@ -149,10 +150,7 @@ void Matrix_to_DoubleArray(Matrix &M, double* D, boundary_conditions BC) {
 
 	for (int i = 0; i < Nx; i++) {
 		for (int j = 0; j < Ny; j++) {
-			if (BC == periodical) {
-				if (i == Nx - 1); else  D[i + j*(Nx - 1)] = M[i][j];
-			}
-			else D[i + j*Nx] = M[i][j];
+			D[i + j*Nx] = M[i][j];
 		}
 	}
 
@@ -166,9 +164,39 @@ void DoubleArray_to_Matrix(double* D, Matrix &M, boundary_conditions BC) {
 
 	for (int i = 0; i < Nx; i++) {
 		for (int j = 0; j < Ny; j++) {
+			M[i][j] = D[i + j*Nx];
+		}
+	}
+}
+
+void MatrixV_to_DoubleArray(Matrix &M, double* D, boundary_conditions BC) {
+
+	int Nx = M.size();
+	int Ny = M[0].size();
+
+	for (int i = 0; i < Nx; i++) {
+		for (int j = 0; j < Ny; j++) {
+			if (BC == periodical) {
+				if (i == Nx - 1);
+				else  D[i + j*(Nx - 1)] = M[i][j];
+			}
+			else D[i + j*Nx] = M[i][j];
+		}
+	}
+
+	//Output_2DArray(D, Nx - 1, Ny, "Result/", "Array", 555);
+}
+
+void DoubleArray_to_MatrixV(double* D, Matrix &M, boundary_conditions BC) {
+
+	int Nx = M.size();
+	int Ny = M[0].size();
+
+	for (int i = 0; i < Nx; i++) {
+		for (int j = 0; j < Ny; j++) {
 			if (BC == periodical) {
 				if (i == Nx - 1) M[i][j] = D[1 + j*(Nx - 1)];
-				else           M[i][j] = D[i + j*(Nx - 1)];
+				else             M[i][j] = D[i + j*(Nx - 1)];
 			}
 			else M[i][j] = D[i + j*Nx];
 		}

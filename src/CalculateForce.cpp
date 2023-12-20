@@ -79,6 +79,7 @@ void CalculateForce(Matrix &dFx, Matrix &dFy, int* Ax_beg, int* Ax_end, int* Ay_
 	if (par.AMP == true) {
 		begin = std::clock();
 			F_to_Euler_grid(Nodes, dFx, dFy, Ax_beg, Ax_end, Ay_beg, Ay_end, par, par.Nn_max);
+			//Output_U(dFx, "dFx_new", 0, par);
 		end = std::clock();
 		std::cout << "time f new " << end - begin << std::endl;
 	}
@@ -86,10 +87,11 @@ void CalculateForce(Matrix &dFx, Matrix &dFy, int* Ax_beg, int* Ax_end, int* Ay_
 	if (par.AMP == false) {
 		begin = std::clock();
 			F_to_Euler_grid_old(Nodes, dFx, dFy, par, par.Nn_max);
+			//Output_U(dFx, "dFx_old", 0, par);
 		end = std::clock();
 		std::cout << "time f old " << end - begin << std::endl;
 	}
-
+	//std::getchar();
 
 	// copy force to non-used boundary nodes
 	if (par.BC == periodical) {
@@ -162,8 +164,8 @@ void Solids_deformation_velocity_pressure(std::vector<Circle> &Solids, std::vect
 					GeomVec xs = solid.x + Nodes[Ind].x;
 					Nodes[Ind].p         +=   p[i_real][j] * DeltaFunction(xp[1] - xs[1], xp[2] - xs[2], par.d_x, par.d_y);
 					if (par.BC == periodical) {
-						Nodes[Ind].p         +=   (p[i_real][j] + dpdx_Poiseuille(par.H, par.Re)*par.L) * DeltaFunction(xp[1] - xs[1] - par.L, xp[2] - xs[2], par.d_x, par.d_y);
-						Nodes[Ind].p         +=   (p[i_real][j] - dpdx_Poiseuille(par.H, par.Re)*par.L) * DeltaFunction(xp[1] - xs[1] + par.L, xp[2] - xs[2], par.d_x, par.d_y);
+						Nodes[Ind].p         +=   (p[i_real][j] + par.u_in*dpdx_Poiseuille(par.H, par.Re)*par.L) * DeltaFunction(xp[1] - xs[1] - par.L, xp[2] - xs[2], par.d_x, par.d_y);
+						Nodes[Ind].p         +=   (p[i_real][j] - par.u_in*dpdx_Poiseuille(par.H, par.Re)*par.L) * DeltaFunction(xp[1] - xs[1] + par.L, xp[2] - xs[2], par.d_x, par.d_y);
 					}
 				}
 			}
@@ -245,63 +247,65 @@ void uf_in_Nodes(std::vector<Node>& Nodes, Matrix &u, Matrix &v, Param par, int 
 	double L = par.L;
 	//std::clock_t begin = std::clock();
 
-	std::vector<Node_simple> Nodes_simple = Copy_Node_Simple_vector(Nodes, 0, Nn);
-	array_view<Node_simple, 1> Nodes_AV(Nn, Nodes_simple);
+	if (Nn > 0) {
+		std::vector<Node_simple> Nodes_simple = Copy_Node_Simple_vector(Nodes, 0, Nn);
+		array_view<Node_simple, 1> Nodes_AV(Nn, Nodes_simple);
 
-	double *u_ = new double[N1_u*N2_u];
-	double *v_ = new double[N1_v*N2_v];
+		double *u_ = new double[N1_u*N2_u];
+		double *v_ = new double[N1_v*N2_v];
 
-	Matrix_to_DoubleArray(u, u_, par.BC);
-	Matrix_to_DoubleArray(v, v_, par.BC);
+		Matrix_to_DoubleArray(u, u_, par.BC);
+		Matrix_to_DoubleArray(v, v_, par.BC);
 
-	array_view <double, 2> u_AV(N2_u, N1_u, u_);
-	array_view <double, 2> v_AV(N2_v, N1_v, v_);
+		array_view <double, 2> u_AV(N2_u, N1_u, u_);
+		array_view <double, 2> v_AV(N2_v, N1_v, v_);
 
-	//std::cout << "Matrix u = " << u[10][20] << ";  double* = " << u_[10 + N1 * 20] << "; u_AV = " << u_AV(20, 10) << std::endl;
-	//std::getchar();
+		//std::cout << "Matrix u = " << u[10][20] << ";  double* = " << u_[10 + N1 * 20] << "; u_AV = " << u_AV(20, 10) << std::endl;
+		//std::getchar();
 
-	//Nodes_AV.discard_data();
-	parallel_for_each(Nodes_AV.extent, [=](index<1> k) restrict(amp) {
-		InfluenceArea IA_u = GetInfluenceArea_(N1_u - 1, N2_u - 1, Nodes_AV[k].x_s, 4, BC, d_x, d_y);
-		//calculating fluid velocity uf in Lagrange nodes by using near Euler nodes and discrete delta function
-		Nodes_AV[k].uf[1] = 0.0;
-		for (int i = IA_u.i_min; i <= IA_u.i_max; ++i) {
-			for (int j = IA_u.j_min; j <= IA_u.j_max; ++j) {
-				int i_real = i_real_u_(i, N1_period);
-				double* xu = x_u_(i, j, d_x, d_y);
-				Nodes_AV[k].uf[1] += u_AV(j, i_real) * DeltaFunction_(xu[1] - Nodes_AV[k].x_s[1], xu[2] - Nodes_AV[k].x_s[2], d_x, d_y);
-				if (BC == periodical) {
-					Nodes_AV[k].uf[1] += u_AV(j, i_real) * DeltaFunction_(xu[1] - Nodes_AV[k].x_s[1] - L, xu[2] - Nodes_AV[k].x_s[2], d_x, d_y);
-					Nodes_AV[k].uf[1] += u_AV(j, i_real) * DeltaFunction_(xu[1] - Nodes_AV[k].x_s[1] + L, xu[2] - Nodes_AV[k].x_s[2], d_x, d_y);
+		//Nodes_AV.discard_data();
+		parallel_for_each(Nodes_AV.extent, [=](index<1> k) restrict(amp) {
+			InfluenceArea IA_u = GetInfluenceArea_(N1_u - 1, N2_u - 1, Nodes_AV[k].x_s, 4, BC, d_x, d_y);
+			//calculating fluid velocity uf in Lagrange nodes by using near Euler nodes and discrete delta function
+			Nodes_AV[k].uf[1] = 0.0;
+			for (int i = IA_u.i_min; i <= IA_u.i_max; ++i) {
+				for (int j = IA_u.j_min; j <= IA_u.j_max; ++j) {
+					int i_real = i_real_u_(i, N1_period);
+					double* xu = x_u_(i, j, d_x, d_y);
+					Nodes_AV[k].uf[1] += u_AV(j, i_real) * DeltaFunction_(xu[1] - Nodes_AV[k].x_s[1], xu[2] - Nodes_AV[k].x_s[2], d_x, d_y);
+					if (BC == periodical) {
+						Nodes_AV[k].uf[1] += u_AV(j, i_real) * DeltaFunction_(xu[1] - Nodes_AV[k].x_s[1] - L, xu[2] - Nodes_AV[k].x_s[2], d_x, d_y);
+						Nodes_AV[k].uf[1] += u_AV(j, i_real) * DeltaFunction_(xu[1] - Nodes_AV[k].x_s[1] + L, xu[2] - Nodes_AV[k].x_s[2], d_x, d_y);
+					}
+				}
+			}
+
+			InfluenceArea IA_v = GetInfluenceArea_(N1_v - 1, N2_v - 1, Nodes_AV[k].x_s, 4, BC, d_x, d_y);
+			//calculating fluid velocity uf in Lagrange nodes by using near Euler nodes and discrete delta function
+			Nodes_AV[k].uf[2] = 0.0;
+			for (int i = IA_v.i_min; i <= IA_v.i_max; ++i) {
+				for (int j = IA_v.j_min; j <= IA_v.j_max; ++j) {
+					int i_real = i_real_v_(i, N1_period);
+					double* xv = x_v_(i, j, d_x, d_y);
+					Nodes_AV[k].uf[2] += v_AV(j, i_real) * DeltaFunction_(xv[1] - Nodes_AV[k].x_s[1], xv[2] - Nodes_AV[k].x_s[2], d_x, d_y);
+					if (BC == periodical) {
+						Nodes_AV[k].uf[1] += v_AV(j, i_real) * DeltaFunction_(xv[1] - Nodes_AV[k].x_s[1] - L, xv[2] - Nodes_AV[k].x_s[2], d_x, d_y);
+						Nodes_AV[k].uf[1] += v_AV(j, i_real) * DeltaFunction_(xv[1] - Nodes_AV[k].x_s[1] + L, xv[2] - Nodes_AV[k].x_s[2], d_x, d_y);
+					}
 				}
 			}
 		}
+		);
+		Nodes_AV.synchronize();
 
-		InfluenceArea IA_v = GetInfluenceArea_(N1_v - 1, N2_v - 1, Nodes_AV[k].x_s, 4, BC, d_x, d_y);
-		//calculating fluid velocity uf in Lagrange nodes by using near Euler nodes and discrete delta function
-		Nodes_AV[k].uf[2] = 0.0;
-		for (int i = IA_v.i_min; i <= IA_v.i_max; ++i) {
-			for (int j = IA_v.j_min; j <= IA_v.j_max; ++j) {
-				int i_real = i_real_v_(i, N1_period);
-				double* xv = x_v_(i, j, d_x, d_y);
-				Nodes_AV[k].uf[2] += v_AV(j, i_real) * DeltaFunction_(xv[1] - Nodes_AV[k].x_s[1], xv[2] - Nodes_AV[k].x_s[2], d_x, d_y);
-				if (BC == periodical) {
-					Nodes_AV[k].uf[1] += v_AV(j, i_real) * DeltaFunction_(xv[1] - Nodes_AV[k].x_s[1] - L, xv[2] - Nodes_AV[k].x_s[2], d_x, d_y);
-					Nodes_AV[k].uf[1] += v_AV(j, i_real) * DeltaFunction_(xv[1] - Nodes_AV[k].x_s[1] + L, xv[2] - Nodes_AV[k].x_s[2], d_x, d_y);
-				}
-			}
-		}
+		//std::clock_t end = std::clock();
+		//std::cout << "time u new " << end - begin << std::endl;
+
+		Copy_Node_vector(Nodes_simple, Nodes, 0, Nn);
+
+		delete u_;
+		delete v_;
 	}
-	);
-	Nodes_AV.synchronize();
-
-	//std::clock_t end = std::clock();
-	//std::cout << "time u new " << end - begin << std::endl;
-
-	Copy_Node_vector(Nodes_simple, Nodes, 0, Nn);
-
-	delete u_;
-	delete v_;
 }
 
 void uf_in_Nodes_old(std::vector<Node>& Nodes, Matrix &u, Matrix &v, Param par, int Nn){
@@ -349,7 +353,7 @@ void uf_in_Nodes_old(std::vector<Node>& Nodes, Matrix &u, Matrix &v, Param par, 
 	//std::cout << "time u old " << end - begin << std::endl;
 }
 
-void Make_interaction_Matrix(int* A_beg, int* A_end, int N1, int N2, double d_x, double d_y, std::vector<Node>& Nodes, int Nn_max, Direction Dir) {
+void Make_interaction_Matrix(int* A_beg, int* A_end, int N1, int N2, double d_x, double d_y, std::vector<Node>& Nodes, int Nn_max, Direction Dir, boundary_conditions BC, double L) {
 
 	array_view <int, 2> A_beg_(N2, N1, A_beg);
 	array_view <int, 2> A_end_(N2, N1, A_end);
@@ -381,67 +385,69 @@ void Make_interaction_Matrix(int* A_beg, int* A_end, int N1, int N2, double d_x,
 		int kb_beg = m*Nn_max / mp;
 		int kb_end = (m + 1)*Nn_max / mp;
 
-		std::vector<Node_simple> Nodes_simple = Copy_Node_Simple_vector(Nodes, kb_beg, kb_end);
-		array_view<Node_simple, 1> Nodes_AV(Nnp_max, Nodes_simple);
+		if (kb_beg < kb_end) {
+			std::vector<Node_simple> Nodes_simple = Copy_Node_Simple_vector(Nodes, kb_beg, kb_end);
+			array_view<Node_simple, 1> Nodes_AV(Nnp_max, Nodes_simple);
 
-		parallel_for_each(A_beg_.extent, [=](index<2> idx) restrict(amp) {
-			int i = idx[1];
-			int j = idx[0];
+			parallel_for_each(A_beg_.extent, [=](index<2> idx) restrict(amp) {
+				int i = idx[1];
+				int j = idx[0];
 
-			double* x=NULL;
-			int i_real = i;
+				double* x = NULL;
+				int i_real = i;
 
-			if (Dir == Du) {
-				//i_real = i_real_u_(i, N1_period);
-				x = x_u_(i_real, j, d_x, d_y);
-			}
-			else if (Dir == Dv) {
-				//i_real = i_real_v_(i, N1_period);
-				x = x_v_(i_real, j, d_x, d_y);
-			}
+				if (Dir == Du) {
+					//i_real = i_real_u_(i, N1_period);
+					x = x_u_(i_real, j, d_x, d_y);
+				}
+				else if (Dir == Dv) {
+					//i_real = i_real_v_(i, N1_period);
+					x = x_v_(i_real, j, d_x, d_y);
+				}
 
-			for (int k = 0; k < Nnp_max; ++k) {
-				if (fabs(x[1] - Nodes_AV[k].x_s[1]) < 2.1*d_x && fabs(x[2] - Nodes_AV[k].x_s[2]) < 2.1*d_y) {
-					if (kb_beg + k < A_beg_(j, i_real)) {
-						A_beg_(j, i_real) = kb_beg + k;
-						break;
+				for (int k = 0; k < Nnp_max; ++k) {
+					if (fabs(x[1] - Nodes_AV[k].x_s[1]) < 2.1*d_x && fabs(x[2] - Nodes_AV[k].x_s[2]) < 2.1*d_y) {
+						//if (kb_beg + k < A_beg_(j, i_real)) {
+							A_beg_(j, i_real) =  kb_beg + k;
+							break;
+						//}
 					}
+					if (BC == periodical) {
 
-					/*if (BC == periodical) {
+						if (fabs(x[1] - Nodes_AV[k].x_s[1] + L) < 2.1*d_x && fabs(x[2] - Nodes_AV[k].x_s[2]) < 2.1*d_y) {
+							A_beg_(j, i_real) = kb_beg + k;
+							break;
+						}
 
-						double* xu_plus = xu;
-						xu_plus[1] += L;
-						A_beg_(j, i_real) = k;
+						if (fabs(x[1] - Nodes_AV[k].x_s[1] - L) < 2.1*d_x && fabs(x[2] - Nodes_AV[k].x_s[2]) < 2.1*d_y) {
+							A_beg_(j, i_real) = kb_beg + k;
+							break;
+						}
+					}
+				}
 
-						double* xu_minus = xu;
-						xu_minus[1] -= L;
-						A_beg_(j, i_real) = k;
-					}*/
+				for (int k = Nnp_max - 1; k >= 0; --k) {
+					if (fabs(x[1] - Nodes_AV[k].x_s[1]) < 2.1*d_x && fabs(x[2] - Nodes_AV[k].x_s[2]) < 2.1*d_y) {
+						//if (kb_beg + k > A_end_(j, i_real)) {
+							A_end_(j, i_real) = kb_beg + k;
+							break;
+						//}
+					}
+					if (BC == periodical) {
+						if (fabs(x[1] - Nodes_AV[k].x_s[1] + L) < 2.1*d_x && fabs(x[2] - Nodes_AV[k].x_s[2]) < 2.1*d_y) {
+							A_end_(j, i_real) = kb_beg + k;
+							break;
+						}
+
+						if (fabs(x[1] - Nodes_AV[k].x_s[1] - L) < 2.1*d_x && fabs(x[2] - Nodes_AV[k].x_s[2]) < 2.1*d_y) {
+							A_end_(j, i_real) = kb_beg + k;
+							break;
+						}
+					}
 				}
 			}
-
-			for (int k = Nnp_max - 1; k >= 0; --k) {
-				if (fabs(x[1] - Nodes_AV[k].x_s[1]) < 2.1*d_x && fabs(x[2] - Nodes_AV[k].x_s[2]) < 2.1*d_y) {
-					if (kb_beg + k > A_end_(j, i_real)) {
-						A_end_(j, i_real) = kb_beg + k;
-						break;
-					}
-
-					/*if (BC == periodical) {
-
-					double* xu_plus = xu;
-					xu_plus[1] += L;
-					A_end_(j, i_real) = k;
-
-					double* xu_minus = xu;
-					xu_minus[1] -= L;
-					A_end_(j, i_real) = k;
-					}*/
-				}
-			}
+			);
 		}
-		);
-
 	}
 
 }
@@ -476,87 +482,74 @@ void F_to_Euler_grid(std::vector<Node>& Nodes, Matrix &Fx_temp, Matrix &Fy_temp,
 	array_view <double, 2> Fy_temp_AV(N2_v, N1_v, Fy_temp_);
 
 	int m = 0;
-	int mp = 50; // Nn_max / 30000 + 1;
+	int mp = Nn_max / 10000 + 1;
 	int Nnp = Nn_max / mp;
 
 	for (int m = 0; m < mp; m++)
 	{
 		int kb_beg = m*Nn_max / mp;
 		int kb_end = (m + 1)*Nn_max / mp;
-		std::vector<Node_simple> Nodes_simple = Copy_Node_Simple_vector(Nodes, kb_beg, kb_end);
-		array_view<Node_simple, 1> Nodes_AV(Nnp, Nodes_simple);
+		if (kb_beg < kb_end) {
+			std::vector<Node_simple> Nodes_simple = Copy_Node_Simple_vector(Nodes, kb_beg, kb_end);
+			array_view<Node_simple, 1> Nodes_AV(Nnp, Nodes_simple);
 
-		//Fx_temp_AV.discard_data();
-		parallel_for_each(Fx_temp_AV.extent, [=](index<2> idx) restrict(amp) {
-			int i = idx[1];
-			int j = idx[0];
-			int i_real = i_real_u_(i, N1_period);
+			//Fx_temp_AV.discard_data();
+			parallel_for_each(Fx_temp_AV.extent, [=](index<2> idx) restrict(amp) {
+				int i = idx[1];
+				int j = idx[0];
+				
+				//if ((i != 1) && (i != 0) && (i != N1_u-1)){
 
-			int k_beg = max(Ax_beg_(j, i_real), kb_beg) - kb_beg;
-			int k_end = min(Ax_end_(j, i_real), kb_end) - kb_beg;
+				int k_beg = max(Ax_beg_(j, i), kb_beg) - kb_beg;
+				int k_end = min(Ax_end_(j, i), kb_end) - kb_beg;
 
-			if (k_beg<k_end){
+				if (k_beg < k_end) {
 
-			double* xu = x_u_(i, j, d_x, d_y);
+					double* xu = x_u_(i, j, d_x, d_y);
 
-			for (int k = k_beg; k <= k_end; ++k) {
-			//for (int k = 0; k <= Nnp; ++k) {
-				if (fabs(xu[1] - Nodes_AV[k].x_s[1]) < 2.1*d_x && fabs(xu[2] - Nodes_AV[k].x_s[2]) < 2.1*d_y) {
-					Fx_temp_AV(j, i_real) += Nodes_AV[k].f[1] * DeltaFunction_(xu[1] - Nodes_AV[k].x_s[1], xu[2] - Nodes_AV[k].x_s[2], d_x, d_y) * l_dxdy * Nodes_AV[k].ds;
+					for (int k = k_beg; k <= k_end; ++k) {
+						//for (int k = 0; k <= Nnp; ++k) {
+						if (fabs(xu[1] - Nodes_AV[k].x_s[1]) < 2.1*d_x && fabs(xu[2] - Nodes_AV[k].x_s[2]) < 2.1*d_y)
+							Fx_temp_AV(j, i) += Nodes_AV[k].f[1] * DeltaFunction_(xu[1] - Nodes_AV[k].x_s[1]    , xu[2] - Nodes_AV[k].x_s[2], d_x, d_y) * l_dxdy * Nodes_AV[k].ds;
+						if (BC == periodical) {
+							Fx_temp_AV(j, i) += Nodes_AV[k].f[1] * DeltaFunction_(xu[1] - Nodes_AV[k].x_s[1] + L, xu[2] - Nodes_AV[k].x_s[2], d_x, d_y) * l_dxdy * Nodes_AV[k].ds;
+							Fx_temp_AV(j, i) += Nodes_AV[k].f[1] * DeltaFunction_(xu[1] - Nodes_AV[k].x_s[1] - L, xu[2] - Nodes_AV[k].x_s[2], d_x, d_y) * l_dxdy * Nodes_AV[k].ds;
+						}
+					}
 				}
-				/*if (BC == periodical) {
-
-					double* xu_plus = xu;
-					xu_plus[1] += L;
-					Fx_temp_AV(j, i_real) += Nodes_AV[k].f[1] * DeltaFunction_(xu_plus[1] - Nodes_AV[k].x_s[1], xu_plus[2] - Nodes_AV[k].x_s[2], d_x, d_y) * l_dxdy * Nodes_AV[k].ds;
-
-					double* xu_minus = xu;
-					xu_minus[1] -= L;
-					Fx_temp_AV(j, i_real) += Nodes_AV[k].f[1] * DeltaFunction_(xu_minus[1] - Nodes_AV[k].x_s[1], xu_minus[2] - Nodes_AV[k].x_s[2], d_x, d_y) * l_dxdy * Nodes_AV[k].ds;
-				}*/
+				//}
 			}
-			}
-		}
-		);
+			);
+			//Fy_temp_AV.discard_data();
+			parallel_for_each(Fy_temp_AV.extent, [=](index<2> idx) restrict(amp) {
+				int i = idx[1];
+				int j = idx[0];
 
-		//Fy_temp_AV.discard_data();
-		parallel_for_each(Fy_temp_AV.extent, [=](index<2> idx) restrict(amp) {
-			int i = idx[1];
-			int j = idx[0];
-			int i_real = i_real_v_(i, N1_period);
+				int k_beg = max(Ay_beg_(j, i), kb_beg) - kb_beg;
+				int k_end = min(Ay_end_(j, i), kb_end) - kb_beg;
 
-			int k_beg = max(Ax_beg_(j, i_real), kb_beg) - kb_beg;
-			int k_end = min(Ax_end_(j, i_real), kb_end) - kb_beg;
+				if (k_beg < k_end) {
+					double* xv = x_v_(i, j, d_x, d_y);
 
-			double* xv = x_v_(i_real, j, d_x, d_y);
-
-			if (k_beg<k_end) {
-
-			for (int k = k_beg; k <= k_end; ++k) {
-			//for (int k = 0; k <= Nnp; ++k) {
-				if (fabs(xv[1] - Nodes_AV[k].x_s[1]) < 2.1*d_x && fabs(xv[2] - Nodes_AV[k].x_s[2]) < 2.1*d_y) {
-					Fy_temp_AV(j, i_real) += Nodes_AV[k].f[2] * DeltaFunction_(xv[1] - Nodes_AV[k].x_s[1], xv[2] - Nodes_AV[k].x_s[2], d_x, d_y) * l_dxdy * Nodes_AV[k].ds;
+					for (int k = k_beg; k <= k_end; ++k) {
+						//for (int k = 0; k <= Nnp; ++k) {
+						if (fabs(xv[1] - Nodes_AV[k].x_s[1]) < 2.1*d_x && fabs(xv[2] - Nodes_AV[k].x_s[2]) < 2.1*d_y)
+							Fy_temp_AV(j, i) += Nodes_AV[k].f[2] * DeltaFunction_(xv[1] - Nodes_AV[k].x_s[1]    , xv[2] - Nodes_AV[k].x_s[2], d_x, d_y) * l_dxdy * Nodes_AV[k].ds;
+						if (BC == periodical) {
+							Fy_temp_AV(j, i) += Nodes_AV[k].f[2] * DeltaFunction_(xv[1] - Nodes_AV[k].x_s[1] + L, xv[2] - Nodes_AV[k].x_s[2], d_x, d_y) * l_dxdy * Nodes_AV[k].ds;
+							Fy_temp_AV(j, i) += Nodes_AV[k].f[2] * DeltaFunction_(xv[1] - Nodes_AV[k].x_s[1] - L, xv[2] - Nodes_AV[k].x_s[2], d_x, d_y) * l_dxdy * Nodes_AV[k].ds;
+						}
+					}
 				}
-				/*if (BC == periodical) {
-
-					double* xv_plus = xv;
-					xv_plus[1] += L;
-					Fy_temp_AV(j, i_real) += Nodes_AV[k].f[2] * DeltaFunction_(xv_plus[1] - Nodes_AV[k].x_s[1], xv_plus[2] - Nodes_AV[k].x_s[2], d_x, d_y) * l_dxdy * Nodes_AV[k].ds;
-
-					double* xv_minus = xv;
-					xv_minus[1] -= L;
-					Fy_temp_AV(j, i_real) += Nodes_AV[k].f[2] * DeltaFunction_(xv_minus[1] - Nodes_AV[k].x_s[1], xv_minus[2] - Nodes_AV[k].x_s[2], d_x, d_y) * l_dxdy * Nodes_AV[k].ds;
-				}*/
 			}
-			}
+			);
+
+			Fx_temp_AV.synchronize();
+			Fy_temp_AV.synchronize();
+			DoubleArray_to_Matrix(Fx_temp_, Fx_temp, par.BC);
+			DoubleArray_to_Matrix(Fy_temp_, Fy_temp, par.BC);
+
 		}
-		);
-
-		Fx_temp_AV.synchronize();
-		Fy_temp_AV.synchronize();
-		DoubleArray_to_Matrix(Fx_temp_, Fx_temp, par.BC);
-		DoubleArray_to_Matrix(Fy_temp_, Fy_temp, par.BC);
-
 	}
 	delete Fx_temp_;
 	delete Fy_temp_;

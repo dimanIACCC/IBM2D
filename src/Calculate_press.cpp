@@ -167,7 +167,7 @@ double Pressure_correction_solve(Matrix &delta_p, Matrix &rhs, Param par) {
 		bd_ay = (double*)mkl_malloc((nx + 1) * sizeof(double), 64);
 		bd_by = (double*)mkl_malloc((nx + 1) * sizeof(double), 64);
 
-		Matrix_to_DoubleArray(rhs, f_mkl, par.BC);
+		MatrixV_to_DoubleArray(rhs, f_mkl, par.BC);
 
 		for (MKL_INT iy = 0; iy <= ny; iy++) {
 			bd_ax[iy] = 0.;
@@ -180,7 +180,7 @@ double Pressure_correction_solve(Matrix &delta_p, Matrix &rhs, Param par) {
 
 		Helmholtz_MKL(f_mkl, ax, bx, ay, by, bd_ax, bd_bx, bd_ay, bd_by, nx, ny, BCtype, q, par.d_x, par.d_y);
 
-		DoubleArray_to_Matrix(f_mkl, delta_p, par.BC);
+		DoubleArray_to_MatrixV(f_mkl, delta_p, par.BC);
 
 		//Output_P(delta_p, "dp", 555, par);
 

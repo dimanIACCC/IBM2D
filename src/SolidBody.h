@@ -25,7 +25,7 @@ class SolidBody
 {
 public:
 	int moving;              // 0 - Solid does not move, 1 - Solid is driven by the fluid, 2 - Solid moves according to the given law
-	GeomVec x_n, x;          // coordinates of the mass center
+	GeomVec x_n, x, x_n_plt, x_plt;          // coordinates of the mass center
 	GeomVec u_n, u, u_s;          // velocity of the mass center
 	GeomVec omega, omega_n, omega_s;  // angular velocity
 	GeomVec alpha;                    // angular orientation
@@ -65,7 +65,7 @@ void fill_solid_coordinates(std::vector<Node> &Nodes, const int Nn_max, const in
 void fill_solid_ds(std::vector<Node> &Nodes, const int Nn_max, const int Nn, const double e, const double dxy);
 void Read_Solids(std::string filename, std::vector<Circle>& Solids, std::vector<Node>& Nodes, Param &par);
 void Add_Solids(std::vector<Circle>& Solids, std::vector<Node>& Nodes, Param &par);
-bool Collide(Circle& s1, Circle& s2, std::vector<Node> &Nodes, Param par, double alpha, double beta, double friction, double kr);
+bool Collide(Circle& s1, Circle& s2, std::vector<Node> &Nodes, Param par, double alpha, double beta, double friction, double kr, double F_collide);
 void Solids_move(std::vector<Circle> &solidList, std::vector<Node> &Nodes, Param par);
 void Solids_collide(std::vector<Circle> &solidList, std::vector<Node> &Nodes, Param par);
 void h_average_of_Solids_Layer(std::vector<Circle> &solidList, Param par, double& h_average);
