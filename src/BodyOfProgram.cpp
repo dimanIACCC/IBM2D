@@ -1,7 +1,7 @@
 #include "stdafx.h"
 #include "BodyOfProgram.h"
 
-void BodyOfProgram(Param &par, std::vector<Circle> &solidList, std::vector<Node> &Nodes, Matrix &U_n, Matrix &V_n, Matrix &P) {
+void BodyOfProgram(Param &par, std::vector<Solid> &solidList, std::vector<Node> &Nodes, Matrix &U_n, Matrix &V_n, Matrix &P) {
 																		 
 #pragma region SetMatrices 
 	CreateMatrix(U_new, par.N1_u, par.N2_u);
@@ -27,6 +27,8 @@ void BodyOfProgram(Param &par, std::vector<Circle> &solidList, std::vector<Node>
 
 		Add_Solids(solidList, Nodes, par);                                                     // add solids if the conditions are fulfilled
 		std::cout << "Add_Solids finished" << std::endl;
+		Output(P, U_new, V_new, Fx, Fy, par.N_step, solidList, Nodes, par);
+		std::getchar();
 
 		if (par.N_step % 100 == 0)
 			MakeHibernationFile(par, solidList, Nodes, U_n, V_n, P);              // writting hibernation file for prior time step
@@ -98,7 +100,7 @@ void BodyOfProgram(Param &par, std::vector<Circle> &solidList, std::vector<Node>
 	//log.close();
 }
 
-void MakeHibernationFile(Param& par, std::vector<Circle>& solidList, std::vector<Node> &Nodes, Matrix& U_n, Matrix& V_n, Matrix& P_n) {
+void MakeHibernationFile(Param& par, std::vector<Solid>& solidList, std::vector<Node> &Nodes, Matrix& U_n, Matrix& V_n, Matrix& P_n) {
 	std::ofstream output;
 	std::string filename = par.WorkDir + "step" + std::to_string(par.N_step) + ".txt";
 	output.open(filename);
@@ -199,7 +201,7 @@ void MakeHibernationFile(Param& par, std::vector<Circle>& solidList, std::vector
 
 
 //this method is restoring calculated values to continue calculations
-void Awake(std::string &filename, Param &par, std::vector<Circle>& solidList, std::vector<Node> &Nodes, Matrix& U_n, Matrix& V_n, Matrix& P_n) {
+void Awake(std::string &filename, Param &par, std::vector<Solid>& solidList, std::vector<Node> &Nodes, Matrix& U_n, Matrix& V_n, Matrix& P_n) {
 	std::ifstream hibernation_source;
 	std::string line;
 	std::string PAR, VALUE;
@@ -263,6 +265,7 @@ void Awake(std::string &filename, Param &par, std::vector<Circle>& solidList, st
 						int name = par.SolidName_max+1;
 						int Nn = par.Nn;
 						int moving = 1;
+						double shape = par.shape;
 						double r = par.r;
 						double e = par.e;
 						bool Poiseuille = false;   //key for initial ux, uy and omega_new corresponding to Poiseuille flow
@@ -279,6 +282,7 @@ void Awake(std::string &filename, Param &par, std::vector<Circle>& solidList, st
 							else if (PAR == "rho")           rho = stod(VALUE);
 							else if (PAR == "Nn")            Nn = stoi(VALUE);
 							else if (PAR == "name")          name = stoi(VALUE);
+							else if (PAR == "shape")         shape = stoi(VALUE);
 							else if (PAR == "r")             r = stod(VALUE);
 							else if (PAR == "e")             e = stod(VALUE);
 							else if (PAR == "<Nodes>") {
@@ -306,9 +310,9 @@ void Awake(std::string &filename, Param &par, std::vector<Circle>& solidList, st
 							}
 							if (line == "<\\Solid>") {
 								double alpha0 = alpha[3];
-								Circle c(x, y, ux, uy, alpha0, omega, rho, Nn, moving, name, r, e);
+								Solid c(x, y, ux, uy, alpha0, omega, rho, Nn, moving, name, shape, r, e);
 								c.add_Nodes(Nodes, par.Nn_max);
-								fill_solid_ds(Nodes, par.Nn_max, c.Nn, c.e, 0.5*(par.d_x + par.d_y));
+								fill_solid_ds(Nodes, par.Nn_max, c.Nn, c.shape, 0.5*(par.d_x + par.d_y));
 								par.Nn_max += c.Nn;
 
 								if (c.name > par.SolidName_max) par.SolidName_max = c.name;

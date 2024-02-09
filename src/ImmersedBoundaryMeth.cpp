@@ -23,7 +23,7 @@ That project is devoted to numerical simulation of disperse flows in the channel
 int main(int argc, char *argv[]) {
 
 	fs::path WorkDir = L"Result/";
-	std::vector<Circle> solidList; // list of immersed solids
+	std::vector<Solid> solidList; // list of immersed solids
 	std::vector<Node> Nodes; // list of Nodes
 
 	for (int i = 1; i < argc; i++) {

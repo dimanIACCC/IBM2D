@@ -15,7 +15,7 @@ void Calculate_u_p(Matrix &U_n   , Matrix &U_new,
                    Matrix &P,
                    Matrix &Fx,
                    Matrix &Fy,
-                   std::vector<Circle> &solidList, std::vector<Node> &Nodes, Param par) {
+                   std::vector<Solid> &solidList, std::vector<Node> &Nodes, Param par) {
 
 	CreateMatrix(U_s, par.N1_u, par.N2_u);
 	CreateMatrix(V_s, par.N1_v, par.N2_v);
@@ -52,7 +52,7 @@ void Calculate_u_p(Matrix &U_n   , Matrix &U_new,
 	CreateMatrix(RHS_u, par.N1_u, par.N2_u);
 	CreateMatrix(RHS_v, par.N1_v, par.N2_v);
 
-	std::vector<Circle>::iterator solid;
+	std::vector<Solid>::iterator solid;
 	for (solid = solidList.begin(); solid != solidList.end(); solid++) {
 		coordinates(solid, Nodes);
 	}
@@ -264,7 +264,7 @@ void Calculate_u_p(Matrix &U_n   , Matrix &U_new,
 	delete Ay_end;
 }
 
-void Zero_velocity_in_Solids(Matrix &u, Param par, std::vector<Circle> iList) {
+void Zero_velocity_in_Solids(Matrix &u, Param par, std::vector<Solid> iList) {
 
 	for (auto solid : iList) {
 		for (int i = ((solid.x[1] - solid.r) / par.d_x + 1); i < (solid.x[1] + solid.r) / par.d_x + 1; i++)

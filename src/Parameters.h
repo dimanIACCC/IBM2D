@@ -44,6 +44,7 @@ public:
 
 	// parameters for many particles
 	double rho;               // default density of Solid
+	int shape;                // shape
 	double r;                 // default radius of Solid
 	double e;                 // default eccentricity of Solid
 	int Nn_max;               // number of nodes

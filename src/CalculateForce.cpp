@@ -3,13 +3,13 @@
 #include "Output.h"
 
 
-void CalculateForce(Matrix &dFx, Matrix &dFy, int* Ax_beg, int* Ax_end, int* Ay_beg, int* Ay_end, std::vector<Circle> &iList, std::vector<Node> &Nodes, Matrix& u, Matrix& v, Param par) {
+void CalculateForce(Matrix &dFx, Matrix &dFy, int* Ax_beg, int* Ax_end, int* Ay_beg, int* Ay_end, std::vector<Solid> &iList, std::vector<Node> &Nodes, Matrix& u, Matrix& v, Param par) {
 
 	int num_thr = 1.; // omp_get_max_threads();
 
 	std::clock_t begin, end;
 
-	std::vector<Circle>::iterator solid;
+	std::vector<Solid>::iterator solid;
 
 	#pragma omp parallel private(solid) num_threads(num_thr)
 	{
@@ -137,7 +137,7 @@ void deformation_velocity(Matrix &u, Matrix &v, Matrix &Exx, Matrix &Eyy, Matrix
 
 }
 
-void Solids_deformation_velocity_pressure(std::vector<Circle> &Solids, std::vector<Node> &Nodes, Matrix &Exx, Matrix &Eyy, Matrix &Exy, Matrix &p, Param par) {
+void Solids_deformation_velocity_pressure(std::vector<Solid> &Solids, std::vector<Node> &Nodes, Matrix &Exx, Matrix &Eyy, Matrix &Exy, Matrix &p, Param par) {
 
 	size_t np1 = par.N1_p;
 	size_t np2 = par.N2_p;

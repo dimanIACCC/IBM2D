@@ -1,9 +1,23 @@
 //circle{
-   x = 2.5
-   y =        0.25
-   moving = 1
-   r = 0.1
+   x = 0.000012
+   y =        0.0002
+   moving = 0
+   r = 0.000008
    e = 0.9
-   Poiseuille = 1
-   rho = 3.0
+   Nn = 1000
+   alpha = -45.
+   Poiseuille = 0
+   rho = 3.0e6
+}
+
+//circle{
+   x = 0.000038
+   y =        0.0002
+   moving = 0
+   r = 0.000008
+   e = 0.9
+   Nn = 1000
+   alpha = 45.
+   Poiseuille = 0
+   rho = 3.0e6
 }

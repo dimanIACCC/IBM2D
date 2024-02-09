@@ -75,7 +75,7 @@ void Output_V(Matrix v, std::string filename, int n, Param par) {
 	output.close();
 }
 
-void Output(Matrix p, Matrix u, Matrix v, Matrix Fx, Matrix Fy, int n, std::vector<Circle> iList, std::vector<Node> Nodes, Param par) {
+void Output(Matrix p, Matrix u, Matrix v, Matrix Fx, Matrix Fy, int n, std::vector<Solid> iList, std::vector<Node> Nodes, Param par) {
 
 	std::ofstream output;
 	std::string filename = par.WorkDir + "step" + std::to_string(n) + ".plt";
@@ -139,7 +139,7 @@ void Output(Matrix p, Matrix u, Matrix v, Matrix Fx, Matrix Fy, int n, std::vect
 	output.close();
 }
 
-bool Read_plt(std::string filename, Param &par, std::vector<Circle>& solidList) {
+bool Read_plt(std::string filename, Param &par, std::vector<Solid>& solidList) {
 
 	std::ifstream input;
 	std::string line;
@@ -150,7 +150,7 @@ bool Read_plt(std::string filename, Param &par, std::vector<Circle>& solidList) 
 		while (getline(input, line)) { // read line from file to string $line$
 			if (line.substr(0, 15) == "zone T = circle") {
 				std::vector<Node> Nodes;
-				Circle c(0, 0, par); //Create circle
+				Solid c(0, 0, par); //Create circle
 				
 				//Get the number of nodes in particle
 				//auto strings = split_string(line, ",");  // split line into parts by delimeter ","

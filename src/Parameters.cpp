@@ -33,6 +33,7 @@ Param::Param() {  // default parameters
 
 	// parameters for many particles
 	rho = 3.;
+	shape = 0;
 	r = 0.05;
 	e = 0.;
 	Nn_max = 0;
@@ -142,6 +143,7 @@ void Param::read_line(std::string line) {
 
 		// parameters for many particles
 		else if (PAR == "rho")                  rho = stod(VALUE);
+		else if (PAR == "shape")                shape = stoi(VALUE);
 		else if (PAR == "r")                    r = stod(VALUE);
 		else if (PAR == "e")                    e = stod(VALUE);
 		else if (PAR == "AddSolids_N")          AddSolids_N = stoi(VALUE);
