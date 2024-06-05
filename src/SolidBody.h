@@ -58,6 +58,7 @@ public:
 void fill_solid_coordinates(std::vector<Node> &Nodes, const int Nn_max, const int Nn, const int shape, const double r, const double e, const double alpha, const double dxy);
 void line_segment(std::vector<Node> &Nodes, const int N_start, const int Nn, GeomVec Xbeg, GeomVec Xend);
 void circular_segment(std::vector<Node> &Nodes, const int N_start, const int Nn, GeomVec Xc, double r, double alpha_beg, double alpha_end);
+void copy_solid_mesh(std::vector<Node> &Nodes, const int N_beg_from, const int N_beg_to, const int Nn);
 void fill_solid_ds(std::vector<Node> &Nodes, const int Nn_max, const int Nn, const int shape, const double dxy);
 void Read_Solids(std::string filename, std::vector<Solid>& Solids, std::vector<Node>& Nodes, Param &par);
 void Add_Solids(std::vector<Solid>& Solids, std::vector<Node>& Nodes, Param &par);

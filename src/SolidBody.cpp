@@ -68,6 +68,9 @@ bool operator >(const Solid& a, const Solid& b) {
 
 void fill_solid_coordinates(std::vector<Node> &Nodes, const int Nn_max, const int Nn, const int shape, const double r, const double e, const double alpha, const double dxy) {
 	GeomVec o;
+	o[0] = 0.;
+	o[1] = 0.;
+	o[2] = 0.;
 	o[3] = alpha;
 
 	if (shape == 0) {    // ellipse
@@ -153,6 +156,84 @@ void fill_solid_coordinates(std::vector<Node> &Nodes, const int Nn_max, const in
 		circular_segment(Nodes, Nn_max + 11*Nn12, Nn12, Xc, e, alpha_beg, alpha_end);
 
 	}
+	else if (shape == 8) {  // swastic
+		int Nn24 = Nn / 24;
+		GeomVec Xbeg, Xend, Xc;
+		Xbeg[0] = 0.; Xbeg[3] = 0.;
+		Xend[0] = 0.; Xend[3] = 0.;
+		Xc[0] = 0.; Xc[3] = 0.;
+		double alpha_beg, alpha_end;
+
+		// R
+		Xbeg[1] = e;  Xbeg[2] = -e;
+		Xend[1] = r;  Xend[2] = -e;
+		line_segment(Nodes, Nn_max + 0 * Nn24, Nn24, Xbeg, Xend);
+
+		Xc[1] = r;  Xc[2] = 0;
+		alpha_beg = -M_PI/2;   alpha_end = 0;
+		circular_segment(Nodes, Nn_max + 1 * Nn24, Nn24, Xc, e, alpha_beg, alpha_end);
+
+		Xbeg[1] = r+e;  Xbeg[2] = 0;
+		Xend[1] = r+e;  Xend[2] = r;
+		line_segment(Nodes, Nn_max + 2 * Nn24, Nn24, Xbeg, Xend);
+
+		Xc[1] = r;  Xc[2] = r;
+		alpha_beg = 0;   alpha_end = M_PI;
+		circular_segment(Nodes, Nn_max + 3 * Nn24, Nn24, Xc, e, alpha_beg, alpha_end);
+
+		Xbeg[1] = r - e;  Xbeg[2] = r;
+		Xend[1] = r - e;  Xend[2] = e;
+		line_segment(Nodes, Nn_max + 4 * Nn24, Nn24, Xbeg, Xend);
+
+		Xbeg[1] = r - e;  Xbeg[2] = e;
+		Xend[1] = e    ;  Xend[2] = e;
+		line_segment(Nodes, Nn_max + 5 * Nn24, Nn24, Xbeg, Xend);
+
+		// U
+		copy_solid_mesh(Nodes, Nn_max +  0 * Nn24, Nn_max +  6 * Nn24, 6 * Nn24);
+
+		// L
+		copy_solid_mesh(Nodes, Nn_max +  6 * Nn24, Nn_max + 12 * Nn24, 6 * Nn24);
+
+		// D
+		copy_solid_mesh(Nodes, Nn_max + 12 * Nn24, Nn_max + 18 * Nn24, 6 * Nn24);
+
+	}
+	else if (shape == 16) {  // propeller
+		int Nn12 = Nn / 16;
+		GeomVec Xbeg, Xend, Xc;
+		Xbeg[0] = 0.; Xbeg[3] = 0.;
+		Xend[0] = 0.; Xend[3] = 0.;
+		Xc[0] = 0.; Xc[3] = 0.;
+		double alpha_beg, alpha_end;
+
+		// R
+		Xbeg[1] = r + e;  Xbeg[2] = 0;
+		Xend[1] = r + e;  Xend[2] = r;
+		line_segment(Nodes, Nn_max + 0 * Nn12, Nn12, Xbeg, Xend);
+
+		Xc[1] = r;  Xc[2] = r;
+		alpha_beg = 0;   alpha_end = M_PI;
+		circular_segment(Nodes, Nn_max + 1 * Nn12, Nn12, Xc, e, alpha_beg, alpha_end);
+
+		Xbeg[1] = r - e;  Xbeg[2] = r;
+		Xend[1] = r - e;  Xend[2] = 0;
+		line_segment(Nodes, Nn_max + 2 * Nn12, Nn12, Xbeg, Xend);
+
+		Xc[1] = r;  Xc[2] = 0;
+		alpha_beg = M_PI;   alpha_end = 2*M_PI;
+		circular_segment(Nodes, Nn_max + 3 * Nn12, Nn12, Xc, e, alpha_beg, alpha_end);
+
+		// U
+		copy_solid_mesh(Nodes, Nn_max + 0 * Nn12, Nn_max + 4 * Nn12, 4 * Nn12);
+
+		// L
+		copy_solid_mesh(Nodes, Nn_max + 4 * Nn12, Nn_max + 8 * Nn12, 4 * Nn12);
+
+		// D
+		copy_solid_mesh(Nodes, Nn_max + 8 * Nn12, Nn_max + 12 * Nn12, 4 * Nn12);
+
+	}
 	else {
 		std::cout << "fill_solid_coordinates: unknown solid shape" << std::endl;
 	}
@@ -167,13 +248,28 @@ void fill_solid_coordinates(std::vector<Node> &Nodes, const int Nn_max, const in
 		int Ind = Nn_max + i;
 		Nodes[Ind].ds = 0.5 * length(Nodes[Ind + 1].x_n - Nodes[Ind - 1].x_n) * dxy;
 	}
-	if (shape == 0 || shape == 4) {    // ellipse or cross
+	if (shape == 0 || shape == 4 || shape == 8 ) {    // ellipse or cross
 		Nodes[Nn_max + 0     ].ds = 0.5 * length(Nodes[Nn_max + 1].x_n - Nodes[Nn_max + Nn - 1].x_n) * dxy;
 		Nodes[Nn_max + Nn - 1].ds = 0.5 * length(Nodes[Nn_max + 0].x_n - Nodes[Nn_max + Nn - 2].x_n) * dxy;
 	}
 	else if (shape == 2) {  // line
 		Nodes[Nn_max + 0     ].ds = length(Nodes[Nn_max      + 1].x_n - Nodes[Nn_max      + 0].x_n) * dxy;
 		Nodes[Nn_max + Nn - 1].ds = length(Nodes[Nn_max + Nn - 1].x_n - Nodes[Nn_max + Nn - 2].x_n) * dxy;
+	}
+	else if (shape == 16) {  // propeller
+		int N04 = Nn_max;
+		int N14 = Nn_max + 1 * Nn / 4;
+		int N24 = Nn_max + 2 * Nn / 4;
+		int N34 = Nn_max + 3 * Nn / 4;
+		int N44 = Nn_max + 4 * Nn / 4;
+		Nodes[N04    ].ds = 0.5 * length(Nodes[N04 + 1].x_n - Nodes[N14 - 1].x_n) * dxy;
+		Nodes[N14 - 1].ds = 0.5 * length(Nodes[N04 + 0].x_n - Nodes[N14 - 2].x_n) * dxy;
+		Nodes[N14    ].ds = 0.5 * length(Nodes[N14 + 1].x_n - Nodes[N24 - 1].x_n) * dxy;
+		Nodes[N24 - 1].ds = 0.5 * length(Nodes[N14 + 0].x_n - Nodes[N24 - 2].x_n) * dxy;
+		Nodes[N24    ].ds = 0.5 * length(Nodes[N24 + 1].x_n - Nodes[N34 - 1].x_n) * dxy;
+		Nodes[N34 - 1].ds = 0.5 * length(Nodes[N24 + 0].x_n - Nodes[N34 - 2].x_n) * dxy;
+		Nodes[N34    ].ds = 0.5 * length(Nodes[N34 + 1].x_n - Nodes[N44 - 1].x_n) * dxy;
+		Nodes[N44 - 1].ds = 0.5 * length(Nodes[N34 + 0].x_n - Nodes[N44 - 2].x_n) * dxy;
 	}
 }
 
@@ -189,6 +285,18 @@ void circular_segment(std::vector<Node> &Nodes, const int N_start, const int Nn,
 		alpha = alpha_beg + (alpha_end - alpha_beg) * i / Nn;
 		Nodes[N_start + i].x_n[1] = Xc[1] + e*cos(alpha);
 		Nodes[N_start + i].x_n[2] = Xc[2] + e*sin(alpha);
+	}
+}
+
+void copy_solid_mesh(std::vector<Node> &Nodes, const int N_beg_from, const int N_beg_to, const int Nn) {
+	GeomVec ooo;
+	ooo[0] = 0.;
+	ooo[1] = 0.;
+	ooo[2] = 0.;
+	ooo[3] = M_PI/2;
+	for (size_t i = 0; i < Nn; ++i) {
+		Nodes[N_beg_to + i] = Nodes[N_beg_from + i];
+		Nodes[N_beg_to + i].x_n = rotate_Vector_around_vector(Nodes[N_beg_to + i].x_n, ooo);
 	}
 }
 
@@ -327,14 +435,14 @@ void Add_Solids(std::vector<Solid>& Solids, std::vector<Node>& Nodes, Param &par
 		for (int i = 0; i < par.AddSolids_N; i++) { // add $AddSolids_N$ solids
 			GeomVec x;
 			x[0] = 0;
-			x[1] = (par.L)  * (0.5 + 0.5*(1 - 1 * par.r / par.L) * (double(rand()) - RAND_MAX / 2) / RAND_MAX);
-			x[2] = (par.H)  * (0.5 + 0.5*(1 - 1 * par.r / par.H) * (double(rand()) - RAND_MAX / 2) / RAND_MAX);
+			x[1] = (par.L)  * (0.5 + 1*(1 - 3 * par.r / par.L) * (double(rand()) - RAND_MAX / 2) / RAND_MAX);
+			x[2] = (par.H)  * (0.5 + 1*(1 - 3 * par.r / par.H) * (double(rand()) - RAND_MAX / 2) / RAND_MAX);
 			x[3] = 0;
 
 			// check if new Solid does not cross other Solids
 			bool add = true;
 			for (auto solid = Solids.begin(); solid != Solids.end(); solid++) {
-				if (length(x - solid->x) < 1.2 * (par.r + solid->r)) {
+				if (length(x - solid->x) < 1.5 * (par.r + solid->r)) {
 				//if (length(x - solid->x) < 1.25 * (par.r + solid->r) && solid->moving == 1) { // flow inside Solid
 					add = false;
 					i--;
@@ -484,16 +592,19 @@ void Solids_collide(std::vector<Solid> &solidList, std::vector<Node> &Nodes, Par
 	double dist_u = par.k_dist*par.d_x;
 	double dist_r = par.k_dist*par.d_x * kr;
 
-	double alpha = 1500 * par.d_t; // coefficient for the collision force based on velocity value
-	double beta  = 30.; // coefficient for the collision force based on distance between particles value
+	double T_collide = dist_u / par.Gravity_module/(par.rho-1)/par.r/par.r/par.Re;
+	double alpha = par.d_t / T_collide; // coefficient for the collision force based on velocity value
+	std::cout << "alpha = " << alpha << std::endl;
+
+	double beta  = 60.; // coefficient for the collision force based on distance between particles value
 	double friction = 0.01; // coefficient for the friction force based on velocity value
 
 	///-------------collision with walls--------------------------
 	double  d_up, d_down, d_left, d_right;
 	GeomVec x_up, x_down, x_left, x_right;
 	double F_collide = std::fmax(par.Gravity_module, 1000*std::fmax(abs(par.u_up-par.u_down),abs(par.u_in))/par.H/par.H/par.Re);
-	/*std::cout << F_collide << std::endl;
-	std::getchar();*/
+	//std::cout << F_collide << std::endl;
+	//std::getchar();
 
 	for (auto one = solidList.begin(); one != solidList.end(); one++) {
 		if (one->moving == 1){
@@ -502,8 +613,8 @@ void Solids_collide(std::vector<Solid> &solidList, std::vector<Node> &Nodes, Par
 
 			//dist = 2*(par.H - one->x[2] - one->r); //<-------distance to upper wall
 			if (d_up < dist_u) {
-				if (one->u[2] > 0) one->d_uv_collide[2] -= alpha * one->u_n[2];   // velocity force
-				double omega_wall = (par.u_up - one->u[1]) / (par.H - one->x[2]);
+				if (one->u[2] > 0) one->d_uv_collide[2] -= 2 * alpha * one->u_n[2];   // velocity force
+				double omega_wall = (par.u_up - one->u[1]) / d_up / 2;
 				one->d_omega_collide[3] -= friction * (one->omega_n[3]-omega_wall);
 				if (Debug) std::cout << "Collision with upper wall,   Delta_u_v =" << alpha * one->u[2] << std::endl;
 			}
@@ -515,8 +626,8 @@ void Solids_collide(std::vector<Solid> &solidList, std::vector<Node> &Nodes, Par
 			}
 			//dist = 2*(one->x[2] - one->r);//<-------distance to lower wall
 			if (d_down < dist_u) {
-				if (one->u[2] < 0) one->d_uv_collide[2] -= alpha * one->u_n[2];   // velocity force
-				double omega_wall = (par.u_down - one->u[1]) / (one->x[2]);
+				if (one->u[2] < 0) one->d_uv_collide[2] -= 2 * alpha * one->u_n[2];   // velocity force
+				double omega_wall = (par.u_down - one->u[1]) / d_down / 2;
 				one->d_omega_collide[3] -= friction * (one->omega_n[3]- omega_wall);
 				if (Debug) std::cout << "Collision with lower wall,   Delta_u_v =" << alpha * one->u[2] << std::endl;
 			}
@@ -530,7 +641,7 @@ void Solids_collide(std::vector<Solid> &solidList, std::vector<Node> &Nodes, Par
 			if (par.BC == box) {
 				//dist = 2*(par.L - one->x[1] - one->r);//<-------distance to right wall
 				if (d_right < dist_u) {
-					if (one->u[1] > 0) one->d_uv_collide[1] -= alpha * one->u_n[1];  // velocity force
+					if (one->u[1] > 0) one->d_uv_collide[1] -= 2 * alpha * one->u_n[1];  // velocity force
 					one->d_omega_collide[3] -= friction * one->omega_n[3];
 					if (Debug) std::cout << "Collision with right wall,   Delta_u_v =" << alpha * one->u[1] << std::endl;
 				}
@@ -542,7 +653,7 @@ void Solids_collide(std::vector<Solid> &solidList, std::vector<Node> &Nodes, Par
 				}
 				//dist = 2*(one->x[1] - one->r);//<-------distance to left  wall
 				if (d_left < dist_u) {
-					if (one->u[1] < 0) one->d_uv_collide[1] -= alpha *one->u_n[1];   // velocity force
+					if (one->u[1] < 0) one->d_uv_collide[1] -= 2 * alpha *one->u_n[1];   // velocity force
 					one->d_omega_collide[3] -= friction * one->omega_n[3];
 					if (Debug) std::cout << "Collision with left wall,   Delta_u_v =" << alpha * one->u[2] << std::endl;
 				}

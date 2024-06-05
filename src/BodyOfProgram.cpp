@@ -27,8 +27,8 @@ void BodyOfProgram(Param &par, std::vector<Solid> &solidList, std::vector<Node> 
 
 		Add_Solids(solidList, Nodes, par);                                                     // add solids if the conditions are fulfilled
 		std::cout << "Add_Solids finished" << std::endl;
-		Output(P, U_new, V_new, Fx, Fy, par.N_step, solidList, Nodes, par);
-		std::getchar();
+		//Output(P, U_new, V_new, Fx, Fy, par.N_step, solidList, Nodes, par);
+		//std::getchar();
 
 		if (par.N_step % 100 == 0)
 			MakeHibernationFile(par, solidList, Nodes, U_n, V_n, P);              // writting hibernation file for prior time step
@@ -265,7 +265,7 @@ void Awake(std::string &filename, Param &par, std::vector<Solid>& solidList, std
 						int name = par.SolidName_max+1;
 						int Nn = par.Nn;
 						int moving = 1;
-						double shape = par.shape;
+						int shape = par.shape;
 						double r = par.r;
 						double e = par.e;
 						bool Poiseuille = false;   //key for initial ux, uy and omega_new corresponding to Poiseuille flow
