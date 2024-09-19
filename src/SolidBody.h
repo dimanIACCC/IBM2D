@@ -29,7 +29,7 @@ public:
 	GeomVec u_n, u, u_s;          // velocity of the mass center
 	GeomVec omega, omega_n, omega_s;  // angular velocity
 	GeomVec alpha;                    // angular orientation
-	GeomVec d_uv_collide, d_ur_collide, d_omega_collide;   // velocity and andgular velocity corrections due to the collision
+	GeomVec av_collide, ar_collide, d_omega_collide;   // acceleration and andgular acceleration due to the collision
 	GeomVec f_new, f;      // force applied to the whole Solid
 	GeomVec tau_new, tau;    // torque, moment of force applied to the whole Solid
 	double Fr;      // average radial Force applied to Solid

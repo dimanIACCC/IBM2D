@@ -1,21 +1,20 @@
 circle{
-   x = 6
-   y = 1
+   x = 0.995
+   y = 4.5
    moving = 1
    r = 0.125
-   e = 0.0125
+   e = 0.5
+   alpha = 0
    Poiseuille = 0
-   shape   = 16
-   rho = 1.25
-   Nn = 240
-   alpha=90
+   rho = 1.5
 }
-
-//circle{
-   x = 0.00002
-   y = 0.0001
+circle{
+   x = 1.005
+   y = 5.0
    moving = 1
-   r = 0.00001
+   r = 0.125
    Poiseuille = 0
-   rho = 3.0e0
+   e = 0.5
+   alpha = 0
+   rho = 1.5
 }

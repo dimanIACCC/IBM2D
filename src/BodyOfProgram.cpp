@@ -30,7 +30,7 @@ void BodyOfProgram(Param &par, std::vector<Solid> &solidList, std::vector<Node> 
 		//Output(P, U_new, V_new, Fx, Fy, par.N_step, solidList, Nodes, par);
 		//std::getchar();
 
-		if (par.N_step % 100 == 0)
+		if (par.N_step % 10 == 0)
 			MakeHibernationFile(par, solidList, Nodes, U_n, V_n, P);              // writting hibernation file for prior time step
 
 		Calculate_u_p(U_n, U_new, V_n, V_new, P, Fx, Fy, solidList, Nodes, par);  // calculate velocity and pressure at the new time step
