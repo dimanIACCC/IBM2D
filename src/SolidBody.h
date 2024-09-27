@@ -29,7 +29,7 @@ public:
 	GeomVec u_n, u, u_s;          // velocity of the mass center
 	GeomVec omega, omega_n, omega_s;  // angular velocity
 	GeomVec alpha;                    // angular orientation
-	GeomVec av_collide, ar_collide, d_omega_collide;   // acceleration and andgular acceleration due to the collision
+	GeomVec a_collide, d_omega_collide;   // acceleration and andgular acceleration due to the collision
 	GeomVec f_new, f;      // force applied to the whole Solid
 	GeomVec tau_new, tau;    // torque, moment of force applied to the whole Solid
 	double Fr;      // average radial Force applied to Solid
@@ -41,12 +41,13 @@ public:
 	GeomVec integralV_dur_dt;     // integral of the d(u x r)/dt over the Volume of the Solid
 	//std::vector<Node> Nodes;   // Nodes of the Solid mesh
 	std::vector<int> IndNodes; // Indices of the Nodes
+	int Nn_, Nn_r;            // Number of Nodes for basic segment and $r$ segment of particle mesh
 	int Nn;                    // Number of Nodes
 	int name;                     // integer name of the Solid
 	int shape;                    // shape of the Solid
 	double r;                     // radius
 	double e;                     // eccentricity 
-	Solid(double x, double y, double ux, double uy, double alpha, double omega, double rho, int Nn, int moving, int name, int shape, double r, double e);
+	Solid(double x, double y, double ux, double uy, double alpha, double omega, double rho, int Nn_, int moving, int name, int shape, double r, double e);
 	Solid(double x, double y, Param &par);
 	~Solid();
 	void add_Nodes(std::vector<Node> &Nodes, const int Nn_max);
@@ -55,14 +56,14 @@ public:
 	void integrals(Matrix U_n, Matrix V_n, Matrix U_new, Matrix V_new, Param par);
 };
 
-void fill_solid_coordinates(std::vector<Node> &Nodes, const int Nn_max, const int Nn, const int shape, const double r, const double e, const double alpha, const double dxy);
+void fill_solid_coordinates(std::vector<Node> &Nodes, const int Nn_max, const int Nn, const int Nn_e, const int Nn_r, const int shape, const double r, const double e, const double alpha, const double dxy);
 void line_segment(std::vector<Node> &Nodes, const int N_start, const int Nn, GeomVec Xbeg, GeomVec Xend);
 void circular_segment(std::vector<Node> &Nodes, const int N_start, const int Nn, GeomVec Xc, double r, double alpha_beg, double alpha_end);
 void copy_solid_mesh(std::vector<Node> &Nodes, const int N_beg_from, const int N_beg_to, const int Nn);
 void fill_solid_ds(std::vector<Node> &Nodes, const int Nn_max, const int Nn, const int shape, const double dxy);
 void Read_Solids(std::string filename, std::vector<Solid>& Solids, std::vector<Node>& Nodes, Param &par);
 void Add_Solids(std::vector<Solid>& Solids, std::vector<Node>& Nodes, Param &par);
-bool Collide(Solid& s1, Solid& s2, std::vector<Node> &Nodes, Param par, double alpha, double beta, double friction, double kr, double F_collide);
+void Collide(Solid& s1, Solid& s2, std::vector<Node> &Nodes, Param par, double dist_u, double dist_r, double alpha, double beta, double friction);
 void Solids_move(std::vector<Solid> &solidList, std::vector<Node> &Nodes, Param par);
 void Solids_collide(std::vector<Solid> &solidList, std::vector<Node> &Nodes, Param par);
 void h_average_of_Solids_Layer(std::vector<Solid> &solidList, Param par, double& h_average);

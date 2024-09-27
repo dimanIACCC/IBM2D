@@ -123,7 +123,7 @@ void MakeHibernationFile(Param& par, std::vector<Solid>& solidList, std::vector<
 	// numerical parameters
 	output << "N1 = " << par.N1 << std::endl;
 	output << "N2 = " << par.N2 << std::endl;
-	output << "Nn = " << par.Nn << std::endl;
+	output << "Nn_ = " << par.Nn_ << std::endl;
 	output << "output_step = " << par.output_step << std::endl;
 	output << "IBM = " << par.IBM << std::endl;
 	output << "DeltaP_method = " << par.DeltaP_method << std::endl;
@@ -135,6 +135,7 @@ void MakeHibernationFile(Param& par, std::vector<Solid>& solidList, std::vector<
 	// parameters for many particles
 	output << "rho = " << par.rho << std::endl;
 	output << "r = " << par.r << std::endl;
+	output << "e = " << par.e << std::endl;
 	output << "AddSolids_N = " << par.AddSolids_N << std::endl;
 	output << "AddSolids_start = " << par.AddSolids_start << std::endl;
 	output << "AddSolids_interval = " << par.AddSolids_interval << std::endl;
@@ -182,9 +183,12 @@ void MakeHibernationFile(Param& par, std::vector<Solid>& solidList, std::vector<
 		output << "I = " << one->I << std::endl;
 		output << "rho = " << one->rho << std::endl;
 		output << "V = " << one->V << std::endl;
+		output << "Nn_ = " << one->Nn_ << std::endl;
 		output << "Nn = " << one->Nn << std::endl;
 		output << "name = " << one->name << std::endl;
+		output << "shape = " << one->shape << std::endl;
 		output << "r = " << one->r << std::endl;
+		output << "e = " << one->e << std::endl;
 		output << "<Nodes>" << std::endl;
 		for (int j = 0; j < one->Nn; j++) {
 			output << "Node{" << std::endl;
@@ -263,7 +267,8 @@ void Awake(std::string &filename, Param &par, std::vector<Solid>& solidList, std
 
 						double rho = par.rho;
 						int name = par.SolidName_max+1;
-						int Nn = par.Nn;
+						int Nn_ = 0;
+						int Nn = 0;
 						int moving = 1;
 						int shape = par.shape;
 						double r = par.r;
@@ -280,6 +285,7 @@ void Awake(std::string &filename, Param &par, std::vector<Solid>& solidList, std
 							else if (PAR == "omega_n")       hibernation_source >> omega_n;//
 							else if (PAR == "alpha")         hibernation_source >> alpha;
 							else if (PAR == "rho")           rho = stod(VALUE);
+							else if (PAR == "Nn_")           Nn_ = stoi(VALUE);
 							else if (PAR == "Nn")            Nn = stoi(VALUE);
 							else if (PAR == "name")          name = stoi(VALUE);
 							else if (PAR == "shape")         shape = stoi(VALUE);
@@ -310,7 +316,7 @@ void Awake(std::string &filename, Param &par, std::vector<Solid>& solidList, std
 							}
 							if (line == "<\\Solid>") {
 								double alpha0 = alpha[3];
-								Solid c(x, y, ux, uy, alpha0, omega, rho, Nn, moving, name, shape, r, e);
+								Solid c(x, y, ux, uy, alpha0, omega, rho, Nn_, moving, name, shape, r, e);
 								c.add_Nodes(Nodes, par.Nn_max);
 								fill_solid_ds(Nodes, par.Nn_max, c.Nn, c.shape, 0.5*(par.d_x + par.d_y));
 								par.Nn_max += c.Nn;

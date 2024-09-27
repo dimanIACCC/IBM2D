@@ -143,7 +143,7 @@ void make_uv_RHS(Matrix &rhsu, Matrix &rhsv, Matrix &u0, Matrix &v0, Matrix &u, 
 
 void predict_uv(Matrix &u, Matrix &v, Matrix &rhsu, Matrix &rhsv, Param &par) {
 
-	#pragma omp parallel sections num_threads(2)
+	#pragma omp parallel sections num_threads(1)
 	{
       #pragma omp section
 	  {

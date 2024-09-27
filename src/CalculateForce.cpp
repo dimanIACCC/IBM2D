@@ -5,7 +5,7 @@
 
 void CalculateForce(Matrix &dFx, Matrix &dFy, int* Ax_beg, int* Ax_end, int* Ay_beg, int* Ay_end, std::vector<Solid> &iList, std::vector<Node> &Nodes, Matrix& u, Matrix& v, Param par) {
 
-	int num_thr = 1.; // omp_get_max_threads();
+	int num_thr = 1; // omp_get_max_threads();
 
 	std::clock_t begin, end;
 
@@ -377,7 +377,7 @@ void Make_interaction_Matrix(int* A_beg, int* A_end, int N1, int N2, double d_x,
 	);
 
 	int m = 0;
-	int mp = Nn_max / 10000 + 1;
+	int mp = Nn_max / 20 + 1;
 	int Nnp_max = Nn_max / mp;
 
 	for (int m = 0; m < mp; m++)
@@ -482,7 +482,7 @@ void F_to_Euler_grid(std::vector<Node>& Nodes, Matrix &Fx_temp, Matrix &Fy_temp,
 	array_view <double, 2> Fy_temp_AV(N2_v, N1_v, Fy_temp_);
 
 	int m = 0;
-	int mp = Nn_max / 10000 + 1;
+	int mp = Nn_max / 2000 + 1;
 	int Nnp = Nn_max / mp;
 
 	for (int m = 0; m < mp; m++)

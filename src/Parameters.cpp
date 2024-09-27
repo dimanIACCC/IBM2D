@@ -37,7 +37,7 @@ Param::Param() {  // default parameters
 	r = 0.05;
 	e = 0.;
 	Nn_max = 0;
-	Nn = 200;
+	Nn_ = 12;
 	AddSolids_N = 0;
 	AddSolids_start = 0;
 	AddSolids_interval = 5000000;
@@ -132,7 +132,7 @@ void Param::read_line(std::string line) {
 		// numerical parameters
 		else if (PAR == "N1")                   N1 = stoi(VALUE);
 		else if (PAR == "N2")                   N2 = stoi(VALUE);
-		else if (PAR == "Nn")                   Nn = stoi(VALUE);
+		else if (PAR == "Nn_")                  Nn_ = stoi(VALUE);
 		else if (PAR == "output_step")          output_step = stoi(VALUE);
 		else if (PAR == "IBM")                  IBM = stoi(VALUE);
 		else if (PAR == "DeltaP_method")        DeltaP_method = stoi(VALUE);

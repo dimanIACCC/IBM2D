@@ -48,7 +48,7 @@ public:
 	double r;                 // default radius of Solid
 	double e;                 // default eccentricity of Solid
 	int Nn_max;               // number of nodes
-	int Nn;                   // number of nodes per added Solid
+	int Nn_;                  // number of nodes for basic segment of added Solid
 	int AddSolids_N;          // number of added Solids
 	int AddSolids_start;      // step when Solids start to add
 	int AddSolids_interval;   // interval for Solids adding

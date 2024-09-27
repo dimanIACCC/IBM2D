@@ -1,7 +1,7 @@
 #include "stdafx.h"
 #include "SolidBody.h"
 
-Solid::Solid(double x, double y, double ux, double uy, double alpha, double omega, double rho, int Nn, int moving, int name, int shape, double r, double e)
+Solid::Solid(double x, double y, double ux, double uy, double alpha, double omega, double rho, int Nn_, int moving, int name, int shape, double r, double e)
 {
 	std::fill(this->x_n.begin()   , this->x_n.end(),    0.0); // fill vector x_n    with zeros
 	std::fill(this->u_n.begin()   , this->u_n.end()   , 0.0); // fill vector u_n    with zeros
@@ -14,7 +14,8 @@ Solid::Solid(double x, double y, double ux, double uy, double alpha, double omeg
 	this->omega_n[3] = omega;
 	this->alpha[3] = alpha;
 	this->rho = rho;
-	this->Nn = Nn;
+	this->Nn_ = Nn_;
+	this->Nn = Nn_;
 	this->moving = moving;
 	this->name = name;
 	this->x_n_plt = this->x_n;
@@ -26,12 +27,16 @@ Solid::Solid(double x, double y, double ux, double uy, double alpha, double omeg
 	this->shape = shape;
 	this->r = r;
 	this->e = e;
+	if (shape == 16) {
+		this->Nn_r = int(this->Nn_ * 0.5*r/e);
+		this->Nn = 8 * this->Nn_r + 16 * this->Nn_;
+	}
 	V = M_PI * r * r;
 	I = V * r * r / 4.0 * (2.0 - e*e) / sqrt(1.0 - e*e); // angular momentum for unit density
 }
 
 Solid::Solid(double x, double y, Param &par) :
-	Solid(x, y, 0.0, 0.0, 0.0, 0.0, par.rho, par.Nn, true, par.SolidName_max + 1, par.shape, par.r, par.e) {
+	Solid(x, y, 0.0, 0.0, 0.0, 0.0, par.rho, par.Nn_, true, par.SolidName_max + 1, par.shape, par.r, par.e) {
 	this->u_n[1] = 0.0;  //  par.u_in * ux_Poiseuille(y, par.H);
 	this->omega_n[3] = 0.0; // -dux_dy_Poiseuille(y, par.H);
 	this->omega = this->omega_n;
@@ -66,7 +71,8 @@ bool operator >(const Solid& a, const Solid& b) {
 
  
 
-void fill_solid_coordinates(std::vector<Node> &Nodes, const int Nn_max, const int Nn, const int shape, const double r, const double e, const double alpha, const double dxy) {
+void fill_solid_coordinates(std::vector<Node> &Nodes, const int Nn_max, const int Nn, const int Nn_e, const int Nn_r,
+                            const int shape, const double r, const double e, const double alpha, const double dxy) {
 	GeomVec o;
 	o[0] = 0.;
 	o[1] = 0.;
@@ -200,38 +206,42 @@ void fill_solid_coordinates(std::vector<Node> &Nodes, const int Nn_max, const in
 
 	}
 	else if (shape == 16) {  // propeller
-		int Nn12 = Nn / 16;
+		int Nn_ = 0;
 		GeomVec Xbeg, Xend, Xc;
 		Xbeg[0] = 0.; Xbeg[3] = 0.;
 		Xend[0] = 0.; Xend[3] = 0.;
-		Xc[0] = 0.; Xc[3] = 0.;
+		Xc[0]   = 0.; Xc[3]   = 0.;
 		double alpha_beg, alpha_end;
 
 		// R
 		Xbeg[1] = r + e;  Xbeg[2] = 0;
 		Xend[1] = r + e;  Xend[2] = r;
-		line_segment(Nodes, Nn_max + 0 * Nn12, Nn12, Xbeg, Xend);
+		line_segment(Nodes, Nn_max + Nn_, Nn_r, Xbeg, Xend);
+		Nn_ += Nn_r;
 
 		Xc[1] = r;  Xc[2] = r;
 		alpha_beg = 0;   alpha_end = M_PI;
-		circular_segment(Nodes, Nn_max + 1 * Nn12, Nn12, Xc, e, alpha_beg, alpha_end);
+		circular_segment(Nodes, Nn_max + Nn_, 2*Nn_e, Xc, e, alpha_beg, alpha_end);
+		Nn_ += 2 * Nn_e;
 
 		Xbeg[1] = r - e;  Xbeg[2] = r;
 		Xend[1] = r - e;  Xend[2] = 0;
-		line_segment(Nodes, Nn_max + 2 * Nn12, Nn12, Xbeg, Xend);
+		line_segment(Nodes, Nn_max + Nn_, Nn_r, Xbeg, Xend);
+		Nn_ += Nn_r;
 
 		Xc[1] = r;  Xc[2] = 0;
 		alpha_beg = M_PI;   alpha_end = 2*M_PI;
-		circular_segment(Nodes, Nn_max + 3 * Nn12, Nn12, Xc, e, alpha_beg, alpha_end);
+		circular_segment(Nodes, Nn_max + Nn_, 2*Nn_e, Xc, e, alpha_beg, alpha_end);
+		Nn_ += 2 * Nn_e;
 
 		// U
-		copy_solid_mesh(Nodes, Nn_max + 0 * Nn12, Nn_max + 4 * Nn12, 4 * Nn12);
+		copy_solid_mesh(Nodes, Nn_max + 0 * Nn_, Nn_max + 1 * Nn_, Nn_);
 
 		// L
-		copy_solid_mesh(Nodes, Nn_max + 4 * Nn12, Nn_max + 8 * Nn12, 4 * Nn12);
+		copy_solid_mesh(Nodes, Nn_max + 1 * Nn_, Nn_max + 2 * Nn_, Nn_);
 
 		// D
-		copy_solid_mesh(Nodes, Nn_max + 8 * Nn12, Nn_max + 12 * Nn12, 4 * Nn12);
+		copy_solid_mesh(Nodes, Nn_max + 2 * Nn_, Nn_max + 3 * Nn_, Nn_);
 
 	}
 	else {
@@ -389,7 +399,7 @@ void Read_Solids(std::string filename, std::vector<Solid>& Solids, std::vector<N
 				double uy = 0;
 				double omega = 0;
 				double rho = par.rho;
-				int Nn = par.Nn;
+				int Nn_ = par.Nn_;
 				int moving = 1;
 				int shape = 0;
 				double r = par.r;
@@ -409,7 +419,7 @@ void Read_Solids(std::string filename, std::vector<Solid>& Solids, std::vector<N
 						else if (PAR == "uy")         uy           = stod(VALUE);
 						else if (PAR == "omega")      omega        = stod(VALUE);
 						else if (PAR == "rho")        rho          = stod(VALUE);
-						else if (PAR == "Nn")         Nn           = stoi(VALUE);
+						else if (PAR == "Nn_")        Nn_          = stoi(VALUE);
 						else if (PAR == "moving")     moving       = stoi(VALUE);
 						else if (PAR == "Poiseuille") Poiseuille   = bool(stoi(VALUE));
 						else if (PAR == "shape")      shape        = stoi(VALUE);
@@ -428,10 +438,10 @@ void Read_Solids(std::string filename, std::vector<Solid>& Solids, std::vector<N
 					omega = - dux_dy_Poiseuille(y, par.H);
 				}
 
-				Solid c(x, y, ux, uy, alpha, omega, rho, Nn, moving, par.SolidName_max+1, shape, r, e);
+				Solid c(x, y, ux, uy, alpha, omega, rho, Nn_, moving, par.SolidName_max+1, shape, r, e);
 				//std::cout << c.I << std::endl;
 				c.add_Nodes(Nodes, par.Nn_max);
-				fill_solid_coordinates(Nodes, par.Nn_max, c.Nn, c.shape, c.r, c.e, alpha, 0.5*(par.d_x+par.d_y));
+				fill_solid_coordinates(Nodes, par.Nn_max, c.Nn, c.Nn_, c.Nn_r, c.shape, c.r, c.e, alpha, 0.5*(par.d_x+par.d_y));
 				par.Nn_max += c.Nn;
 				if (c.name > par.SolidName_max) par.SolidName_max = c.name;
 				Solids.push_back(c);
@@ -467,7 +477,7 @@ void Add_Solids(std::vector<Solid>& Solids, std::vector<Node>& Nodes, Param &par
 			if (add) {
 				Solid c(x[1], x[2], par);
 				c.add_Nodes(Nodes, par.Nn_max);
-				fill_solid_coordinates(Nodes, par.Nn_max, c.Nn, c.shape, par.r, par.e, 0., 0.5*(par.d_x + par.d_y));
+				fill_solid_coordinates(Nodes, par.Nn_max, c.Nn, c.Nn_, c.Nn_r, c.shape, par.r, par.e, 0., 0.5*(par.d_x + par.d_y));
 				par.Nn_max += c.Nn;
 				if (c.name > par.SolidName_max) par.SolidName_max = c.name;
 				Solids.push_back(c);
@@ -490,17 +500,8 @@ double Distance_2Solids(Solid& s1, Solid& s2, Param& par, GeomVec& r) {
 		if (length(r_plus ) < rrr) { r = r_plus ; rrr = length(r_plus ); };
 		if (length(r_minus) < rrr) { r = r_minus; rrr = length(r_minus); };
 	}
-
-	//if (s1.shape == circle && s2.shape == circle) {
-
-		double r1 = std::fmin(s1.r, s2.r);
-		double r2 = std::fmax(s1.r, s2.r);
-
-		if      (rrr >= r2) dist = rrr - (r2 + r1);
-		else if (rrr <= r2) { dist = (r2 - r1) - rrr; r = -r; } // circle r1 is inside circle r2
-	//}
+	dist = rrr - (s1.r + s2.r);
 	r = r / rrr;
-
 	return dist;
 }
 
@@ -518,19 +519,21 @@ double Distance_2Solids_(Solid& s1, Solid& s2, std::vector<Node> Nodes, Param& p
 				GeomVec r_minus = r;
 				r_plus[1] += par.L;
 				r_minus[1] -= par.L;
-				if (length(r_plus) < rrr) { r = r_plus; rrr = length(r_plus); };
+				if (length(r_plus) < rrr ) { r = r_plus ; rrr = length(r_plus) ; };
 				if (length(r_minus) < rrr) { r = r_minus; rrr = length(r_minus); };
 			}
 			if (rrr < dist) {
 				dist = rrr;
-				x1 = Nodes[Ind1].x;
-				x2 = Nodes[Ind2].x;
+				x1 = Nodes[Ind1].x_s;
+				x2 = Nodes[Ind2].x_s;
 				u1 = s1.u_n + x_product(s1.omega_n, x1);
 				u2 = s2.u_n + x_product(s2.omega_n, x2);
 				r_out = r / rrr;
 			}
 		}
 	}
+	//std::cout << x1 << std::endl;
+	//std::cout << x2 << std::endl;
 
 	return dist;
 }
@@ -557,7 +560,7 @@ void Distance_2Walls(Solid& s1, std::vector<Node> Nodes, Param& par,
 	}
 }
 
-GeomVec F_collide_new(GeomVec norm, double dist, GeomVec u1, GeomVec u2, double dist_u, double dist_r, double alpha, double beta, double friction) {
+GeomVec F_collide(GeomVec norm, double dist, GeomVec u1, GeomVec u2, double dist_u, double dist_r, double alpha, double beta, double friction) {
 	GeomVec F_collide;
 	F_collide[0] = 0;
 	F_collide[1] = 0;
@@ -568,37 +571,29 @@ GeomVec F_collide_new(GeomVec norm, double dist, GeomVec u1, GeomVec u2, double 
 		GeomVec d_u12_norm = dot_product(d_u12, norm)*norm;
 		double d_u12_proj = dot_product(d_u12, norm);
 		GeomVec d_u12_tau = d_u12 - d_u12_norm;
-		//GeomVec d_omega12 = omega1 - omega2;
 		if (d_u12_proj < 0.0) { // if Solids move to each other
-			F_collide -=            alpha * 2 * (dist_u - dist)*(dist_u - dist) / dist_u / dist_u * d_u12_norm;
-			F_collide -= friction * alpha * 2 * (dist_u - dist)*(dist_u - dist) / dist_u / dist_u * d_u12_tau;
+			F_collide -=            alpha * 2 * (dist_u - dist) * (dist_u - dist) / dist_u / dist_u * d_u12_norm;
+			F_collide -= friction * alpha * 2 * (dist_u - dist) * (dist_u - dist) / dist_u / dist_u * d_u12_tau;
 			std::cout << "Collision u:  F_collide = " << F_collide[1] << "   " << F_collide[2] << std::endl;
 		}
 		if (dist <= dist_r) {
-			double Delta_u = (dist_r - dist)*(dist_r - dist) / dist_r / dist_r * beta;  // distance force
-			F_collide += beta * Delta_u * norm;
-			std::cout << "Collision r" << std::endl;
+			F_collide += beta * (dist_r - dist)*(dist_r - dist) / dist_r / dist_r * norm;
+			std::cout << "Collision r:  F_collide = " << F_collide[1] << "   " << F_collide[2] << std::endl;
 			//std::getchar();
 		}
 	}
 	return F_collide;
 }
 
-bool Collide(Solid& s1, Solid& s2, std::vector<Node> &Nodes, Param par, double alpha, double beta, double friction, double kr) {
-	bool result = false;
+void Collide(Solid& s1, Solid& s2, std::vector<Node> &Nodes, Param par, double dist_u, double dist_r, double alpha, double beta, double friction) {
 
 	GeomVec r = s1.x - s2.x;
 	GeomVec x1 = s1.x;
 	GeomVec x2 = s2.x;
 	GeomVec u1 = s1.u_n;
 	GeomVec u2 = s2.u_n;
-	GeomVec omega1;
-	omega1[3] = 1.;
 	double dist = Distance_2Solids(s1, s2, par, r);
-	if (dist < 10 * par.d_x) dist = Distance_2Solids_(s1, s2, Nodes, par, r, x1, x2, u1, u2);
-
-	double dist_u = par.k_dist*par.d_x;
-	double dist_r = par.k_dist*par.d_x * kr;
+	if (dist < s1.r + s2.r) dist = Distance_2Solids_(s1, s2, Nodes, par, r, x1, x2, u1, u2);
 
 	double m1 = s1.rho * s1.V;
 	double m2 = s2.rho * s2.V;
@@ -606,21 +601,13 @@ bool Collide(Solid& s1, Solid& s2, std::vector<Node> &Nodes, Param par, double a
 	double I1 = s1.rho * s1.I;
 	double I2 = s2.rho * s2.I;
 	double I = I1 * I2 / (I1 + I2);
-	//std::cout << "u1 " << u1[2] << ", u2 = " << u2[2] << std::endl;
-	//u1 = s1.u_n;
-	//u2 = s2.u_n;
-	//std::cout << "u1 " << u1[2] << ", u2 = " << u2[2] << std::endl;
-	GeomVec F = F_collide_new(r, dist, u1, u2, dist_u, dist_r, alpha, beta, friction);
+	GeomVec F = F_collide(r, dist, u1, u2, dist_u, dist_r, alpha, beta, friction);
 
-	if (s1.moving == 1) s1.av_collide += F * M / m1;
-	if (s2.moving == 1) s2.av_collide -= F * M / m2;
+	if (s1.moving == 1) s1.a_collide += F * M / m1;
+	if (s2.moving == 1) s2.a_collide -= F * M / m2;
 	if (s1.moving == 1) s1.d_omega_collide += x_product(x1, F) * I / I1;
 	if (s2.moving == 1) s2.d_omega_collide -= x_product(x2, F) * I / I2;
 
-	//if (dist <= dist_u) {
-	//	result = true;
-	//}
-	return result;
 }
 
 void Solids_collide(std::vector<Solid> &solidList, std::vector<Node> &Nodes, Param par) {
@@ -629,81 +616,45 @@ void Solids_collide(std::vector<Solid> &solidList, std::vector<Node> &Nodes, Par
 	double dist_u = par.k_dist*par.d_x;
 	double dist_r = par.k_dist*par.d_x * kr;
 
-	double alpha = 10 * sqrt(par.Gravity_module / dist_u); // coefficient for the collision force based on velocity value
-	//std::cout << "alpha = " << alpha << std::endl;
-	double beta  = 1. * std::fmax(par.Gravity_module, 1000 * std::fmax(abs(par.u_up - par.u_down), abs(par.u_in)) / par.H / par.H / par.Re); // coefficient for the collision force based on distance between particles value
+	double alpha = 50. * sqrt(par.Gravity_module / dist_u); // coefficient for the collision force based on velocity value
+	double beta  = 50. * std::fmax(par.Gravity_module, 1000 * std::fmax(abs(par.u_up - par.u_down), abs(par.u_in)) / par.H / par.H / par.Re); // coefficient for the collision force based on distance between particles value
 	double friction = 0.04; // coefficient for the friction force based on velocity value
 
-	///-------------collision with walls--------------------------
 	double  d_up, d_down, d_left, d_right;
 	GeomVec x_up, x_down, x_left, x_right;
-	//std::getchar();
+	GeomVec u_up, u_down, u_left, u_right;
+	GeomVec n_up, n_down, n_left, n_right;
 
 	for (auto one = solidList.begin(); one != solidList.end(); one++) {
 		if (one->moving == 1){
+			for (auto two = next(one); two != solidList.end(); two++) {
+				Collide(*one, *two, Nodes, par, dist_u, dist_r, alpha, beta, friction);
+			}
 
 			Distance_2Walls(*one, Nodes, par, d_up, d_down, d_left, d_right, x_up, x_down, x_left, x_right);
 
-			//distance to upper wall
-			if (d_up < dist_u) {
-				if (one->u[2] > 0) one->av_collide[2] -= 2 * alpha * one->u_n[2];   // velocity force
-				double omega_wall = (par.u_up - one->u[1]) / d_up / 2;
-				one->d_omega_collide[3] -= friction * (one->omega_n[3]-omega_wall);
-				if (Debug) std::cout << "Collision with upper wall,   Delta_u_v =" << alpha * one->u[2] << std::endl;
-			}
-			if (d_up < dist_r) {
-				double Delta_u = (dist_r - d_up)*(dist_r - d_up) / dist_r / dist_r;  // distance force
-				one->ar_collide[2] -= beta*Delta_u;
-				if (one->moving == 1) one->d_omega_collide[3] -= beta*Delta_u*x_up[1] * one->V / one->I;
-				if (Debug) std::cout << "Collision with upper wall,   Delta_u_r =" << beta*Delta_u << std::endl;
-			}
-			//distance to lower wall
-			if (d_down < dist_u) {
-				if (one->u[2] < 0) one->av_collide[2] -= 2 * alpha * one->u_n[2];   // velocity force
-				double omega_wall = (par.u_down - one->u[1]) / d_down / 2;
-				one->d_omega_collide[3] -= friction * (one->omega_n[3]- omega_wall);
-				if (Debug) std::cout << "Collision with lower wall,   Delta_u_v =" << alpha * one->u[2] << std::endl;
-			}
-			if (d_down < dist_r) {
-				double Delta_u = (dist_r - d_down)*(dist_r - d_down) / dist_r / dist_r;  // distance force
-				one->ar_collide[2] += beta*Delta_u;
-				if (one->moving == 1) one->d_omega_collide[3] += beta*Delta_u*x_down[1] * one->V / one->I;
-				if (Debug) std::cout << "Collision with lower wall,   Delta_u_r =" << beta*Delta_u << std::endl;
-			}
+			u_up[0] = 0.;               u_down[0] = 0.;               u_left[0] = 0.;               u_right[0] = 0.;
+			u_up[1] = par.u_up;         u_down[1] = par.u_down;       u_left[1] = 0.;               u_right[1] = 0.;
+			u_up[2] = 0.;               u_down[2] = 0.;               u_left[2] = 0.;               u_right[2] = 0.;
+			u_up[3] = 0.;               u_down[3] = 0.;               u_left[3] = 0.;               u_right[3] = 0.;
 
+			n_up[0] = 0.;               n_down[0] = 0.;               n_left[0] = 0.;               n_right[0] = 0.;
+			n_up[1] = 0.;               n_down[1] = 0.;               n_left[1] = 1.;               n_right[1] = -1.;
+			n_up[2] = -1.;              n_down[2] = 1.;               n_left[2] = 0.;               n_right[2] = 0.;
+			n_up[3] = 0.;               n_down[3] = 0.;               n_left[3] = 0.;               n_right[3] = 0.;
+
+			if (one->moving == 1) {
+				GeomVec F_up    = F_collide(n_up   , d_up   , one->u_n, u_up   , dist_u, dist_r, alpha, beta, friction);
+				GeomVec F_down  = F_collide(n_down , d_down , one->u_n, u_down , dist_u, dist_r, alpha, beta, friction);
+				one->a_collide += F_up + F_down;
+				one->d_omega_collide += x_product(x_up, F_up) + x_product(x_down, F_down);
 			if (par.BC == box) {
-				//distance to right wall
-				if (d_right < dist_u) {
-					if (one->u[1] > 0) one->av_collide[1] -= 2 * alpha * one->u_n[1];  // velocity force
-					one->d_omega_collide[3] -= friction * one->omega_n[3];
-					if (Debug) std::cout << "Collision with right wall,   Delta_u_v =" << alpha * one->u[1] << std::endl;
-				}
-				if (d_right < dist_r) {
-					double Delta_u = (dist_r - d_right)*(dist_r - d_right) / dist_r / dist_r;  // distance force
-					one->ar_collide[1] -= beta*Delta_u;
-					if (one->moving == 1) one->d_omega_collide[3] += beta*Delta_u*x_right[2] * one->V / one->I;
-					if (Debug) std::cout << "Collision with right wall,   Delta_u_r =" << beta*Delta_u << std::endl;
-				}
-				//distance to left  wall
-				if (d_left < dist_u) {
-					if (one->u[1] < 0) one->av_collide[1] -= 2 * alpha *one->u_n[1];   // velocity force
-					one->d_omega_collide[3] -= friction * one->omega_n[3];
-					if (Debug) std::cout << "Collision with left wall,   Delta_u_v =" << alpha * one->u[2] << std::endl;
-				}
-				if (d_left < dist_r) {
-					double Delta_u = (dist_r - d_left)*(dist_r - d_left) / dist_r / dist_r;  // distance force
-					one->ar_collide[1] += beta*Delta_u;
-					if (one->moving == 1) one->d_omega_collide[3] -= beta*Delta_u*x_left[2] * one->V / one->I;
-					if (Debug) std::cout << "Collision with left wall,   Delta_u_r =" << beta*Delta_u << std::endl;
-				}
+				GeomVec F_left  = F_collide(n_left , d_left , one->u_n, u_left , dist_u, dist_r, alpha, beta, friction);
+				GeomVec F_right = F_collide(n_right, d_right, one->u_n, u_right, dist_u, dist_r, alpha, beta, friction);
+				one->a_collide += F_left + F_right;
+				one->d_omega_collide += x_product(x_left, F_left) + x_product(x_right, F_right);
 			}
-		}
-	}
-
-	///--------------collisions between particles-----------------
-	for (auto one = solidList.begin(); one != solidList.end(); one++) {
-		for (auto two = next(one); two != solidList.end(); two++) {
-			if (Collide(*one, *two, Nodes, par, alpha, beta, friction, kr)) if (Debug) std::cout << "Collision of particles" << std::endl;
+			}
 		}
 	}
 
@@ -771,8 +722,7 @@ void Solids_zero_force(std::vector<Solid>& Solids, std::vector<Node>& Nodes, int
 	for (auto& it : Solids) {
 		std::fill(it.f.begin(), it.f.end(), 0.0);
 		std::fill(it.tau.begin(), it.tau.end(), 0.0);
-		std::fill(it.av_collide.begin(), it.av_collide.end(), 0.0);
-		std::fill(it.ar_collide.begin(), it.ar_collide.end(), 0.0);
+		std::fill(it.a_collide.begin(), it.a_collide.end(), 0.0);
 		std::fill(it.d_omega_collide.begin(), it.d_omega_collide.end(), 0.0);
 		
 	}
@@ -793,7 +743,7 @@ void Solids_velocity_new(std::vector<Solid>& Solids, Param par) {
 			it.u_s     = it.u;
 			it.omega_s = it.omega;
 
-			GeomVec a   = (it.integralV_du_dt  - it.f_new  ) / it.V / it.rho * 1 + par.Gravity * (it.rho - 1.) / it.rho + it.av_collide + it.ar_collide;  // fluid density equals 1
+			GeomVec a   = (it.integralV_du_dt  - it.f_new  ) / it.V / it.rho * 1 + par.Gravity * (it.rho - 1.) / it.rho + it.a_collide;  // fluid density equals 1
 			GeomVec tau = (it.integralV_dur_dt - it.tau_new) / it.I / it.rho * 1 + it.d_omega_collide;  // angular moment I is normalized with density
 
 			it.u     = it.u_n     + a   * par.d_t;
