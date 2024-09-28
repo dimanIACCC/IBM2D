@@ -46,6 +46,7 @@ public:
 	double rho;               // default density of Solid
 	int shape;                // shape
 	double r;                 // default radius of Solid
+	double r0;                // default little radius of Solid
 	double e;                 // default eccentricity of Solid
 	int Nn_max;               // number of nodes
 	int Nn_;                  // number of nodes for basic segment of added Solid
@@ -69,7 +70,7 @@ public:
 	double d_x;               // mesh step in x-direction
 	double d_y;               // mesh step in y-direction
 	double ldxdx, ldydy;      // coefficients in Laplace approximation
-	GeomVec x0;               // Special point in test problems Lamb_Oseen and Line_Vortex
+	GeomVec x0 = ZeroVec();   // Special point in test problems Lamb_Oseen and Line_Vortex
 	GeomVec k;                // Spatial frequencies for Taylor_Green vortices
 	GeomVec Gravity;          // Gravity vector
 

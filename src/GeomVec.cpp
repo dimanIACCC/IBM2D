@@ -1,5 +1,11 @@
 ﻿#include "GeomVec.h"
 
+GeomVec ZeroVec() {
+	GeomVec result;
+	std::fill(result.begin(), result.end(), 0.);
+	return result;
+}
+
 double length(GeomVec x) {
 	double result = 0.0;
 	for (int i = 1; i <= 3; i++) {

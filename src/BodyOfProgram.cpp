@@ -135,6 +135,7 @@ void MakeHibernationFile(Param& par, std::vector<Solid>& solidList, std::vector<
 	// parameters for many particles
 	output << "rho = " << par.rho << std::endl;
 	output << "r = " << par.r << std::endl;
+	output << "r0 = " << par.r0 << std::endl;
 	output << "e = " << par.e << std::endl;
 	output << "AddSolids_N = " << par.AddSolids_N << std::endl;
 	output << "AddSolids_start = " << par.AddSolids_start << std::endl;
@@ -183,10 +184,12 @@ void MakeHibernationFile(Param& par, std::vector<Solid>& solidList, std::vector<
 		output << "I = " << one->I << std::endl;
 		output << "rho = " << one->rho << std::endl;
 		output << "V = " << one->V << std::endl;
-		output << "Nn_ = " << one->Nn_ << std::endl;
+		output << "Nn_r0 = " << one->Nn_r0 << std::endl;
+		output << "Nn_r = " << one->Nn_r << std::endl;
 		output << "Nn = " << one->Nn << std::endl;
 		output << "name = " << one->name << std::endl;
 		output << "shape = " << one->shape << std::endl;
+		output << "r0 = " << one->r0 << std::endl;
 		output << "r = " << one->r << std::endl;
 		output << "e = " << one->e << std::endl;
 		output << "<Nodes>" << std::endl;
@@ -259,19 +262,20 @@ void Awake(std::string &filename, Param &par, std::vector<Solid>& solidList, std
 					if (line == "<Solid>") {
 						double x = par.L*0.1;
 						double y = par.H*0.5;
-						double ux = 0;
-						double uy = 0;
-						double omega = 0;
+						double ux = 0.;
+						double uy = 0.;
+						double omega = 0.;
 
 						GeomVec x_n, u_n, omega_n, alpha;
 
 						double rho = par.rho;
 						int name = par.SolidName_max+1;
-						int Nn_ = 0;
-						int Nn = 0;
+						int Nn_ = par.Nn_;
+						int Nn = par.Nn_;
 						int moving = 1;
 						int shape = par.shape;
 						double r = par.r;
+						double r0 = par.r0;
 						double e = par.e;
 						bool Poiseuille = false;   //key for initial ux, uy and omega_new corresponding to Poiseuille flow
 
@@ -289,6 +293,7 @@ void Awake(std::string &filename, Param &par, std::vector<Solid>& solidList, std
 							else if (PAR == "Nn")            Nn = stoi(VALUE);
 							else if (PAR == "name")          name = stoi(VALUE);
 							else if (PAR == "shape")         shape = stoi(VALUE);
+							else if (PAR == "r0")            r0 = stod(VALUE);
 							else if (PAR == "r")             r = stod(VALUE);
 							else if (PAR == "e")             e = stod(VALUE);
 							else if (PAR == "<Nodes>") {
@@ -316,7 +321,7 @@ void Awake(std::string &filename, Param &par, std::vector<Solid>& solidList, std
 							}
 							if (line == "<\\Solid>") {
 								double alpha0 = alpha[3];
-								Solid c(x, y, ux, uy, alpha0, omega, rho, Nn_, moving, name, shape, r, e);
+								Solid c(x, y, ux, uy, alpha0, omega, rho, Nn_, moving, name, shape, r0, r, e);
 								c.add_Nodes(Nodes, par.Nn_max);
 								fill_solid_ds(Nodes, par.Nn_max, c.Nn, c.shape, 0.5*(par.d_x + par.d_y));
 								par.Nn_max += c.Nn;

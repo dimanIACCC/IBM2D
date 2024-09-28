@@ -32,8 +32,8 @@ void Calculate_u_p(Matrix &U_n   , Matrix &U_new,
 		solid.x = solid.x_n;
 		solid.u = solid.u_n;
 		solid.omega = solid.omega_n;
-		std::fill(solid.f_new.begin(), solid.f_new.end(), 0.0);
-		std::fill(solid.tau_new.begin(), solid.tau_new.end(), 0.0);
+		solid.f_new = ZeroVec();
+		solid.tau_new = ZeroVec();
 	}
 
 	U_s = U_n;

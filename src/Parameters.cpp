@@ -35,6 +35,7 @@ Param::Param() {  // default parameters
 	rho = 3.;
 	shape = 0;
 	r = 0.05;
+	r0 = 0.025;
 	e = 0.;
 	Nn_max = 0;
 	Nn_ = 12;
@@ -105,10 +106,9 @@ void Param::init() {
 
 	Gravity_angle *= M_PI / 180.;
 
-	Gravity[0] = 0.0;
+	Gravity = ZeroVec();
 	Gravity[1] =  Gravity_module*sin(Gravity_angle);
 	Gravity[2] = -Gravity_module*cos(Gravity_angle);
-	Gravity[3] = 0.0;
 }
 
 
@@ -144,6 +144,7 @@ void Param::read_line(std::string line) {
 		// parameters for many particles
 		else if (PAR == "rho")                  rho = stod(VALUE);
 		else if (PAR == "shape")                shape = stoi(VALUE);
+		else if (PAR == "r0")                   r0 = stod(VALUE);
 		else if (PAR == "r")                    r = stod(VALUE);
 		else if (PAR == "e")                    e = stod(VALUE);
 		else if (PAR == "AddSolids_N")          AddSolids_N = stoi(VALUE);
@@ -181,39 +182,30 @@ boundary_conditions string_to_BC(std::string s) {
 }
 
 GeomVec x_p(int i, int j, Param par) {
-	GeomVec result;
-	result[0] = 0.0;
+	GeomVec result = ZeroVec();
 	result[1] = (i - 0.5) * par.d_x;
 	result[2] = (j - 0.5) * par.d_y;
-	result[3] = 0.0;
 	return result;
 }
 
 GeomVec x_u(int i, int j, Param par) {
-	GeomVec result;
-	result[0] = 0.0;
+	GeomVec result = ZeroVec();
 	result[1] = (i - 1.0) * par.d_x;
 	result[2] = (j - 0.5) * par.d_y;
-	result[3] = 0.0;
 	return result;
 }
 
 GeomVec x_v(int i, int j, Param par) {
-	GeomVec result;
-	result[0] = 0.0;
+	GeomVec result = ZeroVec();
 	result[1] = (i - 0.5) * par.d_x;
 	result[2] = (j - 1.0) * par.d_y;
-	result[3] = 0.0;
 	return result;
 }
 
 GeomVec x_c(int i, int j, Param par) {
-	GeomVec result;
-	result[0] = 0.0;
+	GeomVec result = ZeroVec();
 	result[1] = i * par.d_x;
 	result[2] = j * par.d_y;
-	result[3] = 0.0;
-
 	return result;
 }
 

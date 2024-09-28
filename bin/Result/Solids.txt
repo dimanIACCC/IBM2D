@@ -1,21 +1,41 @@
-//circle{
-   x = 6
+circle{
+   x = 1
+   y = 3
+   moving = 1
+   r = 0.125
+   r0 = 0.0125
+   e = 0
+   Poiseuille = 0
+   shape   = 4
+   rho = 3.0
+   Nn_ = 4
+   alpha=45
+}
+
+circle{
+   x = 1
+   y = 2
+   moving = 1
+   r = 0.125
+   r0 = 0.0125
+   e = 0
+   Poiseuille = 0
+   shape   = 8
+   rho = 2.5
+   Nn_ = 4
+   alpha=45
+}
+
+circle{
+   x = 1
    y = 1
    moving = 1
    r = 0.125
-   e = 0.0125
+   r0 = 0.0125
+   e = 0
    Poiseuille = 0
    shape   = 16
-   rho = 1.25
-   Nn = 240
-   alpha=90
-}
-
-//circle{
-   x = 0.00002
-   y = 0.0001
-   moving = 1
-   r = 0.00001
-   Poiseuille = 0
-   rho = 3.0e0
+   rho = 2.0
+   Nn_ = 4
+   alpha=45
 }

@@ -11,8 +11,7 @@ namespace ublas = boost::numeric::ublas; // shorten the namespace name
 typedef ublas::bounded_vector<double, 4> GeomVec; // define type of geometric vector
 typedef ublas::bounded_matrix<double, 4, 4> GeomMat;
 
-
-
+GeomVec ZeroVec();                                                // zero vector
 double length(GeomVec x);                                         // length of the geometric vector
 double dot_product(GeomVec v1, GeomVec v2);                       // scalar product of two vectors
 GeomVec x_product(GeomVec v1, GeomVec v2);                        // vector product of two vectors

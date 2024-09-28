@@ -41,13 +41,14 @@ public:
 	GeomVec integralV_dur_dt;     // integral of the d(u x r)/dt over the Volume of the Solid
 	//std::vector<Node> Nodes;   // Nodes of the Solid mesh
 	std::vector<int> IndNodes; // Indices of the Nodes
-	int Nn_, Nn_r;            // Number of Nodes for basic segment and $r$ segment of particle mesh
+	int Nn_r0, Nn_r;           // Number of Nodes for $r0$ and $r$ segments of particle mesh
 	int Nn;                    // Number of Nodes
 	int name;                     // integer name of the Solid
 	int shape;                    // shape of the Solid
 	double r;                     // radius
+	double r0;                    // little radius
 	double e;                     // eccentricity 
-	Solid(double x, double y, double ux, double uy, double alpha, double omega, double rho, int Nn_, int moving, int name, int shape, double r, double e);
+	Solid(double x, double y, double ux, double uy, double alpha, double omega, double rho, int Nn_r0, int moving, int name, int shape, double r0, double r, double e);
 	Solid(double x, double y, Param &par);
 	~Solid();
 	void add_Nodes(std::vector<Node> &Nodes, const int Nn_max);
