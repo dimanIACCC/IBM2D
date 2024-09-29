@@ -239,3 +239,13 @@ void DoubleArray_to_MatrixU(double* D, Matrix &M, boundary_conditions BC) {
 	}
 }
 
+void Matrix_resize(Matrix &M, size_t N1, size_t N2) {
+	M.resize(N1);
+	for (int i = 0; i < N1; i++) M[i].resize(N2);
+}
+
+void Matrix_read(Matrix &M, size_t N1, size_t N2, std::ifstream &input) {
+	for (int i = 0; i < N1; i++)
+	for (int j = 0; j < N2; j++)
+		input >> M[i][j];
+}

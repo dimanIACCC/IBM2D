@@ -16,52 +16,52 @@ enum boundary_conditions {
 
 class Param{
 public:
-	std::string WorkDir;      // WorkDir
-	int N_step;               // step number
-	double time;              // time
-	boundary_conditions BC;   // Boundary Conditions
+	std::string WorkDir = "";              // WorkDir
+	int N_step = 0 ;                       // step number
+	double time = 0.;                      // time
+	boundary_conditions BC = Taylor_Green; // Boundary Conditions
 
 	// physical parameters
-	double d_t;               // time step
-	double L;                 // length
-	double H;                 // height
-	double Re;                // Reynolds number
-	double grad_p_x;          // pressure gradient in x direction
-	double Gravity_angle;     // Angle for rotation of Gravity vector
-	double Gravity_module;    // Gravity vector module
-
+	double d_t = 0.0001;               // time step
+	double L = 1.    ;                 // length
+	double H = 1.;                     // height
+	double Re = 1.;                    // Reynolds number
+	double grad_p_x = 0.;              // pressure gradient in x direction
+	double Gravity_angle = 00.0;       // Angle for rotation of Gravity vector
+	double Gravity_module = 0.0;       // Gravity vector module
+	
 	// numerical parameters
-	int N1;                   // number of points in x-direction
-	int N2;                   // number of points in y-direction
-	int output_step;          // frequency of output
-	int IBM;                  // type of Immersed Boundary Method
-	int DeltaP_method;        // method for pressure correction equation
-	int N_Zeidel;             // number of iterations in Zeidel method
-	double Zeidel_eps;        // tolerance for Zeidel method
-	int s_max;                // max number of iterations for pressure and IBM force
-	double eps_P;             // tolerance for Pressure correction
-	bool AMP;                 // using of AMP parallel velocity and force calculation
+	int N1 = 100;                    // number of points in x-direction
+	int N2 = 100;                    // number of points in y-direction
+	int output_step = 10;            // frequency of output
+	int IBM = 1;                     // type of Immersed Boundary Method
+	int DeltaP_method = 1;           // method for pressure correction equation
+	int N_Zeidel = 500000;           // number of iterations in Zeidel method
+	double Zeidel_eps = 1e-5;        // tolerance for Zeidel method
+	int s_max = 20;                  // max number of iterations for pressure and IBM force
+	double eps_P = 1.e-5;            // tolerance for Pressure correction
+	bool AMP = true;                 // using of AMP parallel velocity and force calculation
 
 	// parameters for many particles
-	double rho;               // default density of Solid
-	int shape;                // shape
-	double r;                 // default radius of Solid
-	double r0;                // default little radius of Solid
-	double e;                 // default eccentricity of Solid
-	int Nn_max;               // number of nodes
-	int Nn_;                  // number of nodes for basic segment of added Solid
-	int AddSolids_N;          // number of added Solids
-	int AddSolids_start;      // step when Solids start to add
-	int AddSolids_interval;   // interval for Solids adding
-	int SolidName_max;        // Maximal Name of Solids
-	double k_dist;            // coefficient for minimal distance between Solids
+	double rho = 3.;                 // default density of Solid
+	int shape = 0;                   // shape
+	double r = 0.05;                 // default radius of Solid
+	double r0 = 0.025;               // default little radius of Solid
+	double e = 0.;                   // default eccentricity of Solid
+	int Nn_max = 0;                  // number of nodes
+	int Nn_ = 12;                    // number of nodes for basic segment of added Solid
+	int AddSolids_N = 0;             // number of added Solids
+	int AddSolids_start = 0;         // step when Solids start to add
+	int AddSolids_interval = 5000000;// interval for Solids adding
+	int SolidName_max = 0;           // Maximal Name of Solids
+	double k_dist = 4.0;             // coefficient for minimal distance between Solids
 
 	// parameters for special problems
-	double Lamb_Oseen_r0;     // initial radius of Lamb_Oseen vortex
-	double u_in;              // velocity of down channel wall
-	double u_down;       // velocity of down channel wall
-	double u_up;         // velocity of up   channel wall
-	double omega_BC;          // omega of the circle driven by external force
+	double Lamb_Oseen_r0 = 0.1;      // initial radius of Lamb_Oseen vortex
+	double u_in = 0.;                // velocity of down channel wall
+	double u_down = 0.;              // velocity of down channel wall
+	double u_up = 0.;                // velocity of up   channel wall
+	double omega_BC = 0.;            // omega of the circle driven by external force
 
 	// calculated parameters (dependent on basic ones)
 	int N1_u, N2_u;           // sizes for u-direction arrays
@@ -76,10 +76,9 @@ public:
 
 	//constructors
 	Param();
-	Param(std::string WorkDir);
-	Param(std::string WorkDir, std::string filename);
 
 	//methods
+	void read(std::ifstream &input);
 	void init();
 	void read_line(std::string);
 };

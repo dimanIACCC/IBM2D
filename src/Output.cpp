@@ -6,7 +6,7 @@
 void Output_U(Matrix u, std::string filename, int n, Param par) {
 
 	std::ofstream output;
-	filename = par.WorkDir + filename + std::to_string(n) + ".plt";
+	filename = par.WorkDir + "/" + filename + std::to_string(n) + ".plt";
 
 	output.open(filename);
 
@@ -44,7 +44,7 @@ void Output_V(Matrix v, std::string filename, int n, Param par) {
 
 	// Solution v
 
-	filename = par.WorkDir + filename + std::to_string(n) + ".plt";
+	filename = par.WorkDir + "/" + filename + std::to_string(n) + ".plt";
 
 	output.open(filename);
 
@@ -78,7 +78,7 @@ void Output_V(Matrix v, std::string filename, int n, Param par) {
 void Output(Matrix p, Matrix u, Matrix v, Matrix Fx, Matrix Fy, int n, std::vector<Solid> iList, std::vector<Node> Nodes, Param par) {
 
 	std::ofstream output;
-	std::string filename = par.WorkDir + "step" + std::to_string(n) + ".plt";
+	std::string filename = par.WorkDir + "/" + "step" + std::to_string(n) + ".plt";
 
 	output.open(filename);
 	output << std::setprecision(15);
@@ -150,7 +150,7 @@ bool Read_plt(std::string filename, Param &par, std::vector<Solid>& solidList) {
 		while (getline(input, line)) { // read line from file to string $line$
 			if (line.substr(0, 15) == "zone T = circle") {
 				std::vector<Node> Nodes;
-				Solid c(0, 0, par); //Create circle
+				Solid c(par); //Create circle
 				
 				//Get the number of nodes in particle
 				//auto strings = split_string(line, ",");  // split line into parts by delimeter ","
@@ -255,7 +255,7 @@ void Output_P(Matrix P, std::string filename, int n, Param par) {
 
 
 	std::ofstream output;
-	filename = par.WorkDir + filename + std::to_string(n) + ".plt";
+	filename = par.WorkDir + "/" + filename + std::to_string(n) + ".plt";
 
 	output.open(filename);
 
@@ -279,7 +279,7 @@ void Output_P(Matrix P, std::string filename, int n, Param par) {
 void Output_c(Matrix c, std::string filename, int n, Param par) {
 
 	std::ofstream output;
-	filename = par.WorkDir + filename + std::to_string(n) + ".plt";
+	filename = par.WorkDir + "/" + filename + std::to_string(n) + ".plt";
 
 	output.open(filename);
 
@@ -300,7 +300,7 @@ void Output_c(Matrix c, std::string filename, int n, Param par) {
 
 void Output_Matrix(Matrix A, std::string WorkDir, std::string Variable, int n) {
 	std::ofstream output;
-	std::string filename = WorkDir + Variable + std::to_string(n) + ".plt";
+	std::string filename = WorkDir + "/" + Variable + std::to_string(n) + ".plt";
 
 	output.open(filename);
 
@@ -320,7 +320,7 @@ void Output_Matrix(Matrix A, std::string WorkDir, std::string Variable, int n) {
 
 void Output_Matrix_mid(Matrix A, std::string WorkDir, std::string Variable, int n) {
 	std::ofstream output;
-	std::string filename = WorkDir + Variable + std::to_string(n) + ".plt";
+	std::string filename = WorkDir + "/" + Variable + std::to_string(n) + ".plt";
 
 	output.open(filename);
 
@@ -339,7 +339,7 @@ void Output_Matrix_mid(Matrix A, std::string WorkDir, std::string Variable, int 
 
 void Output_2DArray(double* A, int Nx, int Ny, std::string WorkDir, std::string Variable, int n) {
 	std::ofstream output;
-	std::string filename = WorkDir + Variable + std::to_string(n) + ".plt";
+	std::string filename = WorkDir + "/" + Variable + std::to_string(n) + ".plt";
 
 	output.open(filename);
 

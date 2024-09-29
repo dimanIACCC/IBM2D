@@ -7,5 +7,6 @@
 
 
 void BodyOfProgram(Param& par, std::vector<Solid>& solidList, std::vector<Node>& Nodes, Matrix& U_n, Matrix& V_n, Matrix& P);
-void MakeHibernationFile(Param& par, std::vector<Solid>& solidList, std::vector<Node>& Nodes, Matrix& U_n, Matrix& V_n, Matrix& P);
-void Awake(std::string &file, Param& par, std::vector<Solid>& solidList, std::vector<Node>& Nodes, Matrix& U_n, Matrix& V_n, Matrix& P);
+void Save_Data(Param& par, std::vector<Solid>& solidList, std::vector<Node>& Nodes, Matrix& U_n, Matrix& V_n, Matrix& P);
+void Load_Data(std::string &file, Param& par, std::vector<Solid>& solidList, std::vector<Node>& Nodes, Matrix& U_n, Matrix& V_n, Matrix& P);
+void Post(fs::path WorkDir, Param &par, std::vector<Solid>& Solids, std::vector<Node> &Nodes, Matrix& U_n, Matrix& V_n, Matrix& P_n);

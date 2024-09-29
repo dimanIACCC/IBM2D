@@ -177,7 +177,7 @@ void Lamb_Oseen_p_test(Param par, double time) {
 
 
 	std::ofstream Ei_bug;
-	std::string filename = par.WorkDir + "/Ei_bug.plt";
+	std::string filename = par.WorkDir + "/" + "Ei_bug.plt";
 	Ei_bug.open(filename);
 	Ei_bug << "title = Ei_bug" << std::endl;
 	Ei_bug << "Variables = x P_integral P_Ei d_P" << std::endl;

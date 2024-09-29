@@ -1,40 +1,33 @@
 #include "stdafx.h"
 #include "SolidBody.h"
 
-Solid::Solid(double x, double y, double ux, double uy, double alpha, double omega, double rho, int Nn_r0, int moving, int name, int shape, double r0, double r, double e)
+Solid::Solid(Param &par) {
+	this->rho = par.rho;
+	this->Nn_r0 = par.Nn_;
+	this->name = par.SolidName_max + 1;
+	this->shape = par.shape;
+	this->r0 = par.r0;
+	this->r  = par.r;
+	this->e  = par.e;
+}
+
+Solid::~Solid()
 {
-	this->x_n = ZeroVec();
-	this->u_n = ZeroVec();
-	this->omega_n = ZeroVec();
-	this->alpha = ZeroVec();
-	this->x_n[1] = x;
-	this->x_n[2] = y;
-	this->u_n[1] = ux;
-	this->u_n[2] = uy;
-	this->omega_n[3] = omega;
-	this->alpha[3] = alpha;
-	this->rho = rho;
-	this->Nn_r0 = Nn_r0;
-	this->Nn_r = 0;
-	this->Nn = 0;
-	this->moving = moving;
-	this->name = name;
-	this->x_n_plt = this->x_n;
-	this->x_plt   = this->x_n;
-	this->x     = this->x_n;
-	this->u     = this->u_n;
-	this->omega = this->omega_n;
-	this->Fr = 0.;
-	this->shape = shape;
-	this->r0 = r0;
-	this->r = r;
-	this->e = e;
+
+}
+
+void Solid::Init() {
+	x_n_plt = x_n;
+	x_plt = x_n;
+	x = x_n;
+	u = u_n;
+	omega = omega_n;
 
 	if (shape == 0) {
 		this->Nn_r = 0;
 		this->Nn = 4 * this->Nn_r0;
 	}
-	else if (shape == 2){
+	else if (shape == 2) {
 		this->Nn_r = int(this->Nn_r0 * 0.5 * r / r0);
 		this->Nn = 2 * this->Nn_r + 4 * this->Nn_r0;
 	}
@@ -52,20 +45,6 @@ Solid::Solid(double x, double y, double ux, double uy, double alpha, double omeg
 	}
 	V = M_PI * r * r;
 	I = V * r * r / 4.0 * (2.0 - e*e) / sqrt(1.0 - e*e); // angular momentum for unit density
-}
-
-Solid::Solid(double x, double y, Param &par) :
-	Solid(x, y, 0.0, 0.0, 0.0, 0.0, par.rho, par.Nn_, true, par.SolidName_max + 1, par.shape, par.r0, par.r, par.e) {
-	this->u_n[1] = 0.0;  //  par.u_in * ux_Poiseuille(y, par.H);
-	this->omega_n[3] = 0.0; // -dux_dy_Poiseuille(y, par.H);
-	this->omega = this->omega_n;
-	this->u = this->u_n;
-}
-
-
-Solid::~Solid()
-{
-
 }
 
 void Solid::add_Nodes(std::vector<Node> &Nodes, const int Nn_max) {
@@ -91,7 +70,7 @@ bool operator >(const Solid& a, const Solid& b) {
  
 
 void fill_solid_coordinates(std::vector<Node> &Nodes, const int Nn_max, const int Nn, const int Nn_r0, const int Nn_r,
-                            const int shape, const double r0, const double r, const double e, const double alpha, const double dxy) {
+                            const int shape, const double r0, const double r, const double e, const double alpha) {
 	int Nn_ = 0;
 	GeomVec Xbeg = ZeroVec();
 	GeomVec Xend = ZeroVec();
@@ -252,7 +231,6 @@ void fill_solid_coordinates(std::vector<Node> &Nodes, const int Nn_max, const in
 		Nodes[Ind].x = Nodes[Ind].x_n;
 	}
 
-	fill_solid_ds(Nodes, Nn_max, Nn, shape, dxy);
 }
 
 void line_segment(std::vector<Node> &Nodes, const int N_start, const int Nn, GeomVec Xbeg, GeomVec Xend) {
@@ -350,6 +328,94 @@ void Solid::log(std::string WorkDir, int n) {
 	       << std::endl;
 }
 
+void Solid::read_line(std::string line) {
+	std::string PAR, VALUE;
+	GetParValue(line, PAR, VALUE);
+	if (VALUE.size() > 0) {
+		if      (PAR == "moving")     moving = stoi(VALUE);
+		else if (PAR == "x")          x_n[1] = stod(VALUE);
+		else if (PAR == "y")          x_n[2] = stod(VALUE);
+		else if (PAR == "ux")         u_n[1] = stod(VALUE);
+		else if (PAR == "uy")         u_n[2] = stod(VALUE);
+		else if (PAR == "omega")      omega_n[3] = stod(VALUE) * M_PI / 180;
+		else if (PAR == "alpha")      alpha[3] = stod(VALUE) * M_PI / 180;
+		else if (PAR == "rho")        rho = stod(VALUE);
+		else if (PAR == "Nn_r0")      Nn_r0 = stoi(VALUE);
+		else if (PAR == "Nn_r")       Nn_r = stoi(VALUE);
+		else if (PAR == "Nn")         Nn = stoi(VALUE);
+		else if (PAR == "moving")     moving = stoi(VALUE);
+		else if (PAR == "Poiseuille") Poiseuille = bool(stoi(VALUE));
+		else if (PAR == "name")       name = stoi(VALUE);
+		else if (PAR == "shape")      shape = stoi(VALUE);
+		else if (PAR == "r0")         r0 = stod(VALUE);
+		else if (PAR == "r")          r = stod(VALUE);
+		else if (PAR == "e")          e = stod(VALUE);
+		else    std::cout << "Read_Solids: unknown parameter " << PAR << std::endl;
+	}
+	else {
+		std::cout << line << std::endl;
+		std::cout << "Solid::read_line: no value inputed" << std::endl;
+	}
+
+}
+
+void Read_Solids_new(std::ifstream &input, std::vector<Solid>& Solids, std::vector<Node> &Nodes, Param &par) {
+	std::string line = "<Solids>";
+
+	do { // while (line != "<Solids>")
+		getline(input, line);
+		if (line == "<Solid>") {
+			Solid s(par);
+			do { //while (line != "</Solid>")
+				getline(input, line);
+				bool key_Nodes = FALSE;
+				if (line == "<Nodes>") {
+					key_Nodes = TRUE;
+					Nodes.resize(par.Nn_max + s.Nn);
+					do { //while (line != "</Nodes>")
+						for (int j = 0; j < s.Nn; j++) {
+							getline(input, line);
+							if (line == "<Node>") {
+								int Ind = par.Nn_max + j;
+								do { // while (line != "</Node>")
+									getline(input, line);
+									std::string PAR, VALUE;
+									GetParValue(line, PAR, VALUE);
+									if (PAR == "x")       Nodes[Ind].x_n[1] = stod(VALUE);
+									if (PAR == "y")       Nodes[Ind].x_n[2] = stod(VALUE);
+									if (PAR == "ds")      Nodes[Ind].ds = stod(VALUE);
+									Nodes[Ind].x = Nodes[Ind].x_n;
+								} while (line != "</Node>");
+							}
+						}
+						getline(input, line);
+					} while (line != "</Nodes>");
+				}
+				else if (line == "</Solid>") {
+					if (s.Poiseuille) {
+						s.u_n[1] = par.u_in * ux_Poiseuille(s.x_n[2], par.H);
+						s.u_n[2] = 0.;
+						s.omega[3] = -dux_dy_Poiseuille(s.x_n[2], par.H);
+					}
+					s.Init();
+					s.add_Nodes(Nodes, par.Nn_max);
+					if (key_Nodes==FALSE) {
+						fill_solid_coordinates(Nodes, par.Nn_max, s.Nn, s.Nn_r0, s.Nn_r, s.shape, s.r0, s.r, s.e, s.alpha[3]);
+						s.log_init(par.WorkDir);
+					}
+					fill_solid_ds(Nodes, par.Nn_max, s.Nn, s.shape, 0.5*(par.d_x + par.d_y));
+					par.Nn_max += s.Nn;
+					if (s.name > par.SolidName_max) par.SolidName_max = s.name;
+					Solids.push_back(s);
+					break;
+				}
+				else
+					s.read_line(line);
+			} while (line != "</Solid>");
+		}
+	} while (line != "</Solids>");
+}
+
 void Read_Solids(std::string filename, std::vector<Solid>& Solids, std::vector<Node> &Nodes, Param &par) {
 	std::ifstream input;
 	std::string line;
@@ -357,63 +423,7 @@ void Read_Solids(std::string filename, std::vector<Solid>& Solids, std::vector<N
 	input.open(filename.c_str());
 	if (input.is_open()) {
 		while (getline(input, line)) { // read line from file to string $line$
-			if (line == "circle{" || line == "line{" || line == "cross{") {
-				double x = par.L*0.1;
-				double y = par.H*0.5;
-				double ux = 0;
-				double uy = 0;
-				double omega = 0;
-				double rho = par.rho;
-				int Nn_ = par.Nn_;
-				int moving = 1;
-				int shape = 0;
-				double r0 = par.r0;
-				double r = par.r;
-				double e = par.e;
-				double alpha = 0.;
-				bool Poiseuille = false;   //key for initial ux, uy and omega_new corresponding to Poiseuille flow
-
-				while (line != "}") {
-					getline(input, line);
-					if (line == "}") break;
-					std::string PAR, VALUE;
-					GetParValue(line, PAR, VALUE);
-					if (VALUE.size() > 0) {
-						if      (PAR == "x")          x            = stod(VALUE);
-						else if (PAR == "y")          y            = stod(VALUE);
-						else if (PAR == "ux")         ux           = stod(VALUE);
-						else if (PAR == "uy")         uy           = stod(VALUE);
-						else if (PAR == "omega")      omega        = stod(VALUE);
-						else if (PAR == "rho")        rho          = stod(VALUE);
-						else if (PAR == "Nn_")        Nn_          = stoi(VALUE);
-						else if (PAR == "moving")     moving       = stoi(VALUE);
-						else if (PAR == "Poiseuille") Poiseuille   = bool(stoi(VALUE));
-						else if (PAR == "shape")      shape        = stoi(VALUE);
-						else if (PAR == "r0")         r0           = stod(VALUE);
-						else if (PAR == "r")          r            = stod(VALUE);
-						else if (PAR == "e")          e            = stod(VALUE);
-						else if (PAR == "alpha")      alpha        = stod(VALUE) * M_PI / 180;
-						else    std::cout << "Read_Solids: unknown parameter " << PAR << std::endl;
-					}
-					else {
-						std::cout << "Read_Solids: no value inputed" << std::endl;
-					}
-				}
-				if (Poiseuille) {
-					ux = par.u_in * ux_Poiseuille(y, par.H);
-					uy = 0;
-					omega = - dux_dy_Poiseuille(y, par.H);
-				}
-
-				Solid c(x, y, ux, uy, alpha, omega, rho, Nn_, moving, par.SolidName_max+1, shape, r0, r, e);
-				//std::cout << c.I << std::endl;
-				c.add_Nodes(Nodes, par.Nn_max);
-				fill_solid_coordinates(Nodes, par.Nn_max, c.Nn, c.Nn_r0, c.Nn_r, c.shape, c.r0, c.r, c.e, alpha, 0.5*(par.d_x+par.d_y));
-				par.Nn_max += c.Nn;
-				if (c.name > par.SolidName_max) par.SolidName_max = c.name;
-				Solids.push_back(c);
-				c.log_init(par.WorkDir);
-			}
+			Read_Solids_new(input, Solids, Nodes, par);
 		}
 	}
 	else {
@@ -440,17 +450,21 @@ void Add_Solids(std::vector<Solid>& Solids, std::vector<Node>& Nodes, Param &par
 				}
 			}
 			if (add) {
-				Solid c(x[1], x[2], par);
-				c.add_Nodes(Nodes, par.Nn_max);
-				fill_solid_coordinates(Nodes, par.Nn_max, c.Nn, c.Nn_r0, c.Nn_r, c.shape, par.r0, par.r, par.e, 0., 0.5*(par.d_x + par.d_y));
-				par.Nn_max += c.Nn;
-				if (c.name > par.SolidName_max) par.SolidName_max = c.name;
-				Solids.push_back(c);
-				c.log_init(par.WorkDir);
+				Solid s(par);
+				s.x_n = x;
+				s.Init();
+				s.add_Nodes(Nodes, par.Nn_max);
+				fill_solid_coordinates(Nodes, par.Nn_max, s.Nn, s.Nn_r0, s.Nn_r, s.shape, par.r0, par.r, par.e, 0.);
+				fill_solid_ds(Nodes, par.Nn_max, s.Nn, s.shape, 0.5*(par.d_x + par.d_y));
+				par.Nn_max += s.Nn;
+				if (s.name > par.SolidName_max) par.SolidName_max = s.name;
+				Solids.push_back(s);
+				s.log_init(par.WorkDir);
 			}
 		}
+		par.AddSolids_start = par.AddSolids_interval;
+		std::cout << "Add_Solids finished" << std::endl;
 	}
-
 }
 
 double Distance_2Solids(Solid& s1, Solid& s2, Param& par, GeomVec& r) {
@@ -540,7 +554,7 @@ GeomVec F_collide(GeomVec norm, double dist, GeomVec u1, GeomVec u2, double dist
 		if (dist <= dist_r) {
 			F_collide += beta * (dist_r - dist)*(dist_r - dist) / dist_r / dist_r * norm;
 			std::cout << "Collision r:  F_collide = " << F_collide[1] << "   " << F_collide[2] << std::endl;
-			std::getchar();
+			//std::getchar();
 		}
 	}
 	return F_collide;

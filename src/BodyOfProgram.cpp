@@ -20,18 +20,17 @@ void BodyOfProgram(Param &par, std::vector<Solid> &solidList, std::vector<Node> 
 #pragma endregion SetMatrices
 
 	std::ofstream history;
-	std::string filename = par.WorkDir + "/history.plt";
+	std::string filename = par.WorkDir + "/" + "history.plt";
 	history_init(par.WorkDir, "history", par.BC);
 
 	for ( ; par.N_step <= 5000000; ++par.N_step) {                                 // main cycle of time iterations
 
 		Add_Solids(solidList, Nodes, par);                                                     // add solids if the conditions are fulfilled
-		std::cout << "Add_Solids finished" << std::endl;
 		//Output(P, U_new, V_new, Fx, Fy, par.N_step, solidList, Nodes, par);
 		//std::getchar();
 
 		if (par.N_step % 10 == 0)
-			MakeHibernationFile(par, solidList, Nodes, U_n, V_n, P);              // writting hibernation file for prior time step
+			Save_Data(par, solidList, Nodes, U_n, V_n, P);              // writting hibernation file for prior time step
 
 		Calculate_u_p(U_n, U_new, V_n, V_new, P, Fx, Fy, solidList, Nodes, par);  // calculate velocity and pressure at the new time step
 
@@ -96,16 +95,14 @@ void BodyOfProgram(Param &par, std::vector<Solid> &solidList, std::vector<Node> 
 		}
 	}
 
-	
-	//log.close();
 }
 
-void MakeHibernationFile(Param& par, std::vector<Solid>& solidList, std::vector<Node> &Nodes, Matrix& U_n, Matrix& V_n, Matrix& P_n) {
+void Save_Data(Param& par, std::vector<Solid>& solidList, std::vector<Node> &Nodes, Matrix& U_n, Matrix& V_n, Matrix& P_n) {
 	std::ofstream output;
-	std::string filename = par.WorkDir + "step" + std::to_string(par.N_step) + ".txt";
+	std::string filename = par.WorkDir + "/" + "step" + std::to_string(par.N_step) + ".txt";
 	output.open(filename);
 	output << std::setprecision(15);
-	output << "par{" << std::endl;
+	output << "<par>" << std::endl;
 
 	output << "N_step = " << par.N_step << std::endl;
 	output << "time = " << par.time << std::endl;
@@ -150,40 +147,40 @@ void MakeHibernationFile(Param& par, std::vector<Solid>& solidList, std::vector<
 	output << "u_up   = " << par.u_up   << std::endl;
 	output << "omega_BC = " << par.omega_BC << std::endl;
 
-	output << "}" << std::endl;
+	output << "</par>" << std::endl;
 
-	output << "U_n{" << std::endl;
+	output << "<U>" << std::endl;
 	for (int i = 0; i < par.N1_u; i++) {
 		for (int j = 0; j < par.N2_u; j++) output << U_n[i][j] << ' ';
 		output << std::endl;
 	}
-	output << "}" << std::endl;
+	output << "</U>" << std::endl;
 
-	output << "V_n{" << std::endl;
+	output << "<V>" << std::endl;
 	for (int i = 0; i < par.N1_v; i++) {
 		for (int j = 0; j < par.N2_v; j++) output << V_n[i][j] << ' ';
 		output << std::endl;
 	}
-	output << "}" << std::endl;
+	output << "</V>" << std::endl;
 
-	output << "P_n{" << std::endl;
+	output << "<P>" << std::endl;
 	for (int i = 0; i < par.N1_p; i++) {
 		for (int j = 0; j < par.N2_p; j++) output << P_n[i][j] << ' ';
 		output << std::endl;
 	}
-	output << "}" << std::endl;
+	output << "</P>" << std::endl;
 
-	output << "<Solidlist>" << std::endl;
+	output << "<Solids>" << std::endl;
 	for (auto one = solidList.begin(); one != solidList.end(); one++) {
 		output << "<Solid>" << std::endl;
 		output << "moving = " << one->moving << std::endl;
-		output << "x_n = " << std::endl << one->x_n << std::endl;
-		output << "u_n = " << std::endl << one->u_n << std::endl;
-		output << "omega_n = " << std::endl << one->omega_n << std::endl;
-		output << "alpha = " << std::endl << one->alpha << std::endl;
-		output << "I = " << one->I << std::endl;
+		output << "x = " << one->x_n[1] << std::endl;
+		output << "y = " << one->x_n[2] << std::endl;
+		output << "ux = " << one->u_n[1] << std::endl;
+		output << "uy = " << one->u_n[2] << std::endl;
+		output << "omega = " << one->omega_n[3] / M_PI * 180 << std::endl;
+		output << "alpha = " << one->alpha[3]   / M_PI * 180 << std::endl;
 		output << "rho = " << one->rho << std::endl;
-		output << "V = " << one->V << std::endl;
 		output << "Nn_r0 = " << one->Nn_r0 << std::endl;
 		output << "Nn_r = " << one->Nn_r << std::endl;
 		output << "Nn = " << one->Nn << std::endl;
@@ -194,158 +191,97 @@ void MakeHibernationFile(Param& par, std::vector<Solid>& solidList, std::vector<
 		output << "e = " << one->e << std::endl;
 		output << "<Nodes>" << std::endl;
 		for (int j = 0; j < one->Nn; j++) {
-			output << "Node{" << std::endl;
-			output << "x_n = " << std::endl << Nodes[one->IndNodes[j]].x_n << std::endl;
-			output << "ds = "  << std::endl << Nodes[one->IndNodes[j]].ds << std::endl;
-			output << "}" << std::endl;
+			output << "<Node>" << std::endl;
+			output << "x = "  << Nodes[one->IndNodes[j]].x_n[1] << std::endl;
+			output << "y = "  << Nodes[one->IndNodes[j]].x_n[2] << std::endl;
+			output << "ds = " << Nodes[one->IndNodes[j]].ds << std::endl;
+			output << "</Node>" << std::endl;
 		}
-		output << "<\\Nodes>" << std::endl;
-		output << "<\\Solid>" << std::endl;
+		output << "</Nodes>" << std::endl;
+		output << "</Solid>" << std::endl;
 	}
-	output << "<\\Solidlist>" << std::endl;
+	output << "</Solids>" << std::endl;
 	output.close();
 }
 
 
 //this method is restoring calculated values to continue calculations
-void Awake(std::string &filename, Param &par, std::vector<Solid>& solidList, std::vector<Node> &Nodes, Matrix& U_n, Matrix& V_n, Matrix& P_n) {
-	std::ifstream hibernation_source;
+void Load_Data(std::string &filename, Param &par, std::vector<Solid>& Solids, std::vector<Node> &Nodes, Matrix& U_n, Matrix& V_n, Matrix& P_n) {
+	std::ifstream input;
 	std::string line;
-	std::string PAR, VALUE;
-	char ch;
+	bool key_U = FALSE;
+	bool key_V = FALSE;
+	bool key_P = FALSE;
 
-	std::cout << "Awake" << std::endl;
-
+	std::cout << "Loading Data from file = " << std::endl;
 	std::cout << filename << std::endl;
-	hibernation_source.open(filename);
-	if (hibernation_source.is_open()) {
-		while (getline(hibernation_source, line)) { // read line from file to string $line$
-			GetParValue(line, PAR, VALUE);
-			if (line == "par{") {
-				while (line != "}") {
-					getline(hibernation_source, line);
-					if (line == "}") break;
-					par.read_line(line);
-				}
-				par.init();
+	input.open(filename);
+	if (input.is_open()) {
+		while (getline(input, line)) { // read line from file to string $line$
+			if (line == "<par>") {
+				par.read(input);
 			}
-			else if (line == "U_n{") {
-				U_n.resize(par.N1_u);
-				for (int i = 0; i < par.N1_u; i++) U_n[i].resize(par.N2_u);
-				for (int i = 0; i < par.N1_u; i++)
-					for (int j = 0; j < par.N2_u; j++) hibernation_source >> U_n[i][j];
-
-
-				if (hibernation_source >> ch && ch != '}') std::cout << "Some troubles in U_n" << std::endl;
+			else if (line == "<U>") {
+				key_U = TRUE;
+				Matrix_resize(U_n, par.N1_u, par.N2_u);
+				Matrix_read  (U_n, par.N1_u, par.N2_u, input);
+				if (input >> line && line != "</U>") std::cout << "Some troubles in <U>" << std::endl;
 			}
-			else if (line == "V_n{") {
-				V_n.resize(par.N1_v);
-				for (int i = 0; i < par.N1_v; i++) V_n[i].resize(par.N2_v);
-				for (int i = 0; i < par.N1_v; i++)
-					for (int j = 0; j < par.N2_v; j++) hibernation_source >> V_n[i][j];
-
-				if (hibernation_source >> ch && ch != '}') std::cout << "Some troubles in V_n" << std::endl;
+			else if (line == "<V>") {
+				key_V = TRUE;
+				Matrix_resize(V_n, par.N1_v, par.N2_v);
+				Matrix_read  (V_n, par.N1_v, par.N2_v, input);
+				if (input >> line && line != "</V>") std::cout << "Some troubles in <V>" << std::endl;
 			}
-			else if (line == "P_n{") {
-				P_n.resize(par.N1_p);
-				for (int i = 0; i < par.N1_p; i++) P_n[i].resize(par.N2_p);
-				for (int i = 0; i < par.N1_p; i++)
-					for (int j = 0; j < par.N2_p; j++) hibernation_source >> P_n[i][j];
-
-				if (hibernation_source >> ch && ch != '}') std::cout << "Some troubles in P" << std::endl;
+			else if (line == "<P>") {
+				key_P = TRUE;
+				Matrix_resize(P_n, par.N1_p, par.N2_p);
+				Matrix_read  (P_n, par.N1_p, par.N2_p, input);
+				if (input >> line && line != "</P>") std::cout << "Some troubles in <P>" << std::endl;
 			}
-			else if (line == "<Solidlist>")
-				while (line != "<\\Solidlist>") {
-					getline(hibernation_source, line);
-
-					if (line == "<\\Solidlist>") break;
-					if (line == "<Solid>") {
-						double x = par.L*0.1;
-						double y = par.H*0.5;
-						double ux = 0.;
-						double uy = 0.;
-						double omega = 0.;
-
-						GeomVec x_n, u_n, omega_n, alpha;
-
-						double rho = par.rho;
-						int name = par.SolidName_max+1;
-						int Nn_ = par.Nn_;
-						int Nn = par.Nn_;
-						int moving = 1;
-						int shape = par.shape;
-						double r = par.r;
-						double r0 = par.r0;
-						double e = par.e;
-						bool Poiseuille = false;   //key for initial ux, uy and omega_new corresponding to Poiseuille flow
-
-						while (line != "<\\Solid>") {
-							getline(hibernation_source, line);
-							GetParValue(line, PAR, VALUE);
-
-							if      (PAR == "moving")        moving = stoi(VALUE);
-							else if (PAR == "x_n")           hibernation_source >> x_n;//
-							else if (PAR == "u_n")           hibernation_source >> u_n;//
-							else if (PAR == "omega_n")       hibernation_source >> omega_n;//
-							else if (PAR == "alpha")         hibernation_source >> alpha;
-							else if (PAR == "rho")           rho = stod(VALUE);
-							else if (PAR == "Nn_")           Nn_ = stoi(VALUE);
-							else if (PAR == "Nn")            Nn = stoi(VALUE);
-							else if (PAR == "name")          name = stoi(VALUE);
-							else if (PAR == "shape")         shape = stoi(VALUE);
-							else if (PAR == "r0")            r0 = stod(VALUE);
-							else if (PAR == "r")             r = stod(VALUE);
-							else if (PAR == "e")             e = stod(VALUE);
-							else if (PAR == "<Nodes>") {
-								Nodes.resize(par.Nn_max + Nn);
-								while (line != "<\\Nodes>") {
-									getline(hibernation_source, line);
-									if (line == "<\\Nodes>") break;
-									for (int j = 0; j < Nn; j++) {
-										int Ind = par.Nn_max + j;
-										if (line == "Node{") {
-											while (line != "}") {
-												getline(hibernation_source, line);
-												if (line == "}") {
-													getline(hibernation_source, line);
-													break;
-												}
-												GetParValue(line, PAR, VALUE);
-												if (PAR == "x_n")               hibernation_source >> Nodes[Ind].x_n;
-												if (PAR == "ds")                hibernation_source >> Nodes[Ind].ds;
-												Nodes[Ind].x = Nodes[Ind].x_n;
-											}
-										}
-									}
-								}
-							}
-							if (line == "<\\Solid>") {
-								double alpha0 = alpha[3];
-								Solid c(x, y, ux, uy, alpha0, omega, rho, Nn_, moving, name, shape, r0, r, e);
-								c.add_Nodes(Nodes, par.Nn_max);
-								fill_solid_ds(Nodes, par.Nn_max, c.Nn, c.shape, 0.5*(par.d_x + par.d_y));
-								par.Nn_max += c.Nn;
-
-								if (c.name > par.SolidName_max) par.SolidName_max = c.name;
-
-								c.x_n = x_n;
-								c.x   = x_n;
-								c.x_n_plt = x_n;
-								c.x_plt   = x_n;
-								c.u_n = u_n;
-								c.u   = u_n;
-								c.omega_n = omega_n;
-								c.omega = omega_n;
-
-								solidList.push_back(c);
-								break;
-							}
-						}
-					}
-				}
+			else if (line == "<Solids>")
+				Read_Solids_new(input, Solids, Nodes, par);
 		}
 	}
-	else std::cout << "Hibernation file is not found. Please check the path\n The correct command is like -h=ResultFolder" << std::endl;
-	std::cout << "End of awaking" << std::endl;
+	else {
+		std::cout << "Error: No file! Starting Problem with Default Parameters" << std::endl;
+		std::getchar();
+	}
+	
+	if (key_U == FALSE) Matrix_resize(U_n, par.N1_u, par.N2_u);
+	if (key_V == FALSE) Matrix_resize(V_n, par.N1_v, par.N2_v);
+	if (key_P == FALSE) Matrix_resize(P_n, par.N1_p, par.N2_p);
+	
+	if (par.BC == Lamb_Oseen) {
+		for (auto& it : Solids) {
+			it.omega_n[3] = Lamb_Oseen_omega(it.r, par.Re, 0.0, par.Lamb_Oseen_r0);
+			it.omega[3] = Lamb_Oseen_omega(it.r, par.Re, par.d_t, par.Lamb_Oseen_r0);
+		}
+	}
 
+	fill_exact(U_n, V_n, P_n, par, 0.0, par.d_t*0.5);             // Initial conditions for velocity and pressure
+
+	std::cout << "Loading Data Finished" << std::endl;
+
+}
+
+void Post(fs::path WorkDir, Param &par, std::vector<Solid>& Solids, std::vector<Node> &Nodes, Matrix& U_n, Matrix& V_n, Matrix& P_n) {
+
+	std::string file = WorkDir.string() + "/" + "input.txt";
+	Load_Data(file, par, Solids, Nodes, U_n, V_n, P_n);
+
+	file = "history_post_average10_dist5";
+	history_init(WorkDir.string(), file, par.BC);
+
+	int i = 1;
+	while (Read_plt(par.WorkDir + "/" + "step" + std::to_string(i * 100) + ".plt", par, Solids)) {
+		std::cout << "i = " << i * 100 << ", start new file" << std::endl;
+
+		double h_average;
+		h_average_of_Solids_Layer(Solids, par, h_average);
+		history_log(par.WorkDir, file, par.N_step*par.d_t, h_average, 0., 0.);
+		Solids.clear();
+		i++;
+	}
+	std::cin.ignore();
 }

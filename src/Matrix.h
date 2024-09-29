@@ -42,3 +42,5 @@ void MatrixV_to_DoubleArray(Matrix &M, double* D, boundary_conditions BC);
 void DoubleArray_to_MatrixV(double* D, Matrix &M, boundary_conditions BC);
 void MatrixU_to_DoubleArray(Matrix &M, double* D, boundary_conditions BC);
 void DoubleArray_to_MatrixU(double* D, Matrix &M, boundary_conditions BC);
+void Matrix_resize(Matrix &M, size_t N1, size_t N2);
+void Matrix_read(Matrix &M, size_t N1, size_t N2, std::ifstream &input);

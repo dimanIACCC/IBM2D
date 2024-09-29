@@ -24,15 +24,25 @@ public:
 class Solid
 {
 public:
-	int moving;              // 0 - Solid does not move, 1 - Solid is driven by the fluid, 2 - Solid moves according to the given law
-	GeomVec x_n, x, x_n_plt, x_plt;          // coordinates of the mass center
-	GeomVec u_n, u, u_s;          // velocity of the mass center
-	GeomVec omega, omega_n, omega_s;  // angular velocity
-	GeomVec alpha;                    // angular orientation
-	GeomVec a_collide, d_omega_collide;   // acceleration and andgular acceleration due to the collision
-	GeomVec f_new, f;      // force applied to the whole Solid
-	GeomVec tau_new, tau;    // torque, moment of force applied to the whole Solid
-	double Fr;      // average radial Force applied to Solid
+	int moving = 1;              // 0 - Solid does not move, 1 - Solid is driven by the fluid, 2 - Solid moves according to the given law
+	GeomVec x_n = ZeroVec();     // mass center at $n$ step
+	GeomVec x   = ZeroVec();     // mass center at $n+1$ step
+	GeomVec x_n_plt = ZeroVec(); // mass center at $n$ step
+	GeomVec x_plt   = ZeroVec(); // mass center at $n+1$ step
+	GeomVec u_n = ZeroVec();     // velocity of the mass center at $n$ step
+	GeomVec u   = ZeroVec();     // velocity of the mass center at $n+1$ step
+	GeomVec u_s = ZeroVec();     // velocity of the mass center at $n+1$ step $s$ iteration
+	GeomVec omega   = ZeroVec(); // angular velocity at $n$ step
+	GeomVec omega_n = ZeroVec(); // angular velocity at $n+1$ step
+	GeomVec omega_s = ZeroVec(); // angular velocity at $n+1$ step $s$ iteration
+	GeomVec alpha = ZeroVec();   // angular orientation
+	GeomVec a_collide = ZeroVec();         // acceleration of the collision
+	GeomVec d_omega_collide = ZeroVec();   // angular acceleration of the collision
+	GeomVec f_new = ZeroVec();             // force applied to the whole Solid
+	GeomVec f     = ZeroVec();             // force applied to the whole Solid
+	GeomVec tau_new = ZeroVec();           // torque, moment of force applied to the whole Solid
+	GeomVec tau     = ZeroVec();           // torque, moment of force applied to the whole Solid
+	double Fr = 0.;      // average radial Force applied to Solid
 	double S;       // length of contour for radial Force averaging
 	double I;       // moment of inertia
 	double rho;     // density
@@ -47,21 +57,24 @@ public:
 	int shape;                    // shape of the Solid
 	double r;                     // radius
 	double r0;                    // little radius
-	double e;                     // eccentricity 
-	Solid(double x, double y, double ux, double uy, double alpha, double omega, double rho, int Nn_r0, int moving, int name, int shape, double r0, double r, double e);
-	Solid(double x, double y, Param &par);
+	double e;                     // eccentricity
+	bool Poiseuille = false;      // key for initial ux, uy and omega_new corresponding to Poiseuille flow
+	Solid(Param &par);
 	~Solid();
+	void Init();
+	void read_line(std::string);
 	void add_Nodes(std::vector<Node> &Nodes, const int Nn_max);
 	void log_init(std::string WorkDir);
 	void log(std::string WorkDir, int n);
 	void integrals(Matrix U_n, Matrix V_n, Matrix U_new, Matrix V_new, Param par);
 };
 
-void fill_solid_coordinates(std::vector<Node> &Nodes, const int Nn_max, const int Nn, const int Nn_e, const int Nn_r, const int shape, const double r, const double e, const double alpha, const double dxy);
+void fill_solid_coordinates(std::vector<Node> &Nodes, const int Nn_max, const int Nn, const int Nn_e, const int Nn_r, const int shape, const double r0, const double r, const double e, const double alpha);
 void line_segment(std::vector<Node> &Nodes, const int N_start, const int Nn, GeomVec Xbeg, GeomVec Xend);
 void circular_segment(std::vector<Node> &Nodes, const int N_start, const int Nn, GeomVec Xc, double r, double alpha_beg, double alpha_end);
 void copy_solid_mesh(std::vector<Node> &Nodes, const int N_beg_from, const int N_beg_to, const int Nn);
 void fill_solid_ds(std::vector<Node> &Nodes, const int Nn_max, const int Nn, const int shape, const double dxy);
+void Read_Solids_new(std::ifstream &input, std::vector<Solid>& Solids, std::vector<Node> &Nodes, Param &par);
 void Read_Solids(std::string filename, std::vector<Solid>& Solids, std::vector<Node>& Nodes, Param &par);
 void Add_Solids(std::vector<Solid>& Solids, std::vector<Node>& Nodes, Param &par);
 void Collide(Solid& s1, Solid& s2, std::vector<Node> &Nodes, Param par, double dist_u, double dist_r, double alpha, double beta, double friction);

@@ -4,80 +4,7 @@
 
 
 Param::Param() {  // default parameters
-
-	WorkDir = "";
-	N_step = 0;
-	time = 0.;
-	BC = u_infinity;
-
-	// physical parameters
-	d_t = 0.0001;
-	L = 1.;
-	H = 1.;
-	Re = 1.;
-	grad_p_x = 0.;
-	Gravity_angle = 0.0;
-	Gravity_module = 00.0;
-
-	// numerical parameters
-	N1 = 100;
-	N2 = 100;
-	output_step = 10;
-	IBM = 1;
-	DeltaP_method = 1;
-	N_Zeidel = 500000;
-	Zeidel_eps = 1e-5;
-	s_max = 20;
-	eps_P = 1.e-5;
-	AMP = true;
-
-	// parameters for many particles
-	rho = 3.;
-	shape = 0;
-	r = 0.05;
-	r0 = 0.025;
-	e = 0.;
-	Nn_max = 0;
-	Nn_ = 12;
-	AddSolids_N = 0;
-	AddSolids_start = 0;
-	AddSolids_interval = 5000000;
-	SolidName_max = 0;
-	k_dist = 4.0;
-
-	// parameters for special problems
-	u_in = 0.;
-	u_down = 0.;
-	u_up   = 0.;
-	omega_BC = 0.;
-	Lamb_Oseen_r0 = 0.1;
-
 	this->init();
-}
-
-Param::Param(std::string WorkDir, std::string filename) : Param() {
-	std::ifstream input;
-	std::string line;
-	WorkDir = WorkDir;
-
-	input.open(WorkDir + filename);
-	if (input.is_open()) {
-		while (getline(input, line)) { // read line from file to string $line$
-			read_line(line);
-		}
-	}
-	else {
-		std::cout << "File " << filename << " is not found" << std::endl;
-		std::cout << "Using default parameters" << std::endl;
-	}
-
-	this->WorkDir = WorkDir;
-
-	this->init();
-
-}
-Param::Param(std::string WorkDir) : Param() {
-	this->WorkDir = WorkDir;
 }
 
 void Param::init() {
@@ -111,6 +38,14 @@ void Param::init() {
 	Gravity[2] = -Gravity_module*cos(Gravity_angle);
 }
 
+void Param::read(std::ifstream &input) {
+	std::string line = "<par>";
+	do { //while (line != "</par>")
+		getline(input, line);
+		if (line != "</par>") this->read_line(line);
+	} while (line != "</par>");
+	this->init();
+}
 
 void Param::read_line(std::string line) {
 	std::string PAR, VALUE;
@@ -163,7 +98,7 @@ void Param::read_line(std::string line) {
 		else    std::cout << "unknown parameter " << PAR << std::endl;
 	}
 	else {
-		std::cout << line << ": no value inputed" << std::endl;
+		std::cout << "Param::read_line(): unknown parameter: " << line << std::endl;
 	}
 
 }
