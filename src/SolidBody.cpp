@@ -11,11 +11,6 @@ Solid::Solid(Param &par) {
 	this->e  = par.e;
 }
 
-Solid::~Solid()
-{
-
-}
-
 void Solid::Init() {
 	x_n_plt = x_n;
 	x_plt = x_n;
@@ -359,10 +354,10 @@ void Solid::read_line(std::string line) {
 
 }
 
-void Read_Solids_new(std::ifstream &input, std::vector<Solid>& Solids, std::vector<Node> &Nodes, Param &par) {
+void Read_Solids(std::ifstream &input, std::vector<Solid>& Solids, std::vector<Node> &Nodes, Param &par) {
 	std::string line = "<Solids>";
 
-	do { // while (line != "<Solids>")
+	do { // while (line != "</Solids>")
 		getline(input, line);
 		if (line == "<Solid>") {
 			Solid s(par);
@@ -414,22 +409,6 @@ void Read_Solids_new(std::ifstream &input, std::vector<Solid>& Solids, std::vect
 			} while (line != "</Solid>");
 		}
 	} while (line != "</Solids>");
-}
-
-void Read_Solids(std::string filename, std::vector<Solid>& Solids, std::vector<Node> &Nodes, Param &par) {
-	std::ifstream input;
-	std::string line;
-
-	input.open(filename.c_str());
-	if (input.is_open()) {
-		while (getline(input, line)) { // read line from file to string $line$
-			Read_Solids_new(input, Solids, Nodes, par);
-		}
-	}
-	else {
-		std::cout << "Read_Solids: File " << filename << " is not found" << std::endl;
-	}
-
 }
 
 void Add_Solids(std::vector<Solid>& Solids, std::vector<Node>& Nodes, Param &par) {
@@ -587,13 +566,14 @@ void Collide(Solid& s1, Solid& s2, std::vector<Node> &Nodes, Param par, double d
 
 void Solids_collide(std::vector<Solid> &solidList, std::vector<Node> &Nodes, Param par) {
 
-	double kr = 0.25;    // fraction of distance where distance force switches on
-	double dist_u = par.k_dist*par.d_x;
-	double dist_r = par.k_dist*par.d_x * kr;
+	double dist_u = par.k_u_dist*par.d_x;
+	double dist_r = par.k_r_dist*par.d_x;
 
-	double alpha = 20. * sqrt(par.Gravity_module / dist_u); // coefficient for the collision force based on velocity value
-	double beta  = 100. * std::fmax(par.Gravity_module, 1000 * std::fmax(abs(par.u_up - par.u_down), abs(par.u_in)) / par.H / par.H / par.Re); // coefficient for the collision force based on distance between particles value
+	double alpha = par.k_u_collide * sqrt(par.Gravity_module / dist_u); // coefficient for the collision force based on velocity value
+	double beta  = par.k_r_collide * std::fmax(par.Gravity_module, 1000 * (abs(par.u_up) + abs(par.u_down) + abs(par.u_in)) / par.H / par.H / par.Re); // coefficient for the collision force based on distance between particles value
 	double friction = 0.04; // coefficient for the friction force based on velocity value
+	std::cout << "alpha = " << alpha << std::endl;
+	std::cout << "beta  = " << beta  << std::endl;
 
 	double  d_up, d_down, d_left, d_right;
 	GeomVec x_up = ZeroVec(), x_down = ZeroVec(), x_left = ZeroVec(), x_right = ZeroVec();

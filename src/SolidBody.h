@@ -59,8 +59,9 @@ public:
 	double r0;                    // little radius
 	double e;                     // eccentricity
 	bool Poiseuille = false;      // key for initial ux, uy and omega_new corresponding to Poiseuille flow
+	//constructor
 	Solid(Param &par);
-	~Solid();
+	//Methods
 	void Init();
 	void read_line(std::string);
 	void add_Nodes(std::vector<Node> &Nodes, const int Nn_max);
@@ -74,8 +75,7 @@ void line_segment(std::vector<Node> &Nodes, const int N_start, const int Nn, Geo
 void circular_segment(std::vector<Node> &Nodes, const int N_start, const int Nn, GeomVec Xc, double r, double alpha_beg, double alpha_end);
 void copy_solid_mesh(std::vector<Node> &Nodes, const int N_beg_from, const int N_beg_to, const int Nn);
 void fill_solid_ds(std::vector<Node> &Nodes, const int Nn_max, const int Nn, const int shape, const double dxy);
-void Read_Solids_new(std::ifstream &input, std::vector<Solid>& Solids, std::vector<Node> &Nodes, Param &par);
-void Read_Solids(std::string filename, std::vector<Solid>& Solids, std::vector<Node>& Nodes, Param &par);
+void Read_Solids(std::ifstream &input, std::vector<Solid>& Solids, std::vector<Node> &Nodes, Param &par);
 void Add_Solids(std::vector<Solid>& Solids, std::vector<Node>& Nodes, Param &par);
 void Collide(Solid& s1, Solid& s2, std::vector<Node> &Nodes, Param par, double dist_u, double dist_r, double alpha, double beta, double friction);
 void Solids_move(std::vector<Solid> &solidList, std::vector<Node> &Nodes, Param par);

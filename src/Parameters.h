@@ -54,7 +54,10 @@ public:
 	int AddSolids_start = 0;         // step when Solids start to add
 	int AddSolids_interval = 5000000;// interval for Solids adding
 	int SolidName_max = 0;           // Maximal Name of Solids
-	double k_dist = 4.0;             // coefficient for minimal distance between Solids
+	double k_u_dist = 4.0;           // coefficient for minimal distance between Solids for collision force $au_collide$
+	double k_r_dist = 1.0;           // coefficient for minimal distance between Solids for collision force $ar_collide$
+	double k_u_collide = 1.;         // coefficient in collision force $au_collide$
+	double k_r_collide = 1.;         // coefficient in collision force $ar_collide$
 
 	// parameters for special problems
 	double Lamb_Oseen_r0 = 0.1;      // initial radius of Lamb_Oseen vortex

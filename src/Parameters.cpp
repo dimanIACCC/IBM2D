@@ -86,7 +86,10 @@ void Param::read_line(std::string line) {
 		else if (PAR == "AddSolids_start")      AddSolids_start = stoi(VALUE);
 		else if (PAR == "AddSolids_interval")   AddSolids_interval = stoi(VALUE);
 		else if (PAR == "SolidName_max")        SolidName_max = stoi(VALUE);
-		else if (PAR == "k_dist")               k_dist = (stod(VALUE));
+		else if (PAR == "k_u_dist")             k_u_dist = (stod(VALUE));
+		else if (PAR == "k_r_dist")             k_r_dist = (stod(VALUE));
+		else if (PAR == "k_u_collide")          k_u_collide = (stod(VALUE));
+		else if (PAR == "k_r_collide")          k_r_collide = (stod(VALUE));
 
 		// parameters for special problems
 		else if (PAR == "Lamb_Oseen_r0")        Lamb_Oseen_r0 = (stod(VALUE));

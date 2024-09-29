@@ -1,27 +1,30 @@
 <par>
-BC      = box
+BC      = periodical
 Re      = 100
-L       = 2
-H       = 4
-N1      = 200
-N2      = 400
+L       = 8
+H       = 2
+N1      = 800
+N2      = 200
 d_t     = 0.0002
-Nn_     = 6
+Nn_     = 4
 rho     = 1.25
 r       = 0.125
 r0      = 0.0125
 e       = 0.
-shape   = 2
+shape   = 16
 output_step = 10
 Gravity_module = 1000.
-Gravity_angle  = 0
+Gravity_angle  = 90
 u_down = 0
-AddSolids_N = 36
+AddSolids_N = 32
 AddSolids_start = 0
 AddSolids_interval = 100000000
-s_max=20
+k_u_dist = 4
+k_r_dist = 1
+k_u_collide = 10
+k_r_collide = 10
 </par>
-<Solids>
+//<Solids>
 <Solid>
    x = 1
    y = 3
@@ -61,4 +64,4 @@ s_max=20
    Nn_r0 = 4
    alpha=45
 </Solid>
-</Solids>
+//</Solids>

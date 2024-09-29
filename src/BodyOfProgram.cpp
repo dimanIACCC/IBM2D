@@ -138,7 +138,10 @@ void Save_Data(Param& par, std::vector<Solid>& solidList, std::vector<Node> &Nod
 	output << "AddSolids_start = " << par.AddSolids_start << std::endl;
 	output << "AddSolids_interval = " << par.AddSolids_interval << std::endl;
 	output << "SolidName_max = " << par.SolidName_max << std::endl;
-	output << "k_dist = " << par.k_dist << std::endl;
+	output << "k_u_dist = " << par.k_u_dist << std::endl;
+	output << "k_r_dist = " << par.k_r_dist << std::endl;
+	output << "k_u_collide = " << par.k_u_collide << std::endl;
+	output << "k_r_collide = " << par.k_r_collide << std::endl;
 
 	// parameters for special problems
 	output << "Lamb_Oseen_r0 = " << par.Lamb_Oseen_r0 << std::endl;
@@ -240,7 +243,7 @@ void Load_Data(std::string &filename, Param &par, std::vector<Solid>& Solids, st
 				if (input >> line && line != "</P>") std::cout << "Some troubles in <P>" << std::endl;
 			}
 			else if (line == "<Solids>")
-				Read_Solids_new(input, Solids, Nodes, par);
+				Read_Solids(input, Solids, Nodes, par);
 		}
 	}
 	else {
