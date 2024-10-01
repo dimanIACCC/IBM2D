@@ -43,7 +43,7 @@ void Calculate_u_p(Matrix &U_n   , Matrix &U_new,
 
 	// output of iterations information
 	std::ofstream output;
-	std::string filename = par.WorkDir + "/iterations" + std::to_string(par.N_step) + ".plt";
+	std::string filename = par.WorkDir + "/" + "iterations" + std::to_string(par.N_step) + ".plt";
 	//output.open(filename);
 
 	output << "title = iterations_step" << par.N_step << std::endl;
@@ -103,10 +103,10 @@ void Calculate_u_p(Matrix &U_n   , Matrix &U_new,
 
 			// apply force from immersed particles for several times to fulfill no-slip BC
 			Solids_zero_force(solidList, Nodes, par.Nn_max);
-			for (auto& it : solidList) {
-				it.Fr = 0.;
-				it.S = 0.;
-			}
+			//for (auto& it : solidList) {
+			//	it.Fr = 0.;
+			//	it.S = 0.;
+			//}
 
 			CalculateForce(dFx, dFy, Ax_beg, Ax_end, Ay_beg, Ay_end, solidList, Nodes, U_f, V_f, par);
 

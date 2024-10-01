@@ -109,8 +109,10 @@ void Output(Matrix p, Matrix u, Matrix v, Matrix Fx, Matrix Fy, int n, std::vect
 		       << 0 << " "
 		       << solid.u[1] << " "
 		       << solid.u[2] << " "
-		       << solid.f[1] << " "
-		       << solid.f[2] << " "
+		       //<< solid.a_collide[1] << " "
+		       //<< solid.a_collide[2] << " "
+			   << 0 << " "
+			   << 0 << " "
 		       << std::endl;
 		for (int k = 0; k < solid.Nn; ++k) {
 			int Ind = solid.IndNodes[k];
@@ -120,8 +122,8 @@ void Output(Matrix p, Matrix u, Matrix v, Matrix Fx, Matrix Fy, int n, std::vect
 			       << Nodes[Ind].p << " "
 			       << Nodes[Ind].us[1] << " "
 			       << Nodes[Ind].us[2] << " "
-			       << Nodes[Ind].f[1] << " "
-			       << Nodes[Ind].f[2] << " "
+			       << Nodes[Ind].f_r_collide[1] << " "
+			       << Nodes[Ind].f_r_collide[2] << " "
 			       << std::endl;
 
 		}
@@ -131,8 +133,8 @@ void Output(Matrix p, Matrix u, Matrix v, Matrix Fx, Matrix Fy, int n, std::vect
 		       << Nodes[Ind].p << " "
 		       << Nodes[Ind].us[1] << " "
 		       << Nodes[Ind].us[2] << " "
-		       << Nodes[Ind].f[1] << " "
-		       << Nodes[Ind].f[2] << " "
+		       << Nodes[Ind].f_r_collide[1] << " "
+		       << Nodes[Ind].f_r_collide[2] << " "
 		       << std::endl;
 	}
 

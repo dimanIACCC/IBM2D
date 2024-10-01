@@ -17,6 +17,7 @@ public:
 	GeomVec uf;       // velocity of the fluid in the Node
 	GeomVec us;       // velocity of the Solid in the Node
 	GeomVec f;        // force
+	GeomVec f_r_collide; // force of particle collision
 	double ds;        // size of Lagrange element
 	double p;         // pressure
 };

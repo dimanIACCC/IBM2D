@@ -297,7 +297,7 @@ void coordinates(std::vector<Solid>::iterator &Solid, std::vector<Node> &Nodes) 
 
 void Solid::log_init(std::string WorkDir) {
 	std::ofstream output;
-	std::string filename = WorkDir + "Solids/" + std::to_string(name) + ".plt";
+	std::string filename = WorkDir + "/" + "Solids" + "/" + std::to_string(name) + ".plt";
 	output.open(filename);
 
 	output << "title = " << '"' << "Solid" << name << '"' << std::endl;
@@ -306,7 +306,7 @@ void Solid::log_init(std::string WorkDir) {
 
 void Solid::log(std::string WorkDir, int n) {
 	std::ofstream output;
-	std::string filename = WorkDir + "Solids/" + std::to_string(name) + ".plt";
+	std::string filename = WorkDir + "/" + "Solids" + " / " + std::to_string(name) + ".plt";
 	output.open(filename, std::ios::app);
 
 	output << std::setprecision(8);
@@ -463,7 +463,7 @@ double Distance_2Solids(Solid& s1, Solid& s2, Param& par, GeomVec& r) {
 	return dist;
 }
 
-double Distance_2Solids_(Solid& s1, Solid& s2, std::vector<Node> Nodes, Param& par, GeomVec& r_out, GeomVec& x1, GeomVec& x2, GeomVec& u1, GeomVec& u2) {
+double Distance_2Solids_(Solid& s1, Solid& s2, std::vector<Node> Nodes, Param& par, GeomVec& r_out, GeomVec& x1, GeomVec& x2, GeomVec& u1, GeomVec& u2, int& Ind1_collide, int& Ind2_collide) {
 	double dist = +1.e99;
 
 	for (size_t k1 = 0; k1 < s1.Nn; ++k1) {
@@ -487,6 +487,8 @@ double Distance_2Solids_(Solid& s1, Solid& s2, std::vector<Node> Nodes, Param& p
 				u1 = s1.u_n + x_product(s1.omega_n, x1);
 				u2 = s2.u_n + x_product(s2.omega_n, x2);
 				r_out = r / rrr;
+				Ind1_collide = Ind1;
+				Ind2_collide = Ind2;
 			}
 		}
 	}
@@ -547,7 +549,8 @@ void Collide(Solid& s1, Solid& s2, std::vector<Node> &Nodes, Param par, double d
 	GeomVec u1 = s1.u_n;
 	GeomVec u2 = s2.u_n;
 	double dist = Distance_2Solids(s1, s2, par, r);
-	if (dist < s1.r + s2.r) dist = Distance_2Solids_(s1, s2, Nodes, par, r, x1, x2, u1, u2);
+	int Ind1=0, Ind2=0;
+	if (dist < s1.r + s2.r) dist = Distance_2Solids_(s1, s2, Nodes, par, r, x1, x2, u1, u2, Ind1, Ind2);
 
 	double m1 = s1.rho * s1.V;
 	double m2 = s2.rho * s2.V;
@@ -557,10 +560,16 @@ void Collide(Solid& s1, Solid& s2, std::vector<Node> &Nodes, Param par, double d
 	double I = I1 * I2 / (I1 + I2);
 	GeomVec F = F_collide(r, dist, u1, u2, dist_u, dist_r, alpha, beta, friction);
 
-	if (s1.moving == 1) s1.a_collide += F * M / m1;
-	if (s2.moving == 1) s2.a_collide -= F * M / m2;
-	if (s1.moving == 1) s1.d_omega_collide += x_product(x1, F) * I / I1;
-	if (s2.moving == 1) s2.d_omega_collide -= x_product(x2, F) * I / I2;
+	if (s1.moving == 1) {
+		s1.a_collide            += F * M / m1;
+		Nodes[Ind1].f_r_collide += F * M / m1;
+		s1.d_omega_collide      += x_product(x1, F) * I / I1;
+	}
+	if (s2.moving == 1) {
+		s2.a_collide            -= F * M / m2;
+		Nodes[Ind2].f_r_collide -= F * M / m1;
+		s2.d_omega_collide      -= x_product(x2, F) * I / I2;
+	}
 
 }
 
@@ -677,10 +686,13 @@ void Solids_zero_force(std::vector<Solid>& Solids, std::vector<Node>& Nodes, int
 		it.tau = ZeroVec();
 		it.a_collide = ZeroVec();
 		it.d_omega_collide = ZeroVec();
+		it.Fr = 0.;
+		it.S = 0.;
 		
 	}
 	for (size_t k = 0; k < Nn_max; ++k) {
 		Nodes[k].f = ZeroVec();
+		Nodes[k].f_r_collide = ZeroVec();
 	}
 }
 

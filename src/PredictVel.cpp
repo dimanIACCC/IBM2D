@@ -238,7 +238,7 @@ void Output_eq_terms(std::string filename, int n, Matrix &u_n, Matrix &v_n, Matr
 
 
 	std::ofstream output;
-	filename = par.WorkDir + filename + std::to_string(n) + ".plt";
+	filename = par.WorkDir + "/" + filename + std::to_string(n) + ".plt";
 
 	output.open(filename);
 
