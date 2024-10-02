@@ -1,11 +1,11 @@
 <par>
 BC      = periodical
 Re      = 100
-L       = 8
+L       = 4
 H       = 2
-N1      = 800
+N1      = 400
 N2      = 200
-d_t     = 0.0002
+d_t     = 0.0005
 Nn_     = 4
 rho     = 1.25
 r       = 0.125
@@ -20,9 +20,9 @@ AddSolids_N = 32
 AddSolids_start = 0
 AddSolids_interval = 100000000
 k_u_dist = 4
-k_r_dist = 1
+k_r_dist = 2
 k_u_collide = 10
-k_r_collide = 10
+k_r_collide = 20
 </par>
 //<Solids>
 <Solid>

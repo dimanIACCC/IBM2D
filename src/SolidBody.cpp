@@ -530,11 +530,11 @@ GeomVec F_collide(GeomVec norm, double dist, GeomVec u1, GeomVec u2, double dist
 		if (d_u12_proj < 0.0) { // if Solids move to each other
 			F_collide -=            alpha * 2 * (dist_u - dist) * (dist_u - dist) / dist_u / dist_u * d_u12_norm;
 			F_collide -= friction * alpha * 2 * (dist_u - dist) * (dist_u - dist) / dist_u / dist_u * d_u12_tau;
-			std::cout << "Collision u:  F_collide = " << F_collide[1] << "   " << F_collide[2] << std::endl;
+			//std::cout << "Collision u:  F_collide = " << F_collide[1] << "   " << F_collide[2] << std::endl;
 		}
 		if (dist <= dist_r) {
 			F_collide += beta * (dist_r - dist)*(dist_r - dist) / dist_r / dist_r * norm;
-			std::cout << "Collision r:  F_collide = " << F_collide[1] << "   " << F_collide[2] << std::endl;
+			//std::cout << "Collision r:  F_collide = " << F_collide[1] << "   " << F_collide[2] << std::endl;
 			//std::getchar();
 		}
 	}
@@ -550,25 +550,47 @@ void Collide(Solid& s1, Solid& s2, std::vector<Node> &Nodes, Param par, double d
 	GeomVec u2 = s2.u_n;
 	double dist = Distance_2Solids(s1, s2, par, r);
 	int Ind1=0, Ind2=0;
-	if (dist < s1.r + s2.r) dist = Distance_2Solids_(s1, s2, Nodes, par, r, x1, x2, u1, u2, Ind1, Ind2);
+	if (dist < s1.r + s2.r) {
+		//dist = Distance_2Solids_(s1, s2, Nodes, par, r, x1, x2, u1, u2, Ind1, Ind2);
 
-	double m1 = s1.rho * s1.V;
-	double m2 = s2.rho * s2.V;
-	double M = m1 * m2 / (m1 + m2);
-	double I1 = s1.rho * s1.I;
-	double I2 = s2.rho * s2.I;
-	double I = I1 * I2 / (I1 + I2);
-	GeomVec F = F_collide(r, dist, u1, u2, dist_u, dist_r, alpha, beta, friction);
+		double m1 = s1.rho * s1.V;
+		double m2 = s2.rho * s2.V;
+		double M = m1 * m2 / (m1 + m2);
+		double I1 = s1.rho * s1.I;
+		double I2 = s2.rho * s2.I;
+		double I = I1 * I2 / (I1 + I2);
 
-	if (s1.moving == 1) {
-		s1.a_collide            += F * M / m1;
-		Nodes[Ind1].f_r_collide += F * M / m1;
-		s1.d_omega_collide      += x_product(x1, F) * I / I1;
-	}
-	if (s2.moving == 1) {
-		s2.a_collide            -= F * M / m2;
-		Nodes[Ind2].f_r_collide -= F * M / m1;
-		s2.d_omega_collide      -= x_product(x2, F) * I / I2;
+		for (size_t k1 = 0; k1 < s1.Nn; ++k1) {
+			int Ind1 = s1.IndNodes[k1];
+			for (size_t k2 = 0; k2 < s2.Nn; ++k2) {
+				int Ind2 = s2.IndNodes[k2];
+				GeomVec r = Nodes[Ind1].x_s - Nodes[Ind2].x_s;
+				dist = length(r);      // distance between particle nodes
+				if (par.BC == periodical) {
+					GeomVec r_plus = r;
+					GeomVec r_minus = r;
+					r_plus[1] += par.L;
+					r_minus[1] -= par.L;
+					if (length(r_plus) < dist) { r = r_plus; dist = length(r_plus); };
+					if (length(r_minus) < dist) { r = r_minus; dist = length(r_minus); };
+				}
+				if (dist < dist_u) {
+
+					GeomVec F = F_collide(r, dist, u1, u2, dist_u, dist_r, alpha, beta, friction);
+
+					if (s1.moving == 1) {
+						s1.a_collide += F * M / m1;
+						Nodes[Ind1].f_r_collide += F * M / m1;
+						s1.d_omega_collide += x_product(x1, F) * I / I1;
+					}
+					if (s2.moving == 1) {
+						s2.a_collide -= F * M / m2;
+						Nodes[Ind2].f_r_collide -= F * M / m1;
+						s2.d_omega_collide -= x_product(x2, F) * I / I2;
+					}
+				}
+			}
+		}
 	}
 
 }
