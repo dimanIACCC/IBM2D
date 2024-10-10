@@ -78,7 +78,8 @@ void copy_solid_mesh(std::vector<Node> &Nodes, const int N_beg_from, const int N
 void fill_solid_ds(std::vector<Node> &Nodes, const int Nn_max, const int Nn, const int shape, const double dxy);
 void Read_Solids(std::ifstream &input, std::vector<Solid>& Solids, std::vector<Node> &Nodes, Param &par);
 void Add_Solids(std::vector<Solid>& Solids, std::vector<Node>& Nodes, Param &par);
-void Collide(Solid& s1, Solid& s2, std::vector<Node> &Nodes, Param par, double dist_u, double dist_r, double alpha, double beta, double friction);
+void Collide_2Solids(Solid& s1, Solid& s2, std::vector<Node> &Nodes, Param par, double dist_u, double dist_r, double alpha, double beta, double friction);
+void Collide_Walls(Solid& s1, std::vector<Node> &Nodes, Param& par, double dist_u, double dist_r, double alpha, double beta, double friction);
 void Solids_move(std::vector<Solid> &solidList, std::vector<Node> &Nodes, Param par);
 void Solids_collide(std::vector<Solid> &solidList, std::vector<Node> &Nodes, Param par);
 void h_average_of_Solids_Layer(std::vector<Solid> &solidList, Param par, double& h_average);

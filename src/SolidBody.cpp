@@ -541,13 +541,10 @@ GeomVec F_collide(GeomVec norm, double dist, GeomVec u1, GeomVec u2, double dist
 	return F_collide;
 }
 
-void Collide(Solid& s1, Solid& s2, std::vector<Node> &Nodes, Param par, double dist_u, double dist_r, double alpha, double beta, double friction) {
+void Collide_2Solids(Solid& s1, Solid& s2, std::vector<Node> &Nodes, Param par, double dist_u, double dist_r, double alpha, double beta, double friction) {
 
 	GeomVec r = s1.x - s2.x;
-	GeomVec x1 = s1.x;
-	GeomVec x2 = s2.x;
-	GeomVec u1 = s1.u_n;
-	GeomVec u2 = s2.u_n;
+
 	double dist = Distance_2Solids(s1, s2, par, r);
 	int Ind1=0, Ind2=0;
 	if (dist < s1.r + s2.r) {
@@ -575,18 +572,19 @@ void Collide(Solid& s1, Solid& s2, std::vector<Node> &Nodes, Param par, double d
 					if (length(r_minus) < dist) { r = r_minus; dist = length(r_minus); };
 				}
 				if (dist < dist_u) {
-
+					GeomVec u1 = s1.u_n + x_product(s1.omega_n, Nodes[Ind1].x);
+					GeomVec u2 = s2.u_n + x_product(s2.omega_n, Nodes[Ind2].x);
 					GeomVec F = F_collide(r, dist, u1, u2, dist_u, dist_r, alpha, beta, friction);
 
 					if (s1.moving == 1) {
 						s1.a_collide += F * M / m1;
 						Nodes[Ind1].f_r_collide += F * M / m1;
-						s1.d_omega_collide += x_product(x1, F) * I / I1;
+						s1.d_omega_collide += x_product(Nodes[Ind1].x, F) * I / I1;
 					}
 					if (s2.moving == 1) {
 						s2.a_collide -= F * M / m2;
 						Nodes[Ind2].f_r_collide -= F * M / m1;
-						s2.d_omega_collide -= x_product(x2, F) * I / I2;
+						s2.d_omega_collide -= x_product(Nodes[Ind2].x, F) * I / I2;
 					}
 				}
 			}
@@ -595,6 +593,43 @@ void Collide(Solid& s1, Solid& s2, std::vector<Node> &Nodes, Param par, double d
 
 }
 
+void Collide_Walls(Solid& s1, std::vector<Node> &Nodes, Param& par, double dist_u, double dist_r, double alpha, double beta, double friction) {
+
+	GeomVec u_up = ZeroVec(), u_down = ZeroVec(), u_left = ZeroVec(), u_right = ZeroVec();
+	GeomVec n_up = ZeroVec(), n_down = ZeroVec(), n_left = ZeroVec(), n_right = ZeroVec();
+
+	u_up[1]   = par.u_up;
+	u_down[1] = par.u_down;
+
+	n_left[1]  = 1.;
+	n_right[1] = -1.;
+	n_up[2]    = -1.;
+	n_down[2]  = 1.;
+
+	for (size_t k1 = 0; k1 < s1.Nn; ++k1) {
+		int Ind1 = s1.IndNodes[k1];
+		double d_up    = 2 * abs(Nodes[Ind1].x_s[2] - par.H);
+		double d_down  = 2 * abs(Nodes[Ind1].x_s[2]);
+		double d_left  = 2 * abs(Nodes[Ind1].x_s[1]);
+		double d_right = 2 * abs(Nodes[Ind1].x_s[1] - par.L);
+
+		GeomVec u1 = s1.u_n + x_product(s1.omega_n, Nodes[Ind1].x);
+
+		GeomVec F = ZeroVec();
+			if (d_up    < dist_u) F += F_collide(n_up   , d_up   , u1, u_up   , dist_u, dist_r, alpha, beta, friction);
+			if (d_down  < dist_u) F += F_collide(n_down , d_down , u1, u_down , dist_u, dist_r, alpha, beta, friction);
+		if (par.BC == box) {
+			if (d_left  < dist_u) F += F_collide(n_left , d_left , u1, u_left , dist_u, dist_r, alpha, beta, friction);
+			if (d_right < dist_u) F += F_collide(n_right, d_right, u1, u_right, dist_u, dist_r, alpha, beta, friction);
+		}
+		s1.a_collide += F;
+		Nodes[Ind1].f_r_collide += F;
+		s1.d_omega_collide += x_product(Nodes[Ind1].x, F);
+
+	}
+}
+
+
 void Solids_collide(std::vector<Solid> &solidList, std::vector<Node> &Nodes, Param par) {
 
 	double dist_u = par.k_u_dist*par.d_x;
@@ -602,43 +637,16 @@ void Solids_collide(std::vector<Solid> &solidList, std::vector<Node> &Nodes, Par
 
 	double alpha = par.k_u_collide * sqrt(par.Gravity_module / dist_u); // coefficient for the collision force based on velocity value
 	double beta  = par.k_r_collide * std::fmax(par.Gravity_module, 1000 * (abs(par.u_up) + abs(par.u_down) + abs(par.u_in)) / par.H / par.H / par.Re); // coefficient for the collision force based on distance between particles value
-	double friction = 0.04; // coefficient for the friction force based on velocity value
-	std::cout << "alpha = " << alpha << std::endl;
-	std::cout << "beta  = " << beta  << std::endl;
-
-	double  d_up, d_down, d_left, d_right;
-	GeomVec x_up = ZeroVec(), x_down = ZeroVec(), x_left = ZeroVec(), x_right = ZeroVec();
-	GeomVec u_up = ZeroVec(), u_down = ZeroVec(), u_left = ZeroVec(), u_right = ZeroVec();
-	GeomVec n_up = ZeroVec(), n_down = ZeroVec(), n_left = ZeroVec(), n_right = ZeroVec();
-	
-	u_up[1]   = par.u_up;
-	u_down[1] = par.u_down;
-
-	n_left[1]  =  1.;
-	n_right[1] = -1.;
-	n_up[2]    = -1.;
-	n_down[2]   = 1.;
+	double friction = 0.5; // coefficient for the friction force based on velocity value
+	//std::cout << "alpha = " << alpha << std::endl;
+	//std::cout << "beta  = " << beta  << std::endl;
 
 	for (auto one = solidList.begin(); one != solidList.end(); one++) {
 		if (one->moving == 1){
 			for (auto two = next(one); two != solidList.end(); two++) {
-				Collide(*one, *two, Nodes, par, dist_u, dist_r, alpha, beta, friction);
+				Collide_2Solids(*one, *two, Nodes, par, dist_u, dist_r, alpha, beta, friction);
 			}
-
-			Distance_2Walls(*one, Nodes, par, d_up, d_down, d_left, d_right, x_up, x_down, x_left, x_right);
-
-			if (one->moving == 1) {
-				GeomVec F_up    = F_collide(n_up   , d_up   , one->u_n, u_up   , dist_u, dist_r, alpha, beta, friction);
-				GeomVec F_down  = F_collide(n_down , d_down , one->u_n, u_down , dist_u, dist_r, alpha, beta, friction);
-				one->a_collide += F_up + F_down;
-				one->d_omega_collide += x_product(x_up, F_up) + x_product(x_down, F_down);
-			if (par.BC == box) {
-				GeomVec F_left  = F_collide(n_left , d_left , one->u_n, u_left , dist_u, dist_r, alpha, beta, friction);
-				GeomVec F_right = F_collide(n_right, d_right, one->u_n, u_right, dist_u, dist_r, alpha, beta, friction);
-				one->a_collide += F_left + F_right;
-				one->d_omega_collide += x_product(x_left, F_left) + x_product(x_right, F_right);
-			}
-			}
+			Collide_Walls(*one, Nodes, par, dist_u, dist_r, alpha, beta, friction);
 		}
 	}
 

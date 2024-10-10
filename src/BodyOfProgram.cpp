@@ -262,6 +262,7 @@ void Load_Data(std::string &filename, Param &par, std::vector<Solid>& Solids, st
 		}
 	}
 
+	if (key_U == FALSE && key_V == FALSE && key_P == FALSE)
 	fill_exact(U_n, V_n, P_n, par, 0.0, par.d_t*0.5);             // Initial conditions for velocity and pressure
 
 	std::cout << "Loading Data Finished" << std::endl;
