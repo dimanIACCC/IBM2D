@@ -64,6 +64,7 @@ void Calculate_u_p(Matrix &U_n   , Matrix &U_new,
 	if (par.AMP == true) {
 		Make_interaction_Matrix(Ax_beg, Ax_end, par.N1_u, par.N2_u, par.d_x, par.d_y, Nodes, par.Nn_max, Du, par.BC, par.L);
 		Make_interaction_Matrix(Ay_beg, Ay_end, par.N1_v, par.N2_v, par.d_x, par.d_y, Nodes, par.Nn_max, Dv, par.BC, par.L);
+		//Output_2DArray(Ax_beg, par.N1_u, par.N2_u, par.WorkDir, "Ax_beg", 2);
 	}
 
 	Fx = Fx * 0.;

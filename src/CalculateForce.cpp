@@ -377,13 +377,13 @@ void Make_interaction_Matrix(int* A_beg, int* A_end, int N1, int N2, double d_x,
 	);
 
 	int m = 0;
-	int mp = Nn_max / 20 + 1;
-	int Nnp_max = Nn_max / mp;
+	int mp = Nn_max / 10000 + 1;
 
 	for (int m = 0; m < mp; m++)
 	{
 		int kb_beg = m*Nn_max / mp;
-		int kb_end = (m + 1)*Nn_max / mp;
+		int kb_end = min((m + 1)*Nn_max / mp, Nn_max);
+		int Nnp_max = kb_end-kb_beg;
 
 		if (kb_beg < kb_end) {
 			std::vector<Node_simple> Nodes_simple = Copy_Node_Simple_vector(Nodes, kb_beg, kb_end);
@@ -407,41 +407,49 @@ void Make_interaction_Matrix(int* A_beg, int* A_end, int N1, int N2, double d_x,
 
 				for (int k = 0; k < Nnp_max; ++k) {
 					if (fabs(x[1] - Nodes_AV[k].x_s[1]) < 2.1*d_x && fabs(x[2] - Nodes_AV[k].x_s[2]) < 2.1*d_y) {
-						//if (kb_beg + k < A_beg_(j, i_real)) {
-							A_beg_(j, i_real) =  kb_beg + k;
+						if (kb_beg + k < A_beg_(j, i_real)) {
+							A_beg_(j, i_real) = kb_beg + k;
 							break;
-						//}
+						}
 					}
 					if (BC == periodical) {
 
 						if (fabs(x[1] - Nodes_AV[k].x_s[1] + L) < 2.1*d_x && fabs(x[2] - Nodes_AV[k].x_s[2]) < 2.1*d_y) {
-							A_beg_(j, i_real) = kb_beg + k;
-							break;
+							if (kb_beg + k < A_beg_(j, i_real)) {
+								A_beg_(j, i_real) = kb_beg + k;
+								break;
+							}
 						}
 
 						if (fabs(x[1] - Nodes_AV[k].x_s[1] - L) < 2.1*d_x && fabs(x[2] - Nodes_AV[k].x_s[2]) < 2.1*d_y) {
-							A_beg_(j, i_real) = kb_beg + k;
-							break;
+							if (kb_beg + k < A_beg_(j, i_real)) {
+								A_beg_(j, i_real) = kb_beg + k;
+								break;
+							}
 						}
 					}
 				}
 
 				for (int k = Nnp_max - 1; k >= 0; --k) {
 					if (fabs(x[1] - Nodes_AV[k].x_s[1]) < 2.1*d_x && fabs(x[2] - Nodes_AV[k].x_s[2]) < 2.1*d_y) {
-						//if (kb_beg + k > A_end_(j, i_real)) {
-							A_end_(j, i_real) = kb_beg + k;
-							break;
-						//}
-					}
-					if (BC == periodical) {
-						if (fabs(x[1] - Nodes_AV[k].x_s[1] + L) < 2.1*d_x && fabs(x[2] - Nodes_AV[k].x_s[2]) < 2.1*d_y) {
+						if (kb_beg + k > A_end_(j, i_real)) {
 							A_end_(j, i_real) = kb_beg + k;
 							break;
 						}
+					}
+					if (BC == periodical) {
+						if (fabs(x[1] - Nodes_AV[k].x_s[1] + L) < 2.1*d_x && fabs(x[2] - Nodes_AV[k].x_s[2]) < 2.1*d_y) {
+							if (kb_beg + k > A_end_(j, i_real)) {
+								A_end_(j, i_real) = kb_beg + k;
+								break;
+							}
+						}
 
 						if (fabs(x[1] - Nodes_AV[k].x_s[1] - L) < 2.1*d_x && fabs(x[2] - Nodes_AV[k].x_s[2]) < 2.1*d_y) {
-							A_end_(j, i_real) = kb_beg + k;
-							break;
+							if (kb_beg + k > A_end_(j, i_real)) {
+								A_end_(j, i_real) = kb_beg + k;
+								break;
+							}
 						}
 					}
 				}
@@ -482,13 +490,14 @@ void F_to_Euler_grid(std::vector<Node>& Nodes, Matrix &Fx_temp, Matrix &Fy_temp,
 	array_view <double, 2> Fy_temp_AV(N2_v, N1_v, Fy_temp_);
 
 	int m = 0;
-	int mp = Nn_max / 2000 + 1;
-	int Nnp = Nn_max / mp;
+	int mp = Nn_max / 10000 + 1;
 
 	for (int m = 0; m < mp; m++)
 	{
 		int kb_beg = m*Nn_max / mp;
-		int kb_end = (m + 1)*Nn_max / mp;
+		int kb_end = min((m + 1)*Nn_max / mp, Nn_max);
+		int Nnp = kb_end-kb_beg;
+
 		if (kb_beg < kb_end) {
 			std::vector<Node_simple> Nodes_simple = Copy_Node_Simple_vector(Nodes, kb_beg, kb_end);
 			array_view<Node_simple, 1> Nodes_AV(Nnp, Nodes_simple);

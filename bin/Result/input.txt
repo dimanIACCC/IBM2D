@@ -1,20 +1,34 @@
 <par>
-Re      = 10
-L       = 10
-H       = 40
-N1      = 100
-N2      = 400
-d_t     = 0.05
-Nn_     = 12
-r       = 0.5
-rho     = 3
-output_step = 10
 BC      = box
-AddSolids_N = 100
-Gravity_module = 1
-Gravity_angle  = 30
+Re      = 10
+L       = 2
+H       = 6
+N1      = 100
+N2      = 300
+d_t     = 0.001
+Nn_     = 25
+rho     = 1.25
+r       = 0.00001
+e       = 0.0
+output_step = 10
+Gravity_module = 1000.
+Gravity_angle  = 00
+AddSolids_N = 0
+AddSolids_start = 0
+AddSolids_interval = 100000000
+s_max=20
 k_u_dist = 4
 k_r_dist = 2
 k_u_collide = 1
 k_r_collide = 200
 </par>
+<Solids>
+<Solid>
+   x = 1
+   y = 4
+   moving = 1
+   r = 0.125
+   Poiseuille = 0
+   rho = 1.25e0
+</Solid>
+</Solids>

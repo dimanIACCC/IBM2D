@@ -21,4 +21,4 @@ bool Read_plt(std::string filename, Param &par, std::vector<Solid>& solidList);
 void Output_c(Matrix c , std::string filename, int n, Param par);
 void Output_Matrix(Matrix A, std::string WorkDir, std::string Variable, int n);
 void Output_Matrix_mid(Matrix A, std::string WorkDir, std::string Variable, int n);
-void Output_2DArray(double* A, int Nx, int Ny, std::string WorkDir, std::string Variable, int n);
+void Output_2DArray(int* A, int Nx, int Ny, std::string WorkDir, std::string Variable, int n);

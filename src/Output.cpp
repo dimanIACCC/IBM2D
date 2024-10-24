@@ -340,7 +340,7 @@ void Output_Matrix_mid(Matrix A, std::string WorkDir, std::string Variable, int 
 	output.close();
 }
 
-void Output_2DArray(double* A, int Nx, int Ny, std::string WorkDir, std::string Variable, int n) {
+void Output_2DArray(int* A, int Nx, int Ny, std::string WorkDir, std::string Variable, int n) {
 	std::ofstream output;
 	std::string filename = WorkDir + "/" + Variable + std::to_string(n) + ".plt";
 
