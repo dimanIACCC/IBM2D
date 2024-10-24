@@ -4,7 +4,7 @@ L       = 10
 H       = 40
 N1      = 100
 N2      = 400
-d_t     = 0.01
+d_t     = 0.05
 Nn_     = 12
 r       = 0.5
 rho     = 3
@@ -15,6 +15,6 @@ Gravity_module = 1
 Gravity_angle  = 30
 k_u_dist = 4
 k_r_dist = 2
-k_u_collide = 40
-k_r_collide = 5000
+k_u_collide = 1
+k_r_collide = 200
 </par>

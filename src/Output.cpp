@@ -228,13 +228,14 @@ void CreateDir(fs::path directory) {
 void history_init(std::string WorkDir, std::string file, boundary_conditions BC) {
 	std::ofstream output;
 	std::string filename = WorkDir + "/" + file + ".plt";
-	output.open(filename);
 
 	output << "title = " << '"' << "history" << '"' << std::endl;
 	if (BC == box) {
+		output.open(filename);
 		output << "Variables = t h_average zero zero" << std::endl;
 	}
 	else if (BC == Taylor_Green || BC == Lamb_Oseen || BC == Line_Vortex) {
+		output.open(filename);
 		output << "Variables = t error_P error_U error_V" << std::endl;
 	}
 }

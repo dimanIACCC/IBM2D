@@ -306,7 +306,7 @@ void Solid::log_init(std::string WorkDir) {
 
 void Solid::log(std::string WorkDir, int n) {
 	std::ofstream output;
-	std::string filename = WorkDir + "/" + "Solids" + " / " + std::to_string(name) + ".plt";
+	std::string filename = WorkDir + "/" + "Solids" + "/" + std::to_string(name) + ".plt";
 	output.open(filename, std::ios::app);
 
 	output << std::setprecision(8);
@@ -361,9 +361,9 @@ void Read_Solids(std::ifstream &input, std::vector<Solid>& Solids, std::vector<N
 		getline(input, line);
 		if (line == "<Solid>") {
 			Solid s(par);
+			bool key_Nodes = FALSE;
 			do { //while (line != "</Solid>")
 				getline(input, line);
-				bool key_Nodes = FALSE;
 				if (line == "<Nodes>") {
 					key_Nodes = TRUE;
 					Nodes.resize(par.Nn_max + s.Nn);
@@ -527,11 +527,11 @@ GeomVec F_collide(GeomVec norm, double dist, GeomVec u1, GeomVec u2, double dist
 		GeomVec d_u12_norm = dot_product(d_u12, norm)*norm;
 		double d_u12_proj = dot_product(d_u12, norm);
 		GeomVec d_u12_tau = d_u12 - d_u12_norm;
-		if (d_u12_proj < 0.0) { // if Solids move to each other
+		//if (d_u12_proj < 0.0) { // if Solids move to each other
 			F_collide -=            alpha * 2 * (dist_u - dist) * (dist_u - dist) / dist_u / dist_u * d_u12_norm;
 			F_collide -= friction * alpha * 2 * (dist_u - dist) * (dist_u - dist) / dist_u / dist_u * d_u12_tau;
 			//std::cout << "Collision u:  F_collide = " << F_collide[1] << "   " << F_collide[2] << std::endl;
-		}
+		//}
 		if (dist <= dist_r) {
 			F_collide += beta * (dist_r - dist)*(dist_r - dist) / dist_r / dist_r * norm;
 			//std::cout << "Collision r:  F_collide = " << F_collide[1] << "   " << F_collide[2] << std::endl;
@@ -577,20 +577,27 @@ void Collide_2Solids(Solid& s1, Solid& s2, std::vector<Node> &Nodes, Param par, 
 					GeomVec F = F_collide(r, dist, u1, u2, dist_u, dist_r, alpha, beta, friction);
 
 					if (s1.moving == 1) {
-						s1.a_collide += F * M / m1;
-						Nodes[Ind1].f_r_collide += F * M / m1;
-						s1.d_omega_collide += x_product(Nodes[Ind1].x, F) * I / I1;
+						double ds2 = Nodes[Ind1].ds * Nodes[Ind2].ds;
+						s1.a_collide += F * M / m1 * ds2;
+						Nodes[Ind1].f_r_collide += F * M / m1 * Nodes[Ind1].ds;
+						s1.d_omega_collide += x_product(Nodes[Ind1].x, F) * I / I1 * ds2;
 					}
 					if (s2.moving == 1) {
-						s2.a_collide -= F * M / m2;
-						Nodes[Ind2].f_r_collide -= F * M / m1;
-						s2.d_omega_collide -= x_product(Nodes[Ind2].x, F) * I / I2;
+						double ds2 = Nodes[Ind2].ds * Nodes[Ind1].ds;
+						s2.a_collide -= F * M / m2 * ds2;
+						Nodes[Ind2].f_r_collide -= F * M / m1 * Nodes[Ind1].ds;
+						s2.d_omega_collide -= x_product(Nodes[Ind2].x, F) * I / I2 * ds2;
 					}
 				}
 			}
 		}
 	}
 
+}
+
+double ds_Wall(double g){
+	double ds_Wall = g * ((g*g+2)*atanh(sqrt(1-g*g)) - 3*sqrt(1-g*g)) /(1-g)/(1-g);
+	return ds_Wall;
 }
 
 void Collide_Walls(Solid& s1, std::vector<Node> &Nodes, Param& par, double dist_u, double dist_r, double alpha, double beta, double friction) {
@@ -608,23 +615,39 @@ void Collide_Walls(Solid& s1, std::vector<Node> &Nodes, Param& par, double dist_
 
 	for (size_t k1 = 0; k1 < s1.Nn; ++k1) {
 		int Ind1 = s1.IndNodes[k1];
-		double d_up    = 2 * abs(Nodes[Ind1].x_s[2] - par.H);
-		double d_down  = 2 * abs(Nodes[Ind1].x_s[2]);
-		double d_left  = 2 * abs(Nodes[Ind1].x_s[1]);
-		double d_right = 2 * abs(Nodes[Ind1].x_s[1] - par.L);
+		double d_up    = 1 * abs(Nodes[Ind1].x_s[2] - par.H);
+		double d_down  = 1 * abs(Nodes[Ind1].x_s[2]);
+		double d_left  = 1 * abs(Nodes[Ind1].x_s[1]);
+		double d_right = 1 * abs(Nodes[Ind1].x_s[1] - par.L);
 
 		GeomVec u1 = s1.u_n + x_product(s1.omega_n, Nodes[Ind1].x);
 
+		double ds_wall = 0;
+
 		GeomVec F = ZeroVec();
-			if (d_up    < dist_u) F += F_collide(n_up   , d_up   , u1, u_up   , dist_u, dist_r, alpha, beta, friction);
-			if (d_down  < dist_u) F += F_collide(n_down , d_down , u1, u_down , dist_u, dist_r, alpha, beta, friction);
+			if (d_up    < dist_u) { F += F_collide(n_up   , d_up   , u1, u_up   , dist_u, dist_r, alpha, beta, friction); ds_wall += dist_u * ds_Wall(d_up   / dist_u);} //sqrt( dist_u * dist_u - d_up    * d_up   ); }
+			if (d_down  < dist_u) { F += F_collide(n_down , d_down , u1, u_down , dist_u, dist_r, alpha, beta, friction); ds_wall += dist_u * ds_Wall(d_down / dist_u);} // sqrt( dist_u * dist_u - d_down  * d_down ); }
 		if (par.BC == box) {
-			if (d_left  < dist_u) F += F_collide(n_left , d_left , u1, u_left , dist_u, dist_r, alpha, beta, friction);
-			if (d_right < dist_u) F += F_collide(n_right, d_right, u1, u_right, dist_u, dist_r, alpha, beta, friction);
+			if (d_left  < dist_u) { F += F_collide(n_left , d_left , u1, u_left , dist_u, dist_r, alpha, beta, friction); ds_wall += dist_u * ds_Wall(d_left / dist_u);} // sqrt( dist_u * dist_u - d_left  * d_left) ; }
+			if (d_right < dist_u) {
+				F += F_collide(n_right, d_right, u1, u_right, dist_u, dist_r, alpha, beta, friction);
+				//double g = 0.2;
+				ds_wall += dist_u * ds_Wall(d_right/ dist_u);
+				//sqrt(dist_u * dist_u - d_right * d_right);
+				//std::cout << "g = "      << g << std::endl;
+				//std::cout << "ds_new = " << ds_Wall(g) << std::endl;
+				//std::cout << "ds_old = " << 2 * sqrt(1 - g * g ) << std::endl;
+				//std::getchar();
+			}
 		}
-		s1.a_collide += F;
-		Nodes[Ind1].f_r_collide += F;
-		s1.d_omega_collide += x_product(Nodes[Ind1].x, F);
+
+		//double ds = ds_wall;
+		double ds = Nodes[Ind1].ds;
+
+
+		s1.a_collide += F;// *Nodes[Ind1].ds * ds;
+		Nodes[Ind1].f_r_collide += F;// *ds;
+		s1.d_omega_collide += x_product(Nodes[Ind1].x, F);// *Nodes[Ind1].ds * ds;
 
 	}
 }
@@ -637,7 +660,7 @@ void Solids_collide(std::vector<Solid> &solidList, std::vector<Node> &Nodes, Par
 
 	double alpha = par.k_u_collide * sqrt(par.Gravity_module / dist_u); // coefficient for the collision force based on velocity value
 	double beta  = par.k_r_collide * std::fmax(par.Gravity_module, 1000 * (abs(par.u_up) + abs(par.u_down) + abs(par.u_in)) / par.H / par.H / par.Re); // coefficient for the collision force based on distance between particles value
-	double friction = 0.5; // coefficient for the friction force based on velocity value
+	double friction = 0.0; // coefficient for the friction force based on velocity value
 	//std::cout << "alpha = " << alpha << std::endl;
 	//std::cout << "beta  = " << beta  << std::endl;
 

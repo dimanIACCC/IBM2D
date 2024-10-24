@@ -49,9 +49,10 @@ int main(int argc, char *argv[]) {
 	CreateDir(WorkDir);
 	CreateDir(WorkDir.string() + "/" + "Solids");
 	file = WorkDir.string() + "/" + file;
+	par.WorkDir = WorkDir.string();
 
 	Load_Data(file, par, Solids, Nodes, U_n, V_n, P_n);
-	par.WorkDir = WorkDir.string();
+
 	BodyOfProgram(par, Solids, Nodes, U_n, V_n, P_n);
 
 	return 0;
