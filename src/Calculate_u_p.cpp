@@ -130,8 +130,8 @@ void Calculate_u_p(Matrix &U_n   , Matrix &U_new,
 					solid.tau_new = solid.tau;
 				}
 				else if (par.IBM == 1) {
-					solid.f_new += solid.f;
-					solid.tau_new += solid.tau;
+					solid.f_new += solid.f * coef;
+					solid.tau_new += solid.tau * coef;
 				}
 			}
 
