@@ -573,18 +573,21 @@ void Collide_2Solids(Solid& s1, Solid& s2, std::vector<Node> &Nodes, Param par, 
 					//GeomVec u2 = s2.u_n + x_product(s2.omega_n, Nodes[Ind2].x);
 					GeomVec u1 = Nodes[Ind1].us;
 					GeomVec u2 = Nodes[Ind2].us;
-					GeomVec F = F_collide(r, dist, u1, u2, dist_u, dist_r, alpha, beta, friction, M);
+					GeomVec n = r / dist;
+					GeomVec F = F_collide(n, dist, u1, u2, dist_u, dist_r, alpha, beta, friction, M);
 
 					if (s1.moving == 1) {
-						double ds2 = Nodes[Ind1].ds * Nodes[Ind2].ds;
+						//double ds2 = Nodes[Ind1].ds * Nodes[Ind2].ds;
+						double ds2 = 1.;
 						s1.a_collide += F * ds2;
-						Nodes[Ind1].f_r_collide += F * Nodes[Ind2].ds;
+						Nodes[Ind1].f_r_collide += F * ds2 / Nodes[Ind1].ds;
 						s1.d_omega_collide += x_product(Nodes[Ind1].x, F) * ds2;
 					}
 					if (s2.moving == 1) {
-						double ds2 = Nodes[Ind2].ds * Nodes[Ind1].ds;
+						//double ds2 = Nodes[Ind2].ds * Nodes[Ind1].ds;
+						double ds2 = 1.;
 						s2.a_collide -= F * ds2;
-						Nodes[Ind2].f_r_collide -= F * Nodes[Ind1].ds;
+						Nodes[Ind2].f_r_collide -= F * ds2 / Nodes[Ind2].ds;
 						s2.d_omega_collide -= x_product(Nodes[Ind2].x, F) * ds2;
 					}
 				}
@@ -647,7 +650,7 @@ void Collide_Walls(Solid& s1, std::vector<Node> &Nodes, Param& par, double dist_
 		double ds = Nodes[Ind1].ds;
 
 		s1.a_collide += F;// *Nodes[Ind1].ds * ds;
-		Nodes[Ind1].f_r_collide += F;// *ds;
+		Nodes[Ind1].f_r_collide += F / Nodes[Ind1].ds;// *ds;
 		s1.d_omega_collide += x_product(Nodes[Ind1].x, F);// *Nodes[Ind1].ds * ds;
 
 	}
