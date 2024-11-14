@@ -141,7 +141,10 @@ void Calculate_u_p(Matrix &U_n   , Matrix &U_new,
 		#pragma endregion Force
 
 			for (auto& it : solidList) {
+				//CreateMatrix(Int, par.N1_u, par.N2_u);
 				it.integrals(U_n, V_n, U_new, V_new, par);
+				//Output_Matrix(Int, par.WorkDir, "Int", 0);
+				//std::getchar();
 			}
 
 
@@ -244,6 +247,7 @@ void Calculate_u_p(Matrix &U_n   , Matrix &U_new,
 
 		Solids_collide(solidList, Nodes, par);
 		Solids_velocity_new(solidList, par);
+		Solids_position_new(solidList, Nodes, par);
 
 		if (par.BC == Lamb_Oseen) {
 			for (auto& it : solidList) {

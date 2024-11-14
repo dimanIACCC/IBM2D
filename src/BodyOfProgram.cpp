@@ -34,8 +34,6 @@ void BodyOfProgram(Param &par, std::vector<Solid> &solidList, std::vector<Node> 
 
 		Calculate_u_p(U_n, U_new, V_n, V_new, P, Fx, Fy, solidList, Nodes, par);  // calculate velocity and pressure at the new time step
 
-		Solids_position_new(solidList, Nodes, par);
-
 		// Output_eq_terms("eq_terms", par.N_step, U_n, V_n, U_new, V_new, P_n, P_new, Fx_new, par, Du);
 
 		double eps_u = diff(U_n, U_new);												// calculate maximum difference between current and prior velocity fields
@@ -182,7 +180,7 @@ void Save_Data(Param& par, std::vector<Solid>& solidList, std::vector<Node> &Nod
 		output << "ux = " << one->u_n[1] << std::endl;
 		output << "uy = " << one->u_n[2] << std::endl;
 		output << "omega = " << one->omega_n[3] / M_PI * 180 << std::endl;
-		output << "alpha = " << one->alpha[3]   / M_PI * 180 << std::endl;
+		output << "alpha = " << one->alpha_n[3] / M_PI * 180 << std::endl;
 		output << "rho = " << one->rho << std::endl;
 		output << "Nn_r0 = " << one->Nn_r0 << std::endl;
 		output << "Nn_r = " << one->Nn_r << std::endl;

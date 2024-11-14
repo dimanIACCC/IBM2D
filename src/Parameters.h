@@ -110,7 +110,8 @@ double FunctionD_(double r) restrict(amp);
 void GetInfluenceArea(int &i_min, int &i_max, int &j_min, int &j_max, size_t Ni, size_t Nj, GeomVec x, int size, Param par);
 
 InfluenceArea GetInfluenceArea_(int Ni, int Nj, double* x, int size, boundary_conditions BC, double d_x, double d_y)  restrict(amp);
-double Volume_Frac(GeomVec xc, double r, GeomVec x, double dx, double dy);
+double ellipse_rho(double r, double e, double phi);
+double Volume_Frac(GeomVec xc, double r, double e, double alpha0, GeomVec x, double dx, double dy);
 double Heaviside(double x);
 int i_real_u(int i, Param par);
 int i_real_u_(int i, int N1) restrict(amp);

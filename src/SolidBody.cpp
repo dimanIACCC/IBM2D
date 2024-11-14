@@ -13,10 +13,15 @@ Solid::Solid(Param &par) {
 
 void Solid::Init() {
 	x_n_plt = x_n;
-	x_plt = x_n;
-	x = x_n;
-	u = u_n;
-	omega = omega_n;
+	x_plt   = x_n;
+	x       = x_n;
+	x_s     = x_n;
+	u       = u_n;
+	u_s     = u_n;
+	omega   = omega_n;
+	omega_s = omega_n;
+	alpha   = alpha_n;
+	alpha_s = alpha_n;
 
 	if (shape == 0) {
 		this->Nn_r = 0;
@@ -61,9 +66,6 @@ bool operator >(const Solid& a, const Solid& b) {
 	else return false;
 }
 
-
- 
-
 void fill_solid_coordinates(std::vector<Node> &Nodes, const int Nn_max, const int Nn, const int Nn_r0, const int Nn_r,
                             const int shape, const double r0, const double r, const double e, const double alpha) {
 	int Nn_ = 0;
@@ -76,8 +78,9 @@ void fill_solid_coordinates(std::vector<Node> &Nodes, const int Nn_max, const in
 		for (size_t i = 0; i < Nn; ++i) {
 			int Ind = Nn_max + i;
 			double phi = i * 2.0 * M_PI / Nn;
-			Nodes[Ind].x_n[1] = cos(phi) * r / sqrt(1 - e*e*cos(phi)*cos(phi)) * pow(1 - e*e, 0.25);
-			Nodes[Ind].x_n[2] = sin(phi) * r / sqrt(1 - e*e*cos(phi)*cos(phi)) * pow(1 - e*e, 0.25);
+			double rho = ellipse_rho(r,e,phi);
+			Nodes[Ind].x_n[1] = cos(phi) * rho;
+			Nodes[Ind].x_n[2] = sin(phi) * rho;
 		}
 	}
 	else if (shape == 2) {  // line
@@ -234,12 +237,12 @@ void line_segment(std::vector<Node> &Nodes, const int N_start, const int Nn, Geo
 	}
 }
 
-void circular_segment(std::vector<Node> &Nodes, const int N_start, const int Nn, GeomVec Xc, double e, double alpha_beg, double alpha_end) {
+void circular_segment(std::vector<Node> &Nodes, const int N_start, const int Nn, GeomVec Xc, double r, double alpha_beg, double alpha_end) {
 	double alpha;
 	for (size_t i = 0; i < Nn; ++i) {
 		alpha = alpha_beg + (alpha_end - alpha_beg) * i / Nn;
-		Nodes[N_start + i].x_n[1] = Xc[1] + e*cos(alpha);
-		Nodes[N_start + i].x_n[2] = Xc[2] + e*sin(alpha);
+		Nodes[N_start + i].x_n[1] = Xc[1] + r*cos(alpha);
+		Nodes[N_start + i].x_n[2] = Xc[2] + r*sin(alpha);
 	}
 }
 
@@ -311,7 +314,7 @@ void Solid::log(std::string WorkDir, int n) {
 
 	output << std::setprecision(8);
 	output << n << "   " 
-		   << x_n_plt[1] << "   "
+	       << x_n_plt[1] << "   "
 	       << x_n_plt[2] << "   "
 	       << u_n[1] << "   "
 	       << u_n[2] << "   "
@@ -319,7 +322,7 @@ void Solid::log(std::string WorkDir, int n) {
 	       << f_new[2] << "   "
 	       << omega_n[3] << "   "
 	       << tau_new[3]   << "   "
-		   << alpha[3] << "   "
+	       << alpha_n[3] << "   "
 	       << std::endl;
 }
 
@@ -333,7 +336,7 @@ void Solid::read_line(std::string line) {
 		else if (PAR == "ux")         u_n[1] = stod(VALUE);
 		else if (PAR == "uy")         u_n[2] = stod(VALUE);
 		else if (PAR == "omega")      omega_n[3] = stod(VALUE) * M_PI / 180;
-		else if (PAR == "alpha")      alpha[3] = stod(VALUE) * M_PI / 180;
+		else if (PAR == "alpha")      alpha_n[3] = stod(VALUE) * M_PI / 180;
 		else if (PAR == "rho")        rho = stod(VALUE);
 		else if (PAR == "Nn_r0")      Nn_r0 = stoi(VALUE);
 		else if (PAR == "Nn_r")       Nn_r = stoi(VALUE);
@@ -395,7 +398,7 @@ void Read_Solids(std::ifstream &input, std::vector<Solid>& Solids, std::vector<N
 					s.Init();
 					s.add_Nodes(Nodes, par.Nn_max);
 					if (key_Nodes==FALSE) {
-						fill_solid_coordinates(Nodes, par.Nn_max, s.Nn, s.Nn_r0, s.Nn_r, s.shape, s.r0, s.r, s.e, s.alpha[3]);
+						fill_solid_coordinates(Nodes, par.Nn_max, s.Nn, s.Nn_r0, s.Nn_r, s.shape, s.r0, s.r, s.e, s.alpha_n[3]);
 						s.log_init(par.WorkDir);
 					}
 					fill_solid_ds(Nodes, par.Nn_max, s.Nn, s.shape, 0.5*(par.d_x + par.d_y));
@@ -431,6 +434,7 @@ void Add_Solids(std::vector<Solid>& Solids, std::vector<Node>& Nodes, Param &par
 			if (add) {
 				Solid s(par);
 				s.x_n = x;
+				//s.rho = 1. + (par.rho - 1.)*(x[2]) / par.H;
 				s.Init();
 				s.add_Nodes(Nodes, par.Nn_max);
 				fill_solid_coordinates(Nodes, par.Nn_max, s.Nn, s.Nn_r0, s.Nn_r, s.shape, par.r0, par.r, par.e, 0.);
@@ -579,16 +583,16 @@ void Collide_2Solids(Solid& s1, Solid& s2, std::vector<Node> &Nodes, Param par, 
 					if (s1.moving == 1) {
 						//double ds2 = Nodes[Ind1].ds * Nodes[Ind2].ds;
 						double ds2 = 1.;
-						s1.a_collide += F * ds2;
+						s1.f_collide += F * ds2;
 						Nodes[Ind1].f_r_collide += F * ds2 / Nodes[Ind1].ds;
-						s1.d_omega_collide += x_product(Nodes[Ind1].x, F) * ds2;
+						s1.tau_collide += x_product(Nodes[Ind1].x, F) * ds2;
 					}
 					if (s2.moving == 1) {
 						//double ds2 = Nodes[Ind2].ds * Nodes[Ind1].ds;
 						double ds2 = 1.;
-						s2.a_collide -= F * ds2;
+						s2.f_collide -= F * ds2;
 						Nodes[Ind2].f_r_collide -= F * ds2 / Nodes[Ind2].ds;
-						s2.d_omega_collide -= x_product(Nodes[Ind2].x, F) * ds2;
+						s2.tau_collide -= x_product(Nodes[Ind2].x, F) * ds2;
 					}
 				}
 			}
@@ -649,9 +653,9 @@ void Collide_Walls(Solid& s1, std::vector<Node> &Nodes, Param& par, double dist_
 		//double ds = ds_wall;
 		double ds = Nodes[Ind1].ds;
 
-		s1.a_collide += F;// *Nodes[Ind1].ds * ds;
+		s1.f_collide += F;// *Nodes[Ind1].ds * ds;
 		Nodes[Ind1].f_r_collide += F / Nodes[Ind1].ds;// *ds;
-		s1.d_omega_collide += x_product(Nodes[Ind1].x, F);// *Nodes[Ind1].ds * ds;
+		s1.tau_collide += x_product(Nodes[Ind1].x, F);// *Nodes[Ind1].ds * ds;
 
 	}
 }
@@ -688,6 +692,7 @@ void Solids_move(std::vector<Solid> &solidList, std::vector<Node> &Nodes, Param 
 				it->omega_n = it->omega;
 				it->x_n    = it->x;
 				it->x_n_plt = it->x_plt;
+				it->alpha_n = it->alpha;
 				for (size_t k = 0; k < it->Nn; ++k) {
 					int Ind = it->IndNodes[k];
 					Nodes[Ind].x_n = Nodes[Ind].x;
@@ -741,8 +746,8 @@ void Solids_zero_force(std::vector<Solid>& Solids, std::vector<Node>& Nodes, int
 	for (auto& it : Solids) {
 		it.f = ZeroVec();
 		it.tau = ZeroVec();
-		it.a_collide = ZeroVec();
-		it.d_omega_collide = ZeroVec();
+		it.f_collide = ZeroVec();
+		it.tau_collide = ZeroVec();
 		it.Fr = 0.;
 		it.S = 0.;
 		
@@ -764,8 +769,20 @@ void Solids_velocity_new(std::vector<Solid>& Solids, Param par) {
 			it.u_s     = it.u;
 			it.omega_s = it.omega;
 
-			GeomVec a   = (it.integralV_du_dt  - it.f_new + it.a_collide) / it.V / it.rho * 1 + par.Gravity * (it.rho - 1.) / it.rho;  // fluid density equals 1
-			GeomVec tau = (it.integralV_dur_dt - it.tau_new + it.d_omega_collide) / it.I / it.rho * 1;  // angular moment I is normalized with density
+			GeomVec a   = (it.integralV_du_dt  - it.f_new + it.f_collide) / it.V / it.rho * 1 + par.Gravity * (it.rho - 1.) / it.rho;  // fluid density equals 1
+			GeomVec tau = (it.integralV_dur_dt - it.tau_new + it.tau_collide) / it.I / it.rho * 1;  // angular moment I is normalized with density
+
+			//std::cout << it.integralV_du_dt[1] / it.V / it.rho << std::endl;
+			//std::cout << -it.f_new[1] / it.V / it.rho << std::endl;
+			//std::cout << par.Gravity[1] * (it.rho - 1.) / it.rho << std::endl;
+			//std::cout << std::endl;
+			//std::cout << it.integralV_du_dt[2] / it.V / it.rho << std::endl;
+			//std::cout << -it.f_new[2] / it.V / it.rho << std::endl;
+			//std::cout << par.Gravity[2] * (it.rho - 1.) / it.rho << std::endl;
+			//std::cout << std::endl;
+			//std::cout << it.integralV_dur_dt[3] / it.I / it.rho << std::endl;
+			//std::cout << -it.tau_new[3] / it.I / it.rho << std::endl;
+			//std::getchar();
 
 			it.u     = it.u_n     + a   * par.d_t;
 			it.omega = it.omega_n + tau * par.d_t;
@@ -787,9 +804,12 @@ void Solids_velocity_new(std::vector<Solid>& Solids, Param par) {
 void Solids_position_new(std::vector<Solid>& Solids, std::vector<Node>& Nodes, Param par) {
 	for (auto& it : Solids) {
 		if (it.moving>0) {
+			it.x_s     = it.x;
+			it.alpha_s = it.alpha;
+
 			it.x     = it.x_n     + 0.5 * (it.u_n + it.u) * par.d_t;
 			it.x_plt = it.x_n_plt + 0.5 * (it.u_n + it.u) * par.d_t;
-			it.alpha = it.alpha + 0.5 * (it.omega_n + it.omega) * par.d_t;
+			it.alpha = it.alpha_n + 0.5 * (it.omega_n + it.omega) * par.d_t;
 			for (size_t k = 0; k < it.Nn; ++k) {
 				int Ind = it.IndNodes[k];
 				Nodes[Ind].x = rotate_Vector_around_vector(Nodes[Ind].x_n, 0.5 * (it.omega_n + it.omega) * par.d_t); //rotate
@@ -811,38 +831,42 @@ void Solid::integrals(Matrix U_n, Matrix V_n, Matrix U_new, Matrix V_new, Param 
 	int i_max, i_min;
 	int j_max, j_min;
 
-	GetInfluenceArea(i_min, i_max, j_min, j_max, nx1 - 1, nx2 - 1, x_n, int(r / par.d_x) + 4, par);
+	double k = sqrt(1 - e*e);
+	int a = int( r / sqrt(k) / par.d_x + 4);
+
+	GetInfluenceArea(i_min, i_max, j_min, j_max, nx1 - 1, nx2 - 1, x_n, a, par);
 	for (int i = i_min; i <= i_max; ++i) {
 		for (int j = j_min; j <= j_max; ++j) {
 			int i_real = i_real_u(i, par);
 			GeomVec xu = x_u(i, j, par);
-			double Frac_n = par.d_x * par.d_y * Volume_Frac(x_n, r, xu, par.d_x, par.d_y);
+			double Frac_n = par.d_x * par.d_y * Volume_Frac(x_n, r, e, alpha_n[3], xu, par.d_x, par.d_y);
 			integralV_un[1] += Frac_n * U_n[i_real][j];
 			GeomVec un = ZeroVec();
 			un[1] = U_n[i_real][j];
 			integralV_un_r   += Frac_n * x_product(xu-x_n, un);
+			//Int[i_real][j] = Frac_n;
 		}
 	}
 
-	GetInfluenceArea(i_min, i_max, j_min, j_max, nx1 - 1, nx2 - 1, x, int(r / par.d_x) + 4, par);
+	GetInfluenceArea(i_min, i_max, j_min, j_max, nx1 - 1, nx2 - 1, x_s, a, par);
 	for (int i = i_min; i <= i_max; ++i) {
 		for (int j = j_min; j <= j_max; ++j) {
 			int i_real = i_real_u(i, par);
 			GeomVec xu = x_u(i, j, par);
-			double Frac = par.d_x * par.d_y * Volume_Frac(x, r, xu, par.d_x, par.d_y);
+			double Frac = par.d_x * par.d_y * Volume_Frac(x_s, r, e, alpha_s[3], xu, par.d_x, par.d_y);
 			integralV_unew[1] += Frac * U_new[i_real][j];
 			GeomVec unew = ZeroVec();
 			unew[1] = U_new[i_real][j];
-			integralV_unew_r += Frac * x_product(xu - x, unew);
+			integralV_unew_r += Frac * x_product(xu - x_s, unew);
 		}
 	}
 
-	GetInfluenceArea(i_min, i_max, j_min, j_max, ny1 - 1, ny2 - 1, x_n, int(r / par.d_y) + 4, par);
+	GetInfluenceArea(i_min, i_max, j_min, j_max, ny1 - 1, ny2 - 1, x_n, a, par);
 	for (int i = i_min; i <= i_max; ++i) {
 		for (int j = j_min; j <= j_max; ++j) {
 			int i_real = i_real_v(i, par);
 			GeomVec xv = x_v(i, j, par);
-			double Frac_n = par.d_x * par.d_y * Volume_Frac(x_n, r, xv, par.d_x, par.d_y);
+			double Frac_n = par.d_x * par.d_y * Volume_Frac(x_n, r, e, alpha_n[3], xv, par.d_x, par.d_y);
 			integralV_un[2] += Frac_n * V_n[i_real][j];
 			GeomVec vn = ZeroVec();
 			vn[2] = V_n[i_real][j];
@@ -850,16 +874,16 @@ void Solid::integrals(Matrix U_n, Matrix V_n, Matrix U_new, Matrix V_new, Param 
 		}
 	}
 
-	GetInfluenceArea(i_min, i_max, j_min, j_max, ny1 - 1, ny2 - 1, x, int(r / par.d_y) + 4, par);
+	GetInfluenceArea(i_min, i_max, j_min, j_max, ny1 - 1, ny2 - 1, x_s, a, par);
 	for (int i = i_min; i <= i_max; ++i) {
 		for (int j = j_min; j <= j_max; ++j) {
 			int i_real = i_real_v(i, par);
 			GeomVec xv = x_v(i, j, par);
-			double Frac = par.d_x * par.d_y * Volume_Frac(x, r, xv, par.d_x, par.d_y);
+			double Frac = par.d_x * par.d_y * Volume_Frac(x_s, r, e, alpha_s[3], xv, par.d_x, par.d_y);
 			integralV_unew[2] += Frac * V_new[i_real][j];
 			GeomVec vnew = ZeroVec();
 			vnew[2] = V_new[i_real][j];
-			integralV_unew_r += Frac * x_product(xv - x, vnew);
+			integralV_unew_r += Frac * x_product(xv - x_s, vnew);
 		}
 	}
 

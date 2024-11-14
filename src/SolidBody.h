@@ -28,6 +28,7 @@ public:
 	int moving = 1;              // 0 - Solid does not move, 1 - Solid is driven by the fluid, 2 - Solid moves according to the given law
 	GeomVec x_n = ZeroVec();     // mass center at $n$ step
 	GeomVec x   = ZeroVec();     // mass center at $n+1$ step
+	GeomVec x_s = ZeroVec();     // mass center at $n+1$ step $s$ iteration
 	GeomVec x_n_plt = ZeroVec(); // mass center at $n$ step
 	GeomVec x_plt   = ZeroVec(); // mass center at $n+1$ step
 	GeomVec u_n = ZeroVec();     // velocity of the mass center at $n$ step
@@ -36,9 +37,11 @@ public:
 	GeomVec omega   = ZeroVec(); // angular velocity at $n$ step
 	GeomVec omega_n = ZeroVec(); // angular velocity at $n+1$ step
 	GeomVec omega_s = ZeroVec(); // angular velocity at $n+1$ step $s$ iteration
-	GeomVec alpha = ZeroVec();   // angular orientation
-	GeomVec a_collide = ZeroVec();         // acceleration of the collision
-	GeomVec d_omega_collide = ZeroVec();   // angular acceleration of the collision
+	GeomVec alpha_n = ZeroVec();   // angular orientation
+	GeomVec alpha   = ZeroVec();   // angular orientation
+	GeomVec alpha_s = ZeroVec();   // angular orientation
+	GeomVec f_collide = ZeroVec();         // acceleration of the collision
+	GeomVec tau_collide = ZeroVec();       // angular acceleration of the collision
 	GeomVec f_new = ZeroVec();             // force applied to the whole Solid
 	GeomVec f     = ZeroVec();             // force applied to the whole Solid
 	GeomVec tau_new = ZeroVec();           // torque, moment of force applied to the whole Solid

@@ -264,8 +264,19 @@ InfluenceArea GetInfluenceArea_(int Ni, int Nj, double* x, int size, boundary_co
 	return IA;
 }
 
-double Volume_Frac(GeomVec xc, double r, GeomVec x, double dx, double dy) {
+
+double ellipse_rho(double r, double e, double phi) {
+	double k = sqrt(1 - e*e);
+	double a = r / sqrt(k);
+	double b = r * sqrt(k);
+	//double ellipse_rho = b / sqrt(1 - e*e*cos(phi)*cos(phi));
+	double ellipse_rho = a*b / sqrt(a*a*sin(phi)*sin(phi) + b*b*cos(phi)*cos(phi));
+	return ellipse_rho;
+}
+
+double Volume_Frac(GeomVec xc, double r, double e, double alpha0, GeomVec x, double dx, double dy) {
 	GeomVec x_i[5];
+
 	for (int i = 1; i <= 4; ++i) {
 		x_i[i] = x;
 	}
@@ -277,7 +288,10 @@ double Volume_Frac(GeomVec xc, double r, GeomVec x, double dx, double dy) {
 	double result = 0;
 	double sum_phi = 0;
 	for (int i = 1; i <= 4; ++i) {
-		double phi = length(x_i[i] - xc) - r;
+		GeomVec r_fluid = x_i[i] - xc;
+		double alpha = atan(r_fluid[2] / r_fluid[1]);
+		double rho_solid = ellipse_rho(r,e,alpha-alpha0);
+		double phi = length(r_fluid) - rho_solid;
 		result -= phi * Heaviside(-phi);
 		sum_phi += std::abs(phi);
 	}
